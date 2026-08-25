@@ -568,3 +568,33 @@ model ProjectDocument {
   @@index([category])
 }
 
+enum LeadStatus {
+  NEW
+  CONTACTED
+  SITE_VISIT
+  ESTIMATE_SENT
+  NEGOTIATION
+  WON
+  LOST
+}
+
+model Lead {
+  id                String      @id @default(cuid())
+  name              String
+  phone             String
+  email             String?
+  location          String
+  plotArea          String?
+  builtUpArea       String?
+  floors            String?
+  budget            String?
+  constructionStage String?
+  requirements      String?     @db.Text
+  status            LeadStatus  @default(NEW)
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}
+

@@ -80,8 +80,8 @@ export default async function StagesOverviewPage() {
       labourSpent,
       serviceSpent,
       billsCount: matchingExpenses.length,
-      status: matchedDbStage?.status ?? (totalSpent > 0 ? "IN_PROGRESS" : "NOT_STARTED"),
-      percentageComplete: matchedDbStage?.percentageComplete ?? (totalSpent > 0 ? 50 : 0),
+      status: matchedDbStage?.status ?? "NOT_STARTED",
+      percentageComplete: matchedDbStage?.percentageComplete ?? 0,
     };
   });
 

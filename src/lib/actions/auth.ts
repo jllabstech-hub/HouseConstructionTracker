@@ -49,30 +49,58 @@ export async function loginUser(input: { email: string; password: string }) {
     });
     return { ok: true };
   } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    let errorStr = message;
+    try {
+      errorStr = JSON.stringify(error, Object.getOwnPropertyNames(error as object));
+    } catch {
+      // ignore serialization error
+    }
+    console.error("Login action caught error:", errorStr);
+
     if (error instanceof AuthError) {
       if (error.type === "CredentialsSignin") {
         return { error: "Invalid user ID or password" };
       }
-      return { error: "Authentication failed. Please verify your credentials." };
+      if (
+        errorStr.includes("DATABASE_CONNECTION_ERROR") ||
+        errorStr.includes("connect") ||
+        errorStr.includes("relation") ||
+        errorStr.includes("does not exist") ||
+        errorStr.includes("P1001") ||
+        errorStr.includes("P2021") ||
+        errorStr.includes("PrismaClient")
+      ) {
+        return {
+          error:
+            "Database table error: The database tables have not been created yet. Please visit /api/setup or verify DATABASE_URL in Vercel.",
+        };
+      }
+      return { error: "Authentication failed. Please verify your user ID and password." };
     }
-    const message = error instanceof Error ? error.message : String(error);
-    const digest = error && typeof error === "object" && "digest" in error ? String((error as { digest: unknown }).digest) : "";
 
-    // Next.js redirect errors are expected if redirect is invoked internally
+    const digest =
+      error && typeof error === "object" && "digest" in error
+        ? String((error as { digest: unknown }).digest)
+        : "";
+
     if (message.includes("NEXT_REDIRECT") || digest.startsWith("NEXT_REDIRECT")) {
       return { ok: true };
     }
-    console.error("Login action error:", error);
+
     if (
       message.includes("DATABASE_CONNECTION_ERROR") ||
       message.includes("connect") ||
+      message.includes("relation") ||
+      message.includes("does not exist") ||
       message.includes("database")
     ) {
       return {
         error:
-          "Database connection error. Please verify DATABASE_URL and AUTH_SECRET in your Vercel environment variables.",
+          "Database connection error. Please verify DATABASE_URL in your Vercel environment variables.",
       };
     }
+
     return {
       error: "Invalid user ID or password.",
     };

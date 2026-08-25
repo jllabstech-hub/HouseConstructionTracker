@@ -95,6 +95,7 @@ export function DocumentsHub({
   const [activeTab, setActiveTab] = useState<string>("ALL");
   const [search, setSearch] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [lightboxDoc, setLightboxDoc] = useState<DocumentItem | null>(null);
   const [editingDoc, setEditingDoc] = useState<DocumentItem | null>(null);
 
@@ -429,12 +430,13 @@ export function DocumentsHub({
               className="space-y-4"
               onSubmit={(e) => {
                 e.preventDefault();
+                setUploadError(null);
                 const formElement = e.currentTarget;
                 const formData = new FormData(formElement);
                 start(async () => {
                   const res = await uploadDocument(projectId, formData);
                   if (res?.error) {
-                    alert(res.error);
+                    setUploadError(res.error);
                     return;
                   }
                   setShowUploadModal(false);
@@ -442,6 +444,11 @@ export function DocumentsHub({
                 });
               }}
             >
+              {uploadError && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800">
+                  {uploadError}
+                </div>
+              )}
               {/* Category Selector */}
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1.5">

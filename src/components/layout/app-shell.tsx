@@ -16,6 +16,7 @@ import {
   Plus,
   Receipt,
   Settings,
+  Sparkles,
   Users,
   Wallet,
   X,
@@ -58,6 +59,7 @@ export function AppShell({
   ];
 
   const moreNav = [
+    { href: "/leads", label: "Inquiries & Leads", icon: Sparkles, active: pathname === "/leads" },
     { href: "/masters", label: t.nav?.shopsWorkers ?? "Vendors & Workers", icon: Users, active: pathname === "/masters" },
     { href: "/documents", label: t.nav?.documents ?? "Documents", icon: Files, active: pathname === "/documents" },
     { href: "/settings", label: t.nav?.settings ?? "Settings", icon: Settings, active: pathname === "/settings" },

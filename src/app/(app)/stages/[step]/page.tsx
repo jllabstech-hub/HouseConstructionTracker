@@ -176,8 +176,8 @@ export default async function StageDetailPage({
       nextStage={nextStage}
       stageName={matchedDbStage?.name || stageConfig.name}
       stageId={stageId}
-      status={matchedDbStage?.status ?? (total > 0 ? "IN_PROGRESS" : "NOT_STARTED")}
-      percentageComplete={matchedDbStage?.percentageComplete ?? (total > 0 ? 50 : 0)}
+      status={matchedDbStage?.status ?? "NOT_STARTED"}
+      percentageComplete={matchedDbStage?.percentageComplete ?? 0}
       expenses={serializedExpenses}
       documents={stageDocuments}
       totalSpent={total}
