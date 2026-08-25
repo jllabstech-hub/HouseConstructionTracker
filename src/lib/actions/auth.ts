@@ -58,6 +58,19 @@ export async function loginUser(input: { email: string; password: string }) {
     }
     console.error("Login action caught error:", errorStr);
 
+    if (
+      errorStr.includes("empty string") ||
+      errorStr.includes("nonempty URL") ||
+      errorStr.includes("DATABASE_URL") ||
+      message.includes("empty string") ||
+      message.includes("nonempty URL")
+    ) {
+      return {
+        error:
+          "Database connection string missing: Please add DATABASE_URL in Vercel Project Settings → Environment Variables.",
+      };
+    }
+
     if (error instanceof AuthError) {
       if (error.type === "CredentialsSignin") {
         return { error: "Invalid user ID or password" };
