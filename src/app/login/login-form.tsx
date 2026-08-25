@@ -41,6 +41,12 @@ export default function LoginForm() {
       >
         <h1 className="font-display text-3xl font-bold text-ink-900">Welcome back</h1>
         <p className="text-sm text-ink-600">Sign in to your construction tracker.</p>
+
+        {params.get("setup") === "success" && (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-semibold text-emerald-800 leading-relaxed">
+            Database tables verified and initialized successfully! You can now sign in with admin / test123.
+          </div>
+        )}
         
         {error && (
           <div className="space-y-2">
@@ -48,12 +54,10 @@ export default function LoginForm() {
               {error}
             </div>
             <a
-              href="/api/setup"
-              target="_blank"
-              rel="noreferrer"
+              href="/api/setup?redirect=true"
               className="block text-center text-xs text-clay-700 font-bold hover:text-clay-900 underline"
             >
-              First time deploying on Vercel? Click here to verify database connection →
+              First time deploying on Vercel? Click here to auto-initialize database →
             </a>
           </div>
         )}

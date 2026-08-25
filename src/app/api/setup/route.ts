@@ -5,13 +5,16 @@ import { seedUserMasters, seedProjectStructure } from "@/lib/catalog/seed-master
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const shouldRedirect = searchParams.get("redirect") === "true";
+
   try {
     // 1. Verify DB connection
     await prisma.$queryRaw`SELECT 1`;
 
     // 2. Ensure admin user exists
-    const passwordHash = await bcrypt.hash("test123", 12);
+    const passwordHash = await bcrypt.hash("test123", 10);
     const user = await prisma.user.upsert({
       where: { email: "admin" },
       update: { name: "Admin", passwordHash },
@@ -39,6 +42,10 @@ export async function GET() {
     }
 
     await seedProjectStructure(project.id, { demoProgress: true });
+
+    if (shouldRedirect) {
+      return NextResponse.redirect(new URL("/login?setup=success", request.url));
+    }
 
     return NextResponse.json({
       ok: true,
