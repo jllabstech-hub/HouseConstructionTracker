@@ -410,13 +410,7 @@ export function ExpenseForm({
               <TextInput name="rate" inputMode="decimal" value={rate} onChange={(event) => setRate(event.target.value)} placeholder="420" />
             </Field>
           </div>
-          {formula ? (
-            <p className="mt-3 text-center text-sm text-ink-500">
-              {formula} = <span className="font-semibold text-ink-900">{preview ? formatINR(preview) : "₹0"}</span>
-            </p>
-          ) : (
-            <p className="mt-3 text-center text-xs text-ink-400">Quantity × rate</p>
-          )}
+          <p className="mt-3 text-center text-xs text-ink-400">{formula ?? "Quantity × rate"}</p>
         </section>
       ) : null}
 
@@ -461,13 +455,7 @@ export function ExpenseForm({
                   />
                 </Field>
               </div>
-              {formula ? (
-                <p className="text-center text-sm text-ink-500">
-                  {formula} = <span className="font-semibold text-ink-900">{preview ? formatINR(preview) : "₹0"}</span>
-                </p>
-              ) : (
-                <p className="text-center text-xs text-ink-400">Workers × days × daily rate</p>
-              )}
+              <p className="text-center text-xs text-ink-400">{formula ?? "Workers × days × daily rate"}</p>
             </>
           ) : (
             <Field label="Amount">
