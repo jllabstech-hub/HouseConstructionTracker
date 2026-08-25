@@ -3,6 +3,10 @@ import type { NextAuthConfig } from "next-auth";
 export const authConfig = {
   session: { strategy: "jwt" },
   trustHost: true,
+  secret:
+    process.env.AUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    "hct_secret_auth_construction_tracker_secure_token_key_2026",
   pages: {
     signIn: "/login",
   },

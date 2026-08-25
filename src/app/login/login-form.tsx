@@ -2,13 +2,12 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { loginUser } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/fields";
 
 export default function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -16,26 +15,39 @@ export default function LoginForm() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-paper-50 px-4">
       <form
-        className="w-full max-w-md space-y-4 rounded-3xl bg-white p-8 shadow-card"
+        className="w-full max-w-md space-y-4 rounded-3xl bg-white p-8 shadow-card border border-paper-200"
         onSubmit={(event) => {
           event.preventDefault();
+          setError(null);
           const form = new FormData(event.currentTarget);
           start(async () => {
-            const result = await loginUser({
-              email: String(form.get("email") ?? ""),
-              password: String(form.get("password") ?? ""),
-            });
-            if (result.error) {
-              setError(result.error);
-              return;
+            try {
+              const result = await loginUser({
+                email: String(form.get("email") ?? ""),
+                password: String(form.get("password") ?? ""),
+              });
+              if (result && result.error) {
+                setError(result.error);
+                return;
+              }
+              const target = params.get("callbackUrl") || "/dashboard";
+              window.location.href = target;
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
+              setError(msg);
             }
-            router.push(params.get("callbackUrl") || "/dashboard");
-            router.refresh();
           });
         }}
       >
-        <h1 className="font-display text-3xl">Welcome back</h1>
+        <h1 className="font-display text-3xl font-bold text-ink-900">Welcome back</h1>
         <p className="text-sm text-ink-600">Sign in to your construction tracker.</p>
+        
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800 leading-relaxed">
+            {error}
+          </div>
+        )}
+
         <Field label="User ID / Email">
           <TextInput
             name="email"
@@ -47,6 +59,7 @@ export default function LoginForm() {
             autoCorrect="off"
           />
         </Field>
+        
         <Field label="Password">
           <TextInput
             name="password"
@@ -56,13 +69,14 @@ export default function LoginForm() {
             placeholder="Password"
           />
         </Field>
-        {error ? <p className="text-sm text-red-700">{error}</p> : null}
+
         <Button type="submit" disabled={pending} className="w-full">
           {pending ? "Signing in…" : "Sign in"}
         </Button>
-        <p className="text-sm text-ink-600">
+
+        <p className="text-sm text-ink-600 text-center">
           New here?{" "}
-          <Link href="/register" className="font-semibold text-clay-700">
+          <Link href="/register" className="font-semibold text-clay-700 hover:underline">
             Create an account
           </Link>
         </p>

@@ -2,7 +2,6 @@ import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { loadProjectExpenses } from "@/lib/finance/queries";
 import { getActiveProjectId } from "@/lib/project-context";
-import { PageHeader } from "@/components/ui/page-header";
 import { MasterForms } from "@/components/masters/master-forms";
 
 export default async function MastersPage() {

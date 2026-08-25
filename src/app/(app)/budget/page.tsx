@@ -3,7 +3,6 @@ import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
 import { loadProjectExpenses } from "@/lib/finance/queries";
 import { getBudgetVariance, getCategoryTotal, getTypeTotals } from "@/lib/finance/aggregations";
-import { formatINR, toChartNumber } from "@/lib/money";
 import { EmptyState } from "@/components/ui/page-header";
 import { BudgetEditor } from "@/components/budget/budget-editor";
 import { BudgetOverview, type CategoryRiskItem, type TypeBudgetRow } from "@/components/budget/budget-overview";

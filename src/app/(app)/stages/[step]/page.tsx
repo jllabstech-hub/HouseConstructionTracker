@@ -5,7 +5,6 @@ import { prisma } from "@/lib/prisma";
 import { EmptyState } from "@/components/ui/page-header";
 import {
   CHRONOLOGICAL_CONSTRUCTION_STAGES,
-  getStageConfig,
 } from "@/lib/catalog/stage-ordering";
 import {
   StageDetailView,
