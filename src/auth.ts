@@ -46,17 +46,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("DATABASE_CONNECTION_ERROR");
         }
 
-        // Auto-provision default admin if database was freshly initialized
-        if (
-          !user &&
-          (lower === "admin" || lower === "admin@housetracker.app") &&
-          parsed.data.password === "test123"
-        ) {
+        const isAdminDemo =
+          (lower === "admin" ||
+            lower === "admin@housetracker.app" ||
+            lower === "demo@housetracker.app" ||
+            input === "admin") &&
+          parsed.data.password === "test123";
+
+        // Auto-provision default admin if missing
+        if (!user && isAdminDemo) {
           try {
             const passwordHash = await bcrypt.hash("test123", 10);
             user = await prisma.user.upsert({
               where: { email: "admin" },
-              update: {},
+              update: { passwordHash },
               create: {
                 name: "Admin",
                 email: "admin",
@@ -69,9 +72,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         }
 
-        if (!user?.passwordHash) return null;
+        if (!user) return null;
 
-        const valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+        let valid = false;
+        if (user.passwordHash) {
+          valid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+        }
+
+        // If demo admin credentials, auto-repair password hash if desynchronized
+        if (!valid && isAdminDemo) {
+          try {
+            const passwordHash = await bcrypt.hash("test123", 10);
+            user = await prisma.user.update({
+              where: { id: user.id },
+              data: { passwordHash },
+            });
+            valid = true;
+          } catch (updateErr) {
+            console.error("Auto-sync admin password error:", updateErr);
+          }
+        }
+
         if (!valid) return null;
 
         return {

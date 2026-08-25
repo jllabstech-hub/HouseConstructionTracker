@@ -43,8 +43,18 @@ export default function LoginForm() {
         <p className="text-sm text-ink-600">Sign in to your construction tracker.</p>
         
         {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800 leading-relaxed">
-            {error}
+          <div className="space-y-2">
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800 leading-relaxed">
+              {error}
+            </div>
+            <a
+              href="/api/setup"
+              target="_blank"
+              rel="noreferrer"
+              className="block text-center text-xs text-clay-700 font-bold hover:text-clay-900 underline"
+            >
+              First time deploying on Vercel? Click here to verify database connection →
+            </a>
           </div>
         )}
 

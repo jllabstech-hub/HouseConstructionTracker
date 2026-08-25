@@ -11,63 +11,61 @@ import {
 } from "@/lib/catalog/defaults";
 
 export async function seedUserMasters(userId: string) {
-  for (const [groupIndex, group] of MATERIAL_CATALOG.entries()) {
-    for (const [itemIndex, name] of group.items.entries()) {
-      await prisma.materialCategory.upsert({
-        where: {
-          userId_groupName_name: { userId, groupName: group.group, name },
-        },
-        update: {},
-        create: {
+  const materialsCount = await prisma.materialCategory.count({ where: { userId } });
+  if (materialsCount === 0) {
+    const materialsData: { userId: string; name: string; groupName: string; sortOrder: number; isDefault: boolean }[] = [];
+    for (const [groupIndex, group] of MATERIAL_CATALOG.entries()) {
+      for (const [itemIndex, name] of group.items.entries()) {
+        materialsData.push({
           userId,
           name,
           groupName: group.group,
           sortOrder: groupIndex * 100 + itemIndex,
           isDefault: true,
-        },
-      });
+        });
+      }
     }
+    await prisma.materialCategory.createMany({ data: materialsData, skipDuplicates: true });
   }
 
-  for (const [groupIndex, group] of LABOUR_CATALOG.entries()) {
-    for (const [itemIndex, name] of group.items.entries()) {
-      await prisma.labourCategory.upsert({
-        where: {
-          userId_groupName_name: { userId, groupName: group.group, name },
-        },
-        update: {},
-        create: {
+  const laboursCount = await prisma.labourCategory.count({ where: { userId } });
+  if (laboursCount === 0) {
+    const laboursData: { userId: string; name: string; groupName: string; sortOrder: number; isDefault: boolean }[] = [];
+    for (const [groupIndex, group] of LABOUR_CATALOG.entries()) {
+      for (const [itemIndex, name] of group.items.entries()) {
+        laboursData.push({
           userId,
           name,
           groupName: group.group,
           sortOrder: groupIndex * 100 + itemIndex,
           isDefault: true,
-        },
-      });
+        });
+      }
     }
+    await prisma.labourCategory.createMany({ data: laboursData, skipDuplicates: true });
   }
 
-  for (const [index, name] of SERVICE_CATALOG.entries()) {
-    await prisma.serviceCategory.upsert({
-      where: { userId_name: { userId, name } },
-      update: {},
-      create: { userId, name, sortOrder: index, isDefault: true },
+  const servicesCount = await prisma.serviceCategory.count({ where: { userId } });
+  if (servicesCount === 0) {
+    await prisma.serviceCategory.createMany({
+      data: SERVICE_CATALOG.map((name, index) => ({ userId, name, sortOrder: index, isDefault: true })),
+      skipDuplicates: true,
     });
   }
 
-  for (const [index, name] of EQUIPMENT_CATALOG.entries()) {
-    await prisma.equipmentCategory.upsert({
-      where: { userId_name: { userId, name } },
-      update: {},
-      create: { userId, name, sortOrder: index, isDefault: true },
+  const equipmentsCount = await prisma.equipmentCategory.count({ where: { userId } });
+  if (equipmentsCount === 0) {
+    await prisma.equipmentCategory.createMany({
+      data: EQUIPMENT_CATALOG.map((name, index) => ({ userId, name, sortOrder: index, isDefault: true })),
+      skipDuplicates: true,
     });
   }
 
-  for (const [index, name] of PROFESSIONAL_CATALOG.entries()) {
-    await prisma.professionalCategory.upsert({
-      where: { userId_name: { userId, name } },
-      update: {},
-      create: { userId, name, sortOrder: index, isDefault: true },
+  const professionalsCount = await prisma.professionalCategory.count({ where: { userId } });
+  if (professionalsCount === 0) {
+    await prisma.professionalCategory.createMany({
+      data: PROFESSIONAL_CATALOG.map((name, index) => ({ userId, name, sortOrder: index, isDefault: true })),
+      skipDuplicates: true,
     });
   }
 
@@ -75,14 +73,15 @@ export async function seedUserMasters(userId: string) {
 }
 
 export async function seedWorkAreas(userId: string) {
+  const existingCount = await prisma.workArea.count({ where: { userId } });
+  if (existingCount > 0) return;
+
   const materials = await prisma.materialCategory.findMany({ where: { userId } });
   const labours = await prisma.labourCategory.findMany({ where: { userId } });
 
   for (const [index, template] of WORK_AREA_TEMPLATES.entries()) {
-    const workArea = await prisma.workArea.upsert({
-      where: { userId_name: { userId, name: template.name } },
-      update: { sortOrder: index },
-      create: { userId, name: template.name, sortOrder: index },
+    const workArea = await prisma.workArea.create({
+      data: { userId, name: template.name, sortOrder: index },
     });
 
     const materialIds = materials
@@ -91,9 +90,6 @@ export async function seedWorkAreas(userId: string) {
     const labourIds = labours
       .filter((category) => template.labourNames.includes(category.name))
       .map((category) => category.id);
-
-    await prisma.workAreaMaterial.deleteMany({ where: { workAreaId: workArea.id } });
-    await prisma.workAreaLabour.deleteMany({ where: { workAreaId: workArea.id } });
 
     if (materialIds.length) {
       await prisma.workAreaMaterial.createMany({
