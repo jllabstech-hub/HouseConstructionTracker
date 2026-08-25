@@ -1,37 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import {
   ArrowLeft,
-  ArrowRight,
   ChevronLeft,
   ChevronRight,
-  Download,
-  FileSpreadsheet,
-  FileText,
-  Hammer,
+  Files,
   HardHat,
-  Layers,
-  Milestone,
+  MoreHorizontal,
+  Package,
   Plus,
-  Receipt,
-  RotateCcw,
-  Search,
-  Sparkles,
-  Truck,
-  Upload,
-  User,
-  Wallet,
+  UploadCloud,
 } from "lucide-react";
 import { formatINR } from "@/lib/money";
-import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
-import {
-  CHRONOLOGICAL_CONSTRUCTION_STAGES,
-  getStageConfig,
-  type StageConfig,
-} from "@/lib/catalog/stage-ordering";
+import { StageConfig } from "@/lib/catalog/stage-ordering";
 
 export type StageDetailExpense = {
   id: string;
@@ -62,426 +45,304 @@ export function StageDetailView({
   projectId,
   projectName,
   step,
+  stageConfig,
+  prevStage,
+  nextStage,
   stageName,
   stageId,
   status,
   percentageComplete,
   expenses,
   documents,
-  totals,
+  totalSpent,
+  materialSpent,
+  labourSpent,
+  serviceSpent,
 }: {
   projectId: string;
   projectName: string;
   step: number;
+  stageConfig: StageConfig;
+  prevStage: StageConfig | null;
+  nextStage: StageConfig | null;
   stageName: string;
   stageId?: string;
   status: string;
   percentageComplete: number;
   expenses: StageDetailExpense[];
   documents: StageDetailDocument[];
-  totals: {
-    total: number;
-    material: number;
-    labour: number;
-    machinery: number;
-    billsCount: number;
-  };
+  totalSpent: number;
+  materialSpent: number;
+  labourSpent: number;
+  serviceSpent: number;
 }) {
   const { language, t, getStageName } = useLanguage();
-  const [filterType, setFilterType] = useState<"ALL" | "MATERIAL" | "LABOUR" | "OTHER">("ALL");
-  const [search, setSearch] = useState("");
-
-  const config = getStageConfig(stageName) || CHRONOLOGICAL_CONSTRUCTION_STAGES[step - 1];
-  const prevStep = step > 1 ? step - 1 : null;
-  const nextStep = step < 20 ? step + 1 : null;
-  const prevStageConfig = prevStep ? CHRONOLOGICAL_CONSTRUCTION_STAGES[prevStep - 1] : null;
-  const nextStageConfig = nextStep ? CHRONOLOGICAL_CONSTRUCTION_STAGES[nextStep - 1] : null;
-
-  const filteredExpenses = expenses.filter((e) => {
-    if (filterType === "MATERIAL" && e.type !== "MATERIAL") return false;
-    if (filterType === "LABOUR" && e.type !== "LABOUR") return false;
-    if (filterType === "OTHER" && (e.type === "MATERIAL" || e.type === "LABOUR")) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      const matchDesc = e.description?.toLowerCase().includes(q);
-      const matchVendor = e.vendorName?.toLowerCase().includes(q);
-      const matchCat = e.category.name.toLowerCase().includes(q);
-      if (!matchDesc && !matchVendor && !matchCat) return false;
-    }
-    return true;
-  });
+  const localizedStageTitle = getStageName(stageConfig.name);
 
   return (
     <div className="space-y-6">
-      {/* 1. Top Navigation Stepper */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 rounded-2xl border border-paper-200 bg-white p-3 shadow-xs">
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start">
-          <Link
-            href="/stages"
-            className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-3 py-1.5 text-xs font-bold text-ink-700 hover:bg-paper-100 transition active:scale-95"
-          >
-            <Milestone className="h-3.5 w-3.5 text-clay-600" />
-            <span>{t.stages?.allStagesTitle ?? "All 20 Stages"}</span>
-          </Link>
+      {/* 1. Top Sequential Stepper & Breadcrumb */}
+      <div className="flex items-center justify-between border-b border-paper-200/80 pb-3">
+        <Link
+          href="/stages"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-600 hover:text-ink-900 transition"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>{language === "te" ? "అన్ని దశల జాబితా" : "All 20 Stages"}</span>
+        </Link>
 
-          <span className="text-xs font-bold text-ink-500 bg-paper-100 px-2.5 py-1 rounded-lg">
-            {language === "te" ? `దశ ${step} / 20` : `Stage ${step} of 20`}
-          </span>
-        </div>
-
-        {/* Previous & Next Buttons */}
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-          {prevStep ? (
+        <div className="flex items-center gap-2">
+          {prevStage ? (
             <Link
-              href={`/stages/${prevStep}`}
-              className="inline-flex items-center gap-1 rounded-xl border border-paper-300 bg-white px-3 py-1.5 text-xs font-bold text-ink-700 hover:bg-clay-50 hover:text-clay-700 hover:border-clay-300 transition"
-              title={prevStageConfig?.name}
+              href={`/stages/${prevStage.step}`}
+              className="inline-flex items-center gap-1 rounded-xl border border-paper-300 bg-white px-3 py-1.5 text-xs font-bold text-ink-700 hover:bg-paper-50 transition"
             >
               <ChevronLeft className="h-4 w-4" />
               <span className="hidden sm:inline">
-                {language === "te" ? "మునుపటిది:" : "Prev:"} {prevStageConfig?.shortName}
+                {prevStage.step}. {prevStage.shortName}
               </span>
-              <span className="sm:hidden">{language === "te" ? "మునుపటిది" : "Prev"}</span>
             </Link>
           ) : (
-            <div />
+            <span className="text-xs text-ink-400 opacity-50 px-2">First Stage</span>
           )}
 
-          {nextStep ? (
+          {nextStage ? (
             <Link
-              href={`/stages/${nextStep}`}
-              className="inline-flex items-center gap-1 rounded-xl bg-clay-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-clay-700 transition shadow-xs active:scale-95"
-              title={nextStageConfig?.name}
+              href={`/stages/${nextStage.step}`}
+              className="inline-flex items-center gap-1 rounded-xl border border-paper-300 bg-white px-3 py-1.5 text-xs font-bold text-ink-700 hover:bg-paper-50 transition"
             >
               <span className="hidden sm:inline">
-                {language === "te" ? "తరువాతిది:" : "Next:"} {nextStageConfig?.shortName}
+                {nextStage.step}. {nextStage.shortName}
               </span>
-              <span className="sm:hidden">{language === "te" ? "తరువాతిది" : "Next"}</span>
               <ChevronRight className="h-4 w-4" />
             </Link>
-          ) : null}
+          ) : (
+            <span className="text-xs text-ink-400 opacity-50 px-2">Final Stage</span>
+          )}
         </div>
       </div>
 
-      {/* 2. Stage Hero Card */}
-      <div className="relative overflow-hidden rounded-3xl border border-ink-800 bg-gradient-to-br from-ink-900 via-ink-800 to-clay-900 p-6 sm:p-8 text-white shadow-lg">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="rounded-full bg-clay-500/30 border border-clay-400/40 px-3 py-0.5 text-xs font-bold text-clay-200">
-                {config?.phase ?? "STRUCTURAL"} PHASE
-              </span>
-              <span className="rounded-full bg-white/10 px-3 py-0.5 text-xs font-bold text-paper-200">
-                {language === "te" ? `క్రమ సంఖ్య: ${step}` : `Step #${step}`}
-              </span>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="text-3xl sm:text-4xl">{config?.icon ?? "🏗️"}</span>
-              <div>
-                <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
-                  {config?.name ?? stageName}
-                </h1>
-                <p className="text-base sm:text-lg text-clay-300 font-semibold mt-0.5">
-                  {getStageName(stageName)}
-                </p>
-              </div>
-            </div>
+      {/* 2. Hero Header Card */}
+      <div className="rounded-2xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="rounded-md bg-clay-100 px-2 py-0.5 text-xs font-bold text-clay-800">
+              Stage {stageConfig.step} of 20
+            </span>
+            <span className="rounded-md bg-paper-100 px-2 py-0.5 text-xs font-bold uppercase text-ink-600">
+              {stageConfig.phase}
+            </span>
           </div>
 
-          {/* Quick Record Action in Hero */}
-          <div className="shrink-0 flex flex-col sm:flex-row lg:flex-col gap-2.5">
-            <Link
-              href={stageId ? `/expenses/new?stageId=${stageId}` : `/expenses/new`}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-clay-500 hover:bg-clay-400 px-5 py-3 text-sm font-bold text-white shadow-md transition active:scale-95 text-center"
-            >
-              <Plus className="h-4 w-4" />
-              <span>{t.stages?.recordExpenseForStage ?? "+ Record Bill / Wages for this Stage"}</span>
-            </Link>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 mt-2">
+            {stageConfig.name}
+          </h1>
+          <p className="text-xs sm:text-sm text-ink-500 mt-0.5">
+            {localizedStageTitle}
+          </p>
+        </div>
 
-            <Link
-              href="/documents"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/15 px-4 py-2.5 text-xs font-bold text-paper-100 transition text-center"
-            >
-              <Layers className="h-4 w-4 text-clay-300" />
-              <span>{t.stages?.uploadStageDrawing ?? "+ Upload Stage Drawing / Plan"}</span>
-            </Link>
-          </div>
+        {/* Primary CTA for this Stage */}
+        <div className="shrink-0">
+          <Link
+            href={`/expenses/new?stageId=${stageId ?? stageConfig.step}`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 stroke-[2.5]" />
+            <span>{language === "te" ? "+ ఈ దశకు ఖర్చు నమోదు" : "+ Record Expense for this Stage"}</span>
+          </Link>
         </div>
       </div>
 
-      {/* 3. Stage Financial Breakdown (4 Metrics Cards) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <div className="rounded-3xl border border-paper-200 bg-white p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-500">
-            <Wallet className="h-4 w-4 text-clay-600" />
-            <span>{t.stages?.spentOnStage ?? "Spent on Stage"}</span>
-          </div>
-          <p className="text-xl sm:text-2xl font-bold text-clay-800 mt-2">
-            {formatINR(totals.total)}
-          </p>
-          <span className="text-[11px] font-medium text-ink-400 mt-0.5 block">
-            {totals.billsCount} {language === "te" ? "బిల్లులు & పేమెంట్లు" : "bills & payments"}
+      {/* 3. Financial Breakdown Strip */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        {/* Total Spent on Stage */}
+        <div className="rounded-2xl border border-clay-200 bg-clay-50/40 p-4 shadow-xs">
+          <span className="text-xs font-bold uppercase tracking-wider text-clay-800">
+            {language === "te" ? "ఈ దశలో ఖర్చు" : "Total Spent on Stage"}
           </span>
+          <p className="font-display text-2xl font-bold text-ink-900 mt-1">
+            {formatINR(totalSpent)}
+          </p>
+          <p className="text-xs text-ink-500 mt-1 font-medium">
+            {expenses.length} {language === "te" ? "లావాదేవీలు" : "transactions"}
+          </p>
         </div>
 
-        <div className="rounded-3xl border border-paper-200 bg-white p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-500">
-            <span>🧱</span>
-            <span>{t.stages?.materialsPurchased ?? "Materials"}</span>
+        {/* Material Purchases */}
+        <div className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs">
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink-600">
+            <Package className="h-4 w-4 text-clay-600" />
+            <span>{language === "te" ? "సామాగ్రి" : "Material"}</span>
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-ink-900 mt-2">
-            {formatINR(totals.material)}
+          <p className="font-display text-2xl font-bold text-ink-900 mt-1">
+            {formatINR(materialSpent)}
           </p>
-          <span className="text-[11px] font-medium text-ink-400 mt-0.5 block">
-            {language === "te" ? "సిమెంట్, స్టీల్, ఇసుక..." : "Cement, Steel, Sand..."}
-          </span>
+          <p className="text-xs text-ink-400 mt-1">
+            {totalSpent > 0 ? `${Math.round((materialSpent / totalSpent) * 100)}% of stage` : "—"}
+          </p>
         </div>
 
-        <div className="rounded-3xl border border-paper-200 bg-white p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-500">
-            <span>👷</span>
-            <span>{t.stages?.labourPaid ?? "Worker Wages"}</span>
+        {/* Labour Payments */}
+        <div className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs">
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink-600">
+            <HardHat className="h-4 w-4 text-emerald-700" />
+            <span>{language === "te" ? "కూలీలు" : "Labour"}</span>
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-ink-900 mt-2">
-            {formatINR(totals.labour)}
+          <p className="font-display text-2xl font-bold text-ink-900 mt-1">
+            {formatINR(labourSpent)}
           </p>
-          <span className="text-[11px] font-medium text-ink-400 mt-0.5 block">
-            {language === "te" ? "మేస్త్రీ & కూలీల చెల్లింపులు" : "Mason & Labour payouts"}
-          </span>
-        </div>
-
-        <div className="rounded-3xl border border-paper-200 bg-white p-4 sm:p-5 shadow-xs">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-ink-500">
-            <Truck className="h-4 w-4 text-amber-600" />
-            <span>{t.stages?.machineryPaid ?? "Machinery & Other"}</span>
-          </div>
-          <p className="text-xl sm:text-2xl font-bold text-ink-900 mt-2">
-            {formatINR(totals.machinery)}
+          <p className="text-xs text-ink-400 mt-1">
+            {totalSpent > 0 ? `${Math.round((labourSpent / totalSpent) * 100)}% of stage` : "—"}
           </p>
-          <span className="text-[11px] font-medium text-ink-400 mt-0.5 block">
-            {language === "te" ? "JCB, రవాణా & అనుమతులు" : "JCB, Transport & Permits"}
-          </span>
         </div>
       </div>
 
-      {/* 4. 1-Tap Quick Presets for this Stage */}
-      {config?.quickPresets && config.quickPresets.length > 0 ? (
-        <div className="rounded-3xl border border-paper-200 bg-white p-5 shadow-xs space-y-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-clay-600" />
+      {/* 4. Common Materials & Wage Presets */}
+      {stageConfig.quickPresets && stageConfig.quickPresets.length > 0 && (
+        <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-3">
+          <div>
             <h3 className="font-display text-sm font-bold text-ink-900">
-              {t.stages?.quickPresets ?? "1-Tap Stage Shortcuts & Quick Presets"}
+              {language === "te" ? "ఈ దశకు సాధారణ సామాగ్రి & కూలీల షార్ట్‌కట్స్" : "Common Materials & Labour for this Stage"}
             </h3>
+            <p className="text-xs text-ink-500 mt-0.5">
+              {language === "te" ? "త్వరిత నమోదు కోసం క్రింది ఐటమ్ పై క్లిక్ చేయండి" : "Click any preset to pre-fill an expense"}
+            </p>
           </div>
-          <p className="text-xs text-ink-500">
-            {language === "te"
-              ? "ఈ దశలో ఎక్కువగా వాడే సామాగ్రి లేదా కూలీ ఖర్చును తక్షణమే నమోదు చేయడానికి కింద ఉన్న బటన్‌పై నొక్కండి:"
-              : "Tap any common item below to instantly prefill and record it for this stage:"}
-          </p>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5 pt-1">
-            {config.quickPresets.map((preset, idx) => (
+          <div className="flex flex-wrap gap-2">
+            {stageConfig.quickPresets.map((preset) => (
               <Link
-                key={idx}
-                href={
-                  stageId
-                    ? `/expenses/new?stageId=${stageId}&description=${encodeURIComponent(preset.description)}&amount=${preset.amount ?? ""}`
-                    : `/expenses/new?description=${encodeURIComponent(preset.description)}`
-                }
-                className="group flex items-center justify-between rounded-2xl border border-paper-200 bg-paper-50 p-3 hover:border-clay-400 hover:bg-clay-50/50 transition active:scale-98"
+                key={preset.label}
+                href={`/expenses/new?stageId=${stageId ?? stageConfig.step}&description=${encodeURIComponent(preset.description || preset.label)}&amount=${preset.amount || ""}`}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-paper-200 bg-paper-50 px-3 py-1.5 text-xs font-semibold text-ink-800 hover:bg-clay-50 hover:text-clay-800 hover:border-clay-300 transition"
               >
-                <div>
-                  <p className="text-xs font-bold text-ink-900 group-hover:text-clay-800">
-                    {preset.label}
-                  </p>
-                  <p className="text-[11px] text-ink-500 line-clamp-1 mt-0.5">
-                    {preset.description}
-                  </p>
-                </div>
-                <span className="shrink-0 rounded-xl bg-white px-2 py-1 text-xs font-bold text-clay-700 border border-paper-200 group-hover:bg-clay-600 group-hover:text-white transition">
-                  {preset.amount ? formatINR(preset.amount) : "+ Add"}
-                </span>
+                {preset.type === "MATERIAL" ? (
+                  <Package className="h-3.5 w-3.5 text-clay-600" />
+                ) : (
+                  <HardHat className="h-3.5 w-3.5 text-emerald-700" />
+                )}
+                <span>{preset.label}</span>
+                {preset.amount && (
+                  <span className="text-[10px] text-ink-400">({formatINR(preset.amount)})</span>
+                )}
               </Link>
             ))}
           </div>
         </div>
-      ) : null}
+      )}
 
-      {/* 5. Linked Blueprints & Drawings for this Stage */}
-      <div className="rounded-3xl border border-paper-200 bg-white p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Layers className="h-4.5 w-4.5 text-clay-600" />
+      {/* 5. Stage Passbook (Expenses recorded for this stage) */}
+      <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-4">
+        <div className="flex items-center justify-between border-b border-paper-100 pb-3">
+          <div>
             <h3 className="font-display text-base font-bold text-ink-900">
-              {t.stages?.linkedDrawings ?? "Blueprints & Drawings for this Stage"}
+              {language === "te" ? "ఈ దశకు సంబంధించిన ఖర్చులు" : "Expenses for this Stage"}
             </h3>
+            <p className="text-xs text-ink-500 mt-0.5">
+              {expenses.length} {language === "te" ? "నమోదైన లావాదేవీలు" : "transactions recorded"}
+            </p>
           </div>
 
           <Link
-            href="/documents"
-            className="text-xs font-bold text-clay-600 hover:text-clay-800"
+            href={`/expenses/new?stageId=${stageId ?? stageConfig.step}`}
+            className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition"
           >
-            {t.stages?.uploadStageDrawing ?? "+ Upload Plan / Drawing"}
+            <Plus className="h-3.5 w-3.5" />
+            <span>{language === "te" ? "ఖర్చు నమోదు" : "Add Expense"}</span>
           </Link>
         </div>
 
-        {documents.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {documents.map((doc) => (
-              <a
-                key={doc.id}
-                href={doc.fileUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group flex items-center gap-3 rounded-2xl border border-paper-200 bg-paper-50 p-3 hover:border-clay-400 hover:bg-clay-50/40 transition"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white border border-paper-200 text-clay-600">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-bold text-ink-900 group-hover:text-clay-800 truncate">
-                    {doc.title}
-                  </p>
-                  <p className="text-[11px] text-ink-500 truncate">
-                    {doc.version ? `v${doc.version} • ` : ""}{doc.category}
-                  </p>
-                </div>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-dashed border-paper-300 bg-paper-50/50 p-5 text-center">
-            <p className="text-xs text-ink-500 font-medium">
-              {t.stages?.noDrawingsForStage ?? "No blueprints or drawings attached for this stage yet."}
-            </p>
-            <Link
-              href="/documents"
-              className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-clay-600 hover:text-clay-800"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              <span>{t.stages?.uploadStageDrawing ?? "Upload Plan for this Stage"}</span>
-            </Link>
-          </div>
-        )}
-      </div>
-
-      {/* 6. Stage Expenses Passbook Table */}
-      <div className="rounded-3xl border border-paper-200 bg-white p-5 shadow-xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="font-display text-base font-bold text-ink-900">
-              {t.stages?.stagePassbook ?? "Stage Expense Passbook"}
-            </h3>
-            <p className="text-xs text-ink-500">
-              {filteredExpenses.length} {language === "te" ? "బిల్లులు మరియు పేమెంట్లు" : "bills and payments recorded"}
-            </p>
-          </div>
-
-          {/* Type Filter Chips */}
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-            <button
-              type="button"
-              onClick={() => setFilterType("ALL")}
-              className={cn(
-                "rounded-xl px-3 py-1 text-xs font-bold transition",
-                filterType === "ALL" ? "bg-clay-600 text-white" : "bg-paper-100 text-ink-700 hover:bg-paper-200"
-              )}
-            >
-              {language === "te" ? "అన్నీ" : "All"} ({expenses.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterType("MATERIAL")}
-              className={cn(
-                "rounded-xl px-3 py-1 text-xs font-bold transition",
-                filterType === "MATERIAL" ? "bg-clay-600 text-white" : "bg-paper-100 text-ink-700 hover:bg-paper-200"
-              )}
-            >
-              🧱 {language === "te" ? "సామాగ్రి" : "Materials"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterType("LABOUR")}
-              className={cn(
-                "rounded-xl px-3 py-1 text-xs font-bold transition",
-                filterType === "LABOUR" ? "bg-clay-600 text-white" : "bg-paper-100 text-ink-700 hover:bg-paper-200"
-              )}
-            >
-              👷 {language === "te" ? "కూలీలు" : "Labour"}
-            </button>
-          </div>
-        </div>
-
-        {/* Expenses List / Table */}
-        {filteredExpenses.length > 0 ? (
-          <div className="divide-y divide-paper-100 border-t border-paper-100">
-            {filteredExpenses.map((exp) => (
+        {expenses.length > 0 ? (
+          <div className="divide-y divide-paper-100">
+            {expenses.map((exp) => (
               <div
                 key={exp.id}
-                className="flex items-center justify-between py-3 hover:bg-paper-50/60 rounded-xl px-2 transition"
+                className="flex items-center justify-between py-3 hover:bg-paper-50/50 rounded-lg px-2 transition"
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold",
-                      exp.type === "MATERIAL"
-                        ? "bg-amber-100 text-amber-800"
-                        : exp.type === "LABOUR"
-                        ? "bg-emerald-100 text-emerald-800"
-                        : "bg-blue-100 text-blue-800"
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-paper-100 text-ink-700">
+                    {exp.type === "MATERIAL" ? (
+                      <Package className="h-4 w-4 text-clay-600" />
+                    ) : exp.type === "LABOUR" ? (
+                      <HardHat className="h-4 w-4 text-emerald-700" />
+                    ) : (
+                      <MoreHorizontal className="h-4 w-4 text-ink-600" />
                     )}
-                  >
-                    {exp.type === "MATERIAL" ? "🧱" : exp.type === "LABOUR" ? "👷" : "🚜"}
                   </div>
-
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold text-ink-900">
-                        {exp.description || exp.category.name}
-                      </p>
-                      <span className="rounded-md bg-paper-100 px-1.5 py-0.5 text-[10px] font-semibold text-ink-600">
-                        {exp.category.name}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-3 text-xs text-ink-500 mt-0.5">
-                      <span>{exp.date}</span>
-                      {exp.vendorName ? <span>• {exp.vendorName}</span> : null}
-                      {exp.quantity && exp.rate ? (
-                        <span>• {exp.quantity} {exp.unit} @ ₹{exp.rate}</span>
-                      ) : null}
-                    </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-ink-900 truncate">
+                      {exp.description || exp.category.name}
+                    </p>
+                    <p className="text-[11px] text-ink-500 truncate">
+                      {exp.date} {exp.vendorName ? `• ${exp.vendorName}` : ""}
+                    </p>
                   </div>
                 </div>
 
-                <div className="text-right shrink-0">
-                  <p className="text-sm font-bold text-ink-900">
+                <div className="text-right shrink-0 pl-3">
+                  <p className="font-display text-sm font-bold text-ink-900">
                     {formatINR(Number(exp.amount))}
                   </p>
                   <Link
                     href={`/expenses/${exp.id}`}
-                    className="text-[11px] font-semibold text-clay-600 hover:text-clay-800"
+                    className="text-[10px] font-semibold text-clay-600 hover:text-clay-800"
                   >
-                    {language === "te" ? "సవరించు →" : "Edit →"}
+                    {language === "te" ? "సవరించు" : "Edit"}
                   </Link>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-paper-200 bg-paper-50/50 p-8 text-center">
-            <Receipt className="mx-auto h-8 w-8 text-ink-300 mb-2" />
-            <p className="text-sm font-medium text-ink-600">
-              {t.stages?.noExpensesForStage ?? "No expenses recorded for this stage yet."}
+          <div className="text-center py-6 text-xs text-ink-400">
+            {language === "te" ? "ఈ దశకు ఖర్చులు ఏవీ నమోదు కాలేదు." : "No expenses recorded for this stage yet."}
+          </div>
+        )}
+      </div>
+
+      {/* 6. Linked Blueprints & Drawings */}
+      <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-paper-100 pb-3">
+          <div>
+            <h3 className="font-display text-base font-bold text-ink-900">
+              {language === "te" ? "ఈ దశకు ప్లాన్లు & డ్రాయింగ్స్" : "Linked Blueprints & Drawings"}
+            </h3>
+            <p className="text-xs text-ink-500 mt-0.5">
+              {language === "te" ? "స్ట్రక్చరల్ మరియు వర్కింగ్ ప్లాన్లు" : "Relevant architectural and structural drawings"}
             </p>
-            <Link
-              href={stageId ? `/expenses/new?stageId=${stageId}` : `/expenses/new`}
-              className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2 text-xs font-bold text-white hover:bg-clay-700 transition shadow-xs"
-            >
-              <Plus className="h-4 w-4" />
-              <span>{t.stages?.recordExpenseForStage ?? "+ Record Expense for this Stage"}</span>
-            </Link>
+          </div>
+
+          <Link
+            href="/documents"
+            className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition"
+          >
+            <UploadCloud className="h-3.5 w-3.5" />
+            <span>{language === "te" ? "ప్లాన్ అప్‌లోడ్" : "Upload Plan"}</span>
+          </Link>
+        </div>
+
+        {documents.length > 0 ? (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {documents.map((doc) => (
+              <a
+                key={doc.id}
+                href={doc.fileUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2.5 rounded-xl border border-paper-200 bg-paper-50 p-3 hover:bg-paper-100 transition"
+              >
+                <Files className="h-4 w-4 text-clay-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-ink-900 truncate">{doc.title}</p>
+                  <p className="text-[10px] text-ink-500">{doc.category}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-4 text-xs text-ink-400">
+            {language === "te" ? "ఈ దశకు ప్రత్యేక ప్లాన్లు ఏవీ జోడించబడలేదు." : "No drawings attached to this stage yet."}
           </div>
         )}
       </div>

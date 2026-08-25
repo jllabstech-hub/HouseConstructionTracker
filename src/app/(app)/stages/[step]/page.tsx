@@ -43,6 +43,9 @@ export default async function StageDetailPage({
     notFound();
   }
 
+  const prevStage = stepNum > 1 ? CHRONOLOGICAL_CONSTRUCTION_STAGES[stepNum - 2] : null;
+  const nextStage = stepNum < 20 ? CHRONOLOGICAL_CONSTRUCTION_STAGES[stepNum] : null;
+
   const [project, dbStages, allExpenses, rawDocuments] = await Promise.all([
     prisma.project.findFirstOrThrow({ where: { id: projectId, userId: user.id } }),
     prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
@@ -169,19 +172,19 @@ export default async function StageDetailPage({
       projectId={project.id}
       projectName={project.name}
       step={stepNum}
+      stageConfig={stageConfig}
+      prevStage={prevStage}
+      nextStage={nextStage}
       stageName={matchedDbStage?.name || stageConfig.name}
       stageId={stageId}
       status={matchedDbStage?.status ?? (total > 0 ? "IN_PROGRESS" : "NOT_STARTED")}
       percentageComplete={matchedDbStage?.percentageComplete ?? (total > 0 ? 50 : 0)}
       expenses={serializedExpenses}
       documents={stageDocuments}
-      totals={{
-        total,
-        material,
-        labour,
-        machinery,
-        billsCount: stageExpenses.length,
-      }}
+      totalSpent={total}
+      materialSpent={material}
+      labourSpent={labour}
+      serviceSpent={machinery}
     />
   );
 }

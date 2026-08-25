@@ -1,10 +1,11 @@
-import Link from "next/link";
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
-import { loadProjectExpenses } from "@/lib/finance/queries";
 import { prisma } from "@/lib/prisma";
 import { ExpenseTable } from "@/components/expenses/expense-table";
-import { EmptyState, PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/page-header";
+import type { ExpenseRowData } from "@/components/expenses/expense-mobile-card";
+
+export const dynamic = "force-dynamic";
 
 export default async function ExpensesPage({
   searchParams,
@@ -14,45 +15,85 @@ export default async function ExpensesPage({
   const user = await requireUser();
   const projectId = await getActiveProjectId(user.id);
   const { type } = await searchParams;
+
   if (!projectId) {
-    return <EmptyState title="No project yet" body="Create a project before recording expenses." />;
+    return <EmptyState title="No project found" body="Create or select a house project to view expenses." />;
   }
 
-  const expenses = await loadProjectExpenses(projectId, undefined, type ? { expenseType: type as never } : undefined);
-  const withQty = await prisma.expense.findMany({
-    where: { projectId, ...(type ? { expenseType: type as never } : {}) },
-    select: { id: true, quantity: true, rate: true, unit: true },
+  const [rawExpenses, stages] = await Promise.all([
+    prisma.expense.findMany({
+      where: {
+        projectId,
+        ...(type ? { expenseType: type as never } : {}),
+      },
+      include: {
+        materialCategory: true,
+        labourCategory: true,
+        serviceCategory: true,
+        equipmentCategory: true,
+        professionalCategory: true,
+        vendor: true,
+        worker: true,
+        constructionStage: true,
+        floor: true,
+        receipts: true,
+      },
+      orderBy: { date: "desc" },
+    }),
+    prisma.constructionStage.findMany({
+      where: { projectId },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true },
+    }),
+  ]);
+
+  let totalSpent = 0;
+
+  const expenses: ExpenseRowData[] = rawExpenses.map((e) => {
+    const categoryName =
+      e.materialCategory?.name ||
+      e.labourCategory?.name ||
+      e.serviceCategory?.name ||
+      e.equipmentCategory?.name ||
+      e.professionalCategory?.name ||
+      "General";
+
+    const categoryId =
+      e.materialCategoryId ||
+      e.labourCategoryId ||
+      e.serviceCategoryId ||
+      e.equipmentCategoryId ||
+      e.professionalCategoryId ||
+      "";
+
+    const vendorOrWorker = e.vendor?.name || e.worker?.name || null;
+    const amountNum = Number(e.amount);
+    totalSpent += amountNum;
+
+    return {
+      id: e.id,
+      date: e.date.toISOString().slice(0, 10),
+      type: e.expenseType,
+      category: { id: categoryId, name: categoryName },
+      amount: e.amount.toString(),
+      description: e.description,
+      vendorName: vendorOrWorker,
+      stageName: e.constructionStage?.name ?? null,
+      floorName: e.floor?.name ?? null,
+      paymentMethod: e.paymentMethod,
+      quantity: e.quantity ? e.quantity.toString() : null,
+      unit: e.unit,
+      rate: e.rate ? e.rate.toString() : null,
+      receiptCount: e.receipts.length,
+    };
   });
-  const qtyMap = new Map(withQty.map((row) => [row.id, row]));
 
   return (
-    <div>
-      <PageHeader
-        title={type === "MATERIAL" ? "Material expenses" : type === "LABOUR" ? "Labour expenses" : "All expenses"}
-        subtitle="Material purchases and labour payments stay in separate types, even when they belong to the same work."
-        actions={
-          <>
-            <Link href="/expenses?type=MATERIAL" className="rounded-xl border border-ink-200 px-3 py-2 text-sm">Material</Link>
-            <Link href="/expenses?type=LABOUR" className="rounded-xl border border-ink-200 px-3 py-2 text-sm">Labour</Link>
-            <Link href="/expenses/new" className="rounded-xl bg-clay-600 px-4 py-2 text-sm font-semibold text-white">Add expense</Link>
-          </>
-        }
-      />
-      <ExpenseTable
-        projectId={projectId}
-        typeFilter={type}
-        expenses={expenses.map((row) => {
-          const itemQty = qtyMap.get(row.id ?? "");
-          return {
-            ...row,
-            quantity: itemQty?.quantity?.toString() ?? null,
-            rate: itemQty?.rate?.toString() ?? null,
-            unit: itemQty?.unit ?? row.unit ?? null,
-            date: row.date instanceof Date ? row.date.toISOString() : row.date,
-            amount: row.amount?.toString() ?? "0",
-          };
-        })}
-      />
-    </div>
+    <ExpenseTable
+      projectId={projectId}
+      expenses={expenses}
+      stages={stages}
+      totalSpent={totalSpent}
+    />
   );
 }

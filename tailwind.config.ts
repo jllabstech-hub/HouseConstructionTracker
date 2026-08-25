@@ -6,9 +6,11 @@ const config: Config = {
     extend: {
       colors: {
         paper: {
-          50: "#FBF8F3",
-          100: "#F4EEE4",
-          200: "#E8DCC8",
+          50: "#F8F6F2",
+          100: "#F1EBE1",
+          200: "#E3D7C5",
+          300: "#D2C2AA",
+          400: "#B8A387",
         },
         clay: {
           50: "#FBF4EE",
@@ -48,7 +50,9 @@ const config: Config = {
         display: ["var(--font-source-serif)", "Georgia", "serif"],
       },
       boxShadow: {
-        card: "0 1px 2px rgba(28, 25, 23, 0.04), 0 8px 24px rgba(28, 25, 23, 0.06)",
+        xs: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+        card: "0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04)",
+        cardHover: "0 6px 16px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -2px rgba(0, 0, 0, 0.04)",
       },
     },
   },

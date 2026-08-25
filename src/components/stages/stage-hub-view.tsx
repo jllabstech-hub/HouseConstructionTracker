@@ -5,25 +5,17 @@ import { useState, useMemo } from "react";
 import {
   ArrowRight,
   CheckCircle2,
+  Circle,
   Clock,
-  Hammer,
-  Layers,
   Milestone,
   Plus,
   Receipt,
   Search,
-  Sparkles,
-  TrendingUp,
 } from "lucide-react";
 import { formatINR } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
-import {
-  CHRONOLOGICAL_CONSTRUCTION_STAGES,
-  getStageConfig,
-  getStageOrderNumber,
-  type StageConfig,
-} from "@/lib/catalog/stage-ordering";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 export type StageSummaryItem = {
   step: number;
@@ -58,6 +50,12 @@ export function StageHubView({
   const [selectedPhase, setSelectedPhase] = useState<"ALL" | "STRUCTURAL" | "ROUGH_IN" | "FINISHING" | "INTERIORS">("ALL");
   const [search, setSearch] = useState("");
 
+  // Calculate overall completion percentage
+  const overallProgress = useMemo(() => {
+    const total = stagesData.reduce((acc, curr) => acc + curr.percentageComplete, 0);
+    return Math.round(total / (stagesData.length || 1));
+  }, [stagesData]);
+
   const filteredStages = useMemo(() => {
     return stagesData.filter((item) => {
       if (selectedPhase !== "ALL" && item.phase !== selectedPhase) return false;
@@ -66,7 +64,7 @@ export function StageHubView({
         const localized = getStageName(item.name).toLowerCase();
         const matchName = item.name.toLowerCase().includes(query);
         const matchShort = item.shortName.toLowerCase().includes(query);
-        const matchStep = `stage ${item.step}`.includes(query) || `${item.step}` === query;
+        const matchStep = `${item.step}` === query || `stage ${item.step}`.includes(query);
         if (!matchName && !matchShort && !matchStep && !localized.includes(query)) {
           return false;
         }
@@ -75,168 +73,143 @@ export function StageHubView({
     });
   }, [stagesData, selectedPhase, search, getStageName]);
 
-  const phases = [
-    { id: "ALL", label: language === "te" ? "అన్ని దశలు (20)" : "All 20 Stages", count: 20 },
-    { id: "STRUCTURAL", label: language === "te" ? "దశ 1: పునాది & స్లాబ్ (1-6)" : "Phase 1: Structural (1–6)", count: 6 },
-    { id: "ROUGH_IN", label: language === "te" ? "దశ 2: గోడలు & వైరింగ్ (7-11)" : "Phase 2: Rough-in (7–11)", count: 5 },
-    { id: "FINISHING", label: language === "te" ? "దశ 3: టైల్స్ & రంగులు (12-16)" : "Phase 3: Finishing (12–16)", count: 5 },
-    { id: "INTERIORS", label: language === "te" ? "దశ 4: గృహప్రవేశం (17-20)" : "Phase 4: Handover (17–20)", count: 4 },
+  const phaseOptions = [
+    { value: "ALL", label: language === "te" ? "అన్నీ (20)" : "All (20)" },
+    { value: "STRUCTURAL", label: language === "te" ? "పునాది & స్లాబ్ (1-6)" : "Structural (1–6)" },
+    { value: "ROUGH_IN", label: language === "te" ? "గోడలు & పైపులు (7-11)" : "Rough-in (7–11)" },
+    { value: "FINISHING", label: language === "te" ? "ఫినిషింగ్ (12-16)" : "Finishing (12–16)" },
+    { value: "INTERIORS", label: language === "te" ? "గృహప్రవేశం (17-20)" : "Handover (17–20)" },
   ];
 
   return (
     <div className="space-y-6">
-      {/* 1. Hero Header Banner */}
-      <div className="relative overflow-hidden rounded-3xl border border-ink-800 bg-gradient-to-br from-ink-900 via-ink-800 to-clay-900 p-6 sm:p-8 text-white shadow-lg">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-clay-500/20 border border-clay-400/30 px-3.5 py-1 text-xs font-bold text-clay-200">
-              <Milestone className="h-3.5 w-3.5" />
-              <span>{projectName} • 20 Construction Stages</span>
-            </div>
-            <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
-              {t.stages?.title ?? "Construction Stages & Timeline"}
-            </h1>
-            <p className="text-sm text-paper-200/90 max-w-2xl">
-              {t.stages?.subtitle ?? "Step-by-step sequential roadmap of your house construction from planning and foundation excavation to final painting & Gruhapravesham."}
+      {/* 1. Header Row */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-paper-200/80 pb-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 tracking-tight">
+            {language === "te" ? "నిర్మాణ పురోగతి & దశలు" : "Construction Progress"}
+          </h1>
+          <p className="text-xs sm:text-sm text-ink-500 mt-0.5">
+            {language === "te"
+              ? "పునాది తవ్వకం నుండి గృహప్రవేశం వరకు 20 వరుస క్రమ దశలు"
+              : "Sequential 20-stage timeline from foundation to handover"}
+          </p>
+        </div>
+
+        {/* Overall Completion Metric Card */}
+        <div className="flex items-center gap-3 rounded-2xl border border-paper-200 bg-white p-3.5 shadow-xs shrink-0">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500">
+              {language === "te" ? "మొత్తం పురోగతి" : "Overall Progress"}
+            </span>
+            <p className="font-display text-xl font-bold text-ink-900">
+              {overallProgress}%
             </p>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 shrink-0">
-            <div className="rounded-2xl bg-white/10 p-4 border border-white/10 backdrop-blur-xs text-center">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-paper-300">
-                {language === "te" ? "మొత్తం ఖర్చు" : "Total Spent"}
-              </span>
-              <p className="text-xl sm:text-2xl font-bold text-clay-300 mt-0.5">
-                {formatINR(totalProjectSpent)}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-white/10 p-4 border border-white/10 backdrop-blur-xs text-center">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-paper-300">
-                {language === "te" ? "మొత్తం దశలు" : "Total Stages"}
-              </span>
-              <p className="text-xl sm:text-2xl font-bold text-white mt-0.5">
-                20 <span className="text-xs text-paper-300 font-normal">{language === "te" ? "దశలు" : "Steps"}</span>
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Phase Navigation Tabs & Search */}
-      <div className="rounded-3xl border border-paper-200 bg-white p-4 sm:p-5 shadow-xs space-y-4">
-        {/* Search and Phase Filters */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-ink-400" />
-            <input
-              type="text"
-              placeholder={language === "te" ? "దశ పేరు లేదా నంబర్ ద్వారా వెతకండి (ఉదా: పునాది, స్లాబ్, 3)..." : "Search stage by name or number (e.g. Footing, Slab, 3)..."}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-2xl border border-paper-300 bg-paper-50 py-2.5 pl-10 pr-4 text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-clay-500/20"
+          <div className="h-10 w-16 overflow-hidden rounded-full bg-paper-100 flex items-center p-1">
+            <div
+              className="h-full rounded-full bg-clay-600 transition-all duration-500"
+              style={{ width: `${overallProgress}%` }}
             />
           </div>
-
-          <div className="text-xs font-semibold text-ink-600 shrink-0 px-2">
-            {language === "te" ? "చూపిస్తోంది:" : "Showing:"}{" "}
-            <strong className="text-ink-900">{filteredStages.length}</strong> / 20 {language === "te" ? "దశలు" : "Stages"}
-          </div>
-        </div>
-
-        {/* Phase Chips */}
-        <div className="flex overflow-x-auto no-scrollbar gap-2 pt-1 border-t border-paper-100">
-          {phases.map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setSelectedPhase(p.id as typeof selectedPhase)}
-              className={cn(
-                "rounded-xl px-3.5 py-2 text-xs font-bold transition whitespace-nowrap active:scale-95",
-                selectedPhase === p.id
-                  ? "bg-clay-600 text-white shadow-xs"
-                  : "bg-paper-100 text-ink-700 hover:bg-paper-200"
-              )}
-            >
-              {p.label}
-            </button>
-          ))}
         </div>
       </div>
 
-      {/* 3. 20-Stage Interactive Sequential Cards Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {/* 2. Controls: Phase Segmented Filter & Search */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <SegmentedControl
+          options={phaseOptions}
+          value={selectedPhase}
+          onChange={(val) => setSelectedPhase(val as typeof selectedPhase)}
+          className="w-full md:w-auto overflow-x-auto"
+        />
+
+        <div className="relative max-w-xs w-full ml-auto">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-400" />
+          <input
+            type="text"
+            placeholder={language === "te" ? "దశ పేరు వెతకండి..." : "Search stages..."}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-xl border border-paper-300 bg-white py-2 pl-9 pr-3 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      {/* 3. Vertical Clean Sequential Timeline */}
+      <div className="rounded-2xl border border-paper-200 bg-white shadow-xs divide-y divide-paper-100 overflow-hidden">
         {filteredStages.map((stage) => {
+          const isCompleted = stage.percentageComplete >= 100 || stage.status === "COMPLETED";
+          const isInProgress = stage.percentageComplete > 0 && stage.percentageComplete < 100;
           const localizedName = getStageName(stage.name);
-          const hasSpend = stage.totalSpent > 0;
-          const conf = getStageConfig(stage.name);
 
           return (
             <div
               key={stage.step}
-              className={cn(
-                "group relative flex flex-col justify-between rounded-3xl border bg-white p-5 shadow-xs transition hover:shadow-md hover:border-clay-300",
-                hasSpend ? "border-paper-300" : "border-paper-200"
-              )}
+              className="flex items-center justify-between p-4 sm:p-5 hover:bg-paper-50/50 transition gap-3"
             >
-              <div>
-                {/* Step Number & Phase Badge */}
-                <div className="flex items-center justify-between gap-2 mb-3">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-clay-100 font-display text-sm font-bold text-clay-800 border border-clay-200">
-                    {stage.step.toString().padStart(2, "0")}
-                  </span>
-                  <span className="rounded-lg bg-paper-100 px-2 py-0.5 text-[10px] font-bold uppercase text-ink-500">
-                    {stage.phase}
-                  </span>
+              {/* Left: Status Icon + Stage Number & Title */}
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="shrink-0">
+                  {isCompleted ? (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                      <CheckCircle2 className="h-4.5 w-4.5" />
+                    </div>
+                  ) : isInProgress ? (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                      <Clock className="h-4.5 w-4.5" />
+                    </div>
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-paper-100 text-ink-400 font-bold text-xs">
+                      {stage.step}
+                    </div>
+                  )}
                 </div>
 
-                {/* Stage Title */}
-                <Link href={`/stages/${stage.step}`} className="block group-hover:text-clay-600 transition">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{conf?.icon ?? stage.icon}</span>
-                    <h3 className="font-display text-base font-bold text-ink-900 group-hover:text-clay-700 leading-snug line-clamp-1">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Link
+                      href={`/stages/${stage.step}`}
+                      className="font-display text-sm sm:text-base font-bold text-ink-900 hover:text-clay-700 transition truncate"
+                    >
                       {stage.step}. {stage.shortName}
-                    </h3>
+                    </Link>
+                    <span className="rounded-md bg-paper-100 px-1.5 py-0.2 text-[10px] font-bold uppercase text-ink-500">
+                      {stage.phase}
+                    </span>
                   </div>
-                  <p className="text-xs text-ink-500 font-medium mt-1 line-clamp-1">
+                  <p className="text-xs text-ink-500 truncate mt-0.5">
                     {localizedName}
                   </p>
-                </Link>
-
-                {/* Spend Overview */}
-                <div className="mt-4 rounded-2xl bg-paper-50 p-3 border border-paper-150 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-bold text-ink-500 uppercase tracking-wider">
-                      {language === "te" ? "ఖర్చు:" : "Spent:"}
-                    </span>
-                    <strong className="text-sm font-bold text-clay-800">
-                      {formatINR(stage.totalSpent)}
-                    </strong>
-                  </div>
-
-                  {/* Materials vs Labour Mini Badges */}
-                  <div className="grid grid-cols-2 gap-1.5 pt-1.5 border-t border-paper-200/80 text-[11px]">
-                    <div className="text-ink-600">
-                      <span>🧱 </span>
-                      <span>{formatINR(stage.materialSpent)}</span>
-                    </div>
-                    <div className="text-ink-600 text-right">
-                      <span>👷 </span>
-                      <span>{formatINR(stage.labourSpent)}</span>
-                    </div>
-                  </div>
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="mt-4 pt-3 border-t border-paper-100 flex items-center justify-between gap-2">
-                <span className="text-[11px] font-medium text-ink-400 flex items-center gap-1">
-                  <Receipt className="h-3.5 w-3.5" />
-                  <span>{stage.billsCount} {language === "te" ? "బిల్లులు" : "bills"}</span>
-                </span>
+              {/* Right: Progress % + Spent + View Button */}
+              <div className="flex items-center gap-4 shrink-0 text-right">
+                <div className="hidden sm:block">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-ink-400 block">
+                    {language === "te" ? "ఖర్చు" : "Spent"}
+                  </span>
+                  <p className="font-display text-sm font-bold text-ink-900">
+                    {stage.totalSpent > 0 ? formatINR(stage.totalSpent) : "—"}
+                  </p>
+                </div>
+
+                <div className="hidden md:block w-20">
+                  <div className="flex items-center justify-between text-[11px] text-ink-500 font-medium mb-1">
+                    <span>{stage.percentageComplete}%</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-paper-100 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-clay-600"
+                      style={{ width: `${stage.percentageComplete}%` }}
+                    />
+                  </div>
+                </div>
 
                 <Link
                   href={`/stages/${stage.step}`}
-                  className="inline-flex items-center gap-1 rounded-xl bg-paper-100 hover:bg-clay-600 hover:text-white px-3 py-1.5 text-xs font-bold text-ink-800 transition active:scale-95 shadow-2xs"
+                  className="inline-flex items-center gap-1 rounded-xl border border-paper-300 bg-white px-3 py-1.5 text-xs font-bold text-ink-800 hover:bg-clay-50 hover:text-clay-700 hover:border-clay-300 transition shadow-2xs active:scale-98"
                 >
                   <span>{language === "te" ? "వివరాలు" : "View"}</span>
                   <ArrowRight className="h-3.5 w-3.5" />

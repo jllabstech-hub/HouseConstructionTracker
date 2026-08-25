@@ -1,616 +1,395 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { format } from "date-fns";
+import { useState, useMemo } from "react";
 import {
+  Filter,
+  HardHat,
+  MoreHorizontal,
+  Package,
   Pencil,
   Plus,
+  Receipt,
   RotateCcw,
   Search,
-  Trash2,
   X,
 } from "lucide-react";
-import { deleteExpense } from "@/lib/actions/expenses";
-import { formatINR, addMoney } from "@/lib/money";
-import { getTypeTotals, type ExpenseRecord } from "@/lib/finance/aggregations";
-import { getStageConfig, getStageOrderNumber } from "@/lib/catalog/stage-ordering";
+import { formatINR } from "@/lib/money";
+import { Badge, expenseTone } from "@/components/ui/badge";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { ExpenseFiltersDrawer, type AdvancedFiltersState } from "@/components/expenses/expense-filters-drawer";
+import { ExpenseMobileCard, type ExpenseRowData } from "@/components/expenses/expense-mobile-card";
 import { TablePagination } from "@/components/ui/table-pagination";
-import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 
-type Row = ExpenseRecord & { receiptCount?: number };
-
 export function ExpenseTable({
-  projectId,
   expenses,
-  typeFilter,
+  stages = [],
 }: {
-  projectId: string;
-  expenses: Row[];
-  typeFilter?: string;
+  expenses: ExpenseRowData[];
+  stages?: { id: string; name: string; shortName?: string }[];
+  totalSpent?: number;
+  projectId?: string;
 }) {
-  const router = useRouter();
-  const { language, t, getStageName } = useLanguage();
-  const [pending, start] = useTransition();
-  const [query, setQuery] = useState("");
-  const [type, setType] = useState(typeFilter ?? "");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [activeDateFilter, setActiveDateFilter] = useState("all");
-  const [selectedStage, setSelectedStage] = useState<string>("ALL");
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [sortOrder, setSortOrder] = useState<"STAGE" | "DATE">("STAGE");
+  const { language, t } = useLanguage();
 
-  const [activeTab, setActiveTab] = useState<"ALL" | "MATERIAL" | "LABOUR" | "SERVICE" | "RECEIPTS">("ALL");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
+  // Primary Segmented Filter
+  const [selectedType, setSelectedType] = useState<"ALL" | "MATERIAL" | "LABOUR" | "OTHER">("ALL");
+  const [search, setSearch] = useState("");
+  const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
 
-  const availableStages = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const exp of expenses) {
-      if (exp.constructionStageName) {
-        map.set(exp.constructionStageName, (map.get(exp.constructionStageName) ?? 0) + 1);
-      }
-    }
-    return [...map.entries()].sort(([stageA], [stageB]) => {
-      return getStageOrderNumber(stageA) - getStageOrderNumber(stageB);
+  // Advanced Filters
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFiltersState>({
+    dateRange: "all",
+    stageId: "all",
+    paymentMethod: "all",
+    minAmount: "",
+    maxAmount: "",
+    sortBy: "date_desc",
+  });
+
+  const [page, setPage] = useState(1);
+  const pageSize = 15;
+
+  const handleFilterChange = (key: keyof AdvancedFiltersState, val: string) => {
+    setAdvancedFilters((prev) => ({ ...prev, [key]: val }));
+    setPage(1);
+  };
+
+  const handleResetFilters = () => {
+    setSearch("");
+    setSelectedType("ALL");
+    setAdvancedFilters({
+      dateRange: "all",
+      stageId: "all",
+      paymentMethod: "all",
+      minAmount: "",
+      maxAmount: "",
+      sortBy: "date_desc",
     });
-  }, [expenses]);
+    setPage(1);
+  };
 
+  // Calculate active filter count
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (advancedFilters.dateRange !== "all") count++;
+    if (advancedFilters.stageId !== "all") count++;
+    if (advancedFilters.paymentMethod !== "all") count++;
+    if (advancedFilters.minAmount) count++;
+    if (advancedFilters.maxAmount) count++;
+    if (advancedFilters.sortBy !== "date_desc") count++;
+    return count;
+  }, [advancedFilters]);
+
+  // Filtering & Sorting
   const filtered = useMemo(() => {
-    return expenses.filter((row) => {
-      if (activeTab === "MATERIAL" && row.expenseType !== "MATERIAL") return false;
-      if (activeTab === "LABOUR" && row.expenseType !== "LABOUR") return false;
-      if (activeTab === "SERVICE" && !["SERVICE", "EQUIPMENT", "PROFESSIONAL", "OTHER"].includes(row.expenseType)) return false;
-      if (activeTab === "RECEIPTS" && (!row.receiptCount || row.receiptCount === 0)) return false;
-      if (selectedStage !== "ALL" && row.constructionStageName !== selectedStage) return false;
-      if (type && row.expenseType !== type) return false;
-      if (paymentMethod && row.paymentMethod !== paymentMethod) return false;
-      if (from && new Date(row.date) < new Date(from)) return false;
-      if (to && new Date(row.date) > new Date(to)) return false;
-      if (query) {
-        const haystack = [
-          row.description,
-          row.vendorName,
-          row.workerName,
-          row.materialCategoryName,
-          row.labourCategoryName,
-          row.serviceCategoryName,
-          row.constructionStageName,
-          row.floorName,
-          row.invoiceNumber,
-          row.paymentMethod,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(query.toLowerCase())) return false;
+    return expenses.filter((e) => {
+      // 1. Primary Type
+      if (selectedType === "MATERIAL" && e.type !== "MATERIAL") return false;
+      if (selectedType === "LABOUR" && e.type !== "LABOUR") return false;
+      if (selectedType === "OTHER" && (e.type === "MATERIAL" || e.type === "LABOUR")) return false;
+
+      // 2. Search
+      if (search) {
+        const q = search.toLowerCase();
+        const matchDesc = e.description?.toLowerCase().includes(q);
+        const matchVendor = e.vendorName?.toLowerCase().includes(q);
+        const matchCat = e.category.name.toLowerCase().includes(q);
+        const matchStage = e.stageName?.toLowerCase().includes(q);
+        if (!matchDesc && !matchVendor && !matchCat && !matchStage) return false;
       }
+
+      // 3. Stage
+      if (advancedFilters.stageId !== "all") {
+        const stageObj = stages.find((s) => s.id === advancedFilters.stageId);
+        if (stageObj && e.stageName !== stageObj.name) return false;
+      }
+
+      // 4. Payment Method
+      if (advancedFilters.paymentMethod !== "all" && e.paymentMethod !== advancedFilters.paymentMethod) {
+        return false;
+      }
+
+      // 5. Min / Max Amount
+      const amt = Number(e.amount);
+      if (advancedFilters.minAmount && amt < Number(advancedFilters.minAmount)) return false;
+      if (advancedFilters.maxAmount && amt > Number(advancedFilters.maxAmount)) return false;
+
+      // 6. Date Range
+      if (advancedFilters.dateRange !== "all") {
+        const d = new Date(e.date);
+        const now = new Date();
+        if (advancedFilters.dateRange === "today") {
+          if (d.toDateString() !== now.toDateString()) return false;
+        } else if (advancedFilters.dateRange === "month") {
+          if (d.getMonth() !== now.getMonth() || d.getFullYear() !== now.getFullYear()) return false;
+        } else if (advancedFilters.dateRange === "lastMonth") {
+          const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+          const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+          if (d.getMonth() !== lastMonth || d.getFullYear() !== year) return false;
+        }
+      }
+
       return true;
-    });
-  }, [expenses, activeTab, selectedStage, type, paymentMethod, from, to, query]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [query, type, paymentMethod, from, to, activeTab, selectedStage, sortOrder]);
-
-  const hasActiveFilters =
-    query !== "" ||
-    selectedStage !== "ALL" ||
-    activeDateFilter !== "all" ||
-    paymentMethod !== "" ||
-    type !== "" ||
-    activeTab !== "ALL";
-
-  function resetAllFilters() {
-    setQuery("");
-    setType("");
-    setFrom("");
-    setTo("");
-    setActiveDateFilter("all");
-    setSelectedStage("ALL");
-    setPaymentMethod("");
-    setActiveTab("ALL");
-  }
-
-  const sortedAndFiltered = useMemo(() => {
-    return [...filtered].sort((a, b) => {
-      if (sortOrder === "STAGE") {
-        const orderA = getStageOrderNumber(a.constructionStageName);
-        const orderB = getStageOrderNumber(b.constructionStageName);
-        if (orderA !== orderB) return orderA - orderB;
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
+    }).sort((a, b) => {
+      if (advancedFilters.sortBy === "date_asc") {
+        return new Date(a.date).getTime() - new Date(b.date).getTime();
       }
+      if (advancedFilters.sortBy === "amount_desc") {
+        return Number(b.amount) - Number(a.amount);
+      }
+      if (advancedFilters.sortBy === "amount_asc") {
+        return Number(a.amount) - Number(b.amount);
+      }
+      // default date_desc
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
-  }, [filtered, sortOrder]);
+  }, [expenses, selectedType, search, advancedFilters, stages]);
 
-  const paginatedRows = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return sortedAndFiltered.slice(start, start + pageSize);
-  }, [sortedAndFiltered, currentPage, pageSize]);
+  const totalFilteredSpent = useMemo(() => {
+    return filtered.reduce((acc, curr) => acc + Number(curr.amount), 0);
+  }, [filtered]);
 
-  const totals = getTypeTotals(filtered);
-  const allTotals = getTypeTotals(expenses);
-  const receiptsCount = expenses.filter((e) => (e.receiptCount ?? 0) > 0).length;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const paginatedExpenses = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  function applyQuickDate(kind: string) {
-    setActiveDateFilter(kind);
-    const now = new Date();
-    if (kind === "all") {
-      setFrom("");
-      setTo("");
-    } else if (kind === "today") {
-      const iso = now.toISOString().slice(0, 10);
-      setFrom(iso);
-      setTo(iso);
-    } else if (kind === "month") {
-      setFrom(new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10));
-      setTo(now.toISOString().slice(0, 10));
-    } else if (kind === "last") {
-      setFrom(new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 10));
-      setTo(new Date(now.getFullYear(), now.getMonth(), 0).toISOString().slice(0, 10));
-    }
-  }
-
-  function getCategoryName(row: Row) {
-    return (
-      row.materialCategoryName ??
-      row.labourCategoryName ??
-      row.serviceCategoryName ??
-      row.equipmentCategoryName ??
-      row.professionalCategoryName ??
-      row.expenseType
-    );
-  }
-
-  function getIconForType(expenseType: string) {
-    if (expenseType === "MATERIAL") return "🧱";
-    if (expenseType === "LABOUR") return "👷";
-    if (expenseType === "SERVICE") return "🚜";
-    if (expenseType === "EQUIPMENT") return "⚙️";
-    if (expenseType === "PROFESSIONAL") return "📐";
-    return "📦";
-  }
+  const filterOptions = [
+    { value: "ALL", label: language === "te" ? "అన్నీ" : "All", count: expenses.length },
+    {
+      value: "MATERIAL",
+      label: language === "te" ? "సామాగ్రి" : "Material",
+      icon: Package,
+      count: expenses.filter((e) => e.type === "MATERIAL").length,
+    },
+    {
+      value: "LABOUR",
+      label: language === "te" ? "కూలీలు" : "Labour",
+      icon: HardHat,
+      count: expenses.filter((e) => e.type === "LABOUR").length,
+    },
+    {
+      value: "OTHER",
+      label: language === "te" ? "ఇతర" : "Other",
+      icon: MoreHorizontal,
+      count: expenses.filter((e) => e.type !== "MATERIAL" && e.type !== "LABOUR").length,
+    },
+  ];
 
   return (
     <div className="space-y-4">
-      {/* 1. Main Navigation Tabs */}
-      <div className="flex overflow-x-auto no-scrollbar gap-2 p-1 bg-paper-100/80 rounded-2xl border border-paper-200">
-        {[
-          { id: "ALL", label: `📋 ${t.passbook.allPassbook}`, count: expenses.length, amount: allTotals.total },
-          { id: "MATERIAL", label: `🧱 ${t.types.materials}`, count: expenses.filter(e => e.expenseType === "MATERIAL").length, amount: allTotals.MATERIAL },
-          { id: "LABOUR", label: `👷 ${t.types.labourWages}`, count: expenses.filter(e => e.expenseType === "LABOUR").length, amount: allTotals.LABOUR },
-          { id: "SERVICE", label: `🚜 ${t.types.machineryOther}`, count: expenses.filter(e => ["SERVICE","EQUIPMENT","PROFESSIONAL","OTHER"].includes(e.expenseType)).length, amount: allTotals.SERVICE.plus(allTotals.EQUIPMENT).plus(allTotals.PROFESSIONAL).plus(allTotals.OTHER) },
-          { id: "RECEIPTS", label: `📸 ${t.passbook.paperBills} (${receiptsCount})`, count: receiptsCount },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => {
-              setActiveTab(tab.id as typeof activeTab);
-              if (tab.id !== "ALL" && tab.id !== "RECEIPTS") {
-                setType("");
-              }
-            }}
-            className={cn(
-              "flex items-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-xs font-bold transition shadow-xs",
-              activeTab === tab.id
-                ? "bg-clay-600 text-white shadow-sm"
-                : "bg-white text-ink-700 hover:bg-paper-50",
-            )}
-          >
-            <span>{tab.label}</span>
-            {tab.amount !== undefined && (
-              <span className={cn("rounded-md px-1.5 py-0.5 text-[10px]", activeTab === tab.id ? "bg-clay-700/80 text-white" : "bg-paper-100 text-ink-500 font-semibold")}>
-                {formatINR(tab.amount)}
-              </span>
-            )}
-          </button>
-        ))}
+      {/* 1. Header Row: Title, Totals & Add CTA */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-paper-200/80 pb-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 tracking-tight">
+            {t.nav?.expenses ?? "Expenses"}
+          </h1>
+          <p className="text-xs sm:text-sm text-ink-500 mt-0.5">
+            <strong className="text-ink-900 font-semibold">{formatINR(totalFilteredSpent)}</strong>{" "}
+            {language === "te" ? "మొత్తం ఖర్చు" : "spent"} ·{" "}
+            <strong className="text-ink-800 font-semibold">{filtered.length}</strong>{" "}
+            {language === "te" ? "లావాదేవీలు" : "transactions"}
+          </p>
+        </div>
+
+        <Link
+          href="/expenses/new"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition w-full sm:w-auto shrink-0"
+        >
+          <Plus className="h-4 w-4 stroke-[2.5]" />
+          <span>{t.nav?.addExpense ?? "+ Add Expense"}</span>
+        </Link>
       </div>
 
-      {/* 2. Redesigned Clean & Compact Filter Center */}
-      <div className="rounded-3xl border border-paper-200 bg-white p-4 sm:p-5 shadow-xs space-y-3.5">
-        {/* Row 1: Omni-Search Bar & Status Indicator & Reset */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          {/* Search Input */}
+      {/* 2. Controls Center: Segmented Filter & Search */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Segmented Control: All | Material | Labour | Other */}
+        <SegmentedControl
+          options={filterOptions}
+          value={selectedType}
+          onChange={(val) => {
+            setSelectedType(val as typeof selectedType);
+            setPage(1);
+          }}
+          className="w-full md:w-auto overflow-x-auto"
+        />
+
+        {/* Search Bar + Filter Drawer Button */}
+        <div className="flex items-center gap-2 flex-1 max-w-md ml-auto">
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-3.5 h-4.5 w-4.5 text-ink-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-400" />
             <input
               type="text"
-              placeholder={t.passbook.searchPlaceholder}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full rounded-2xl border border-paper-300 bg-paper-50 py-2.5 pl-10 pr-9 text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-clay-500/20 transition"
+              placeholder={language === "te" ? "ఖర్చులను వెతకండి..." : "Search expenses..."}
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="w-full rounded-xl border border-paper-300 bg-white py-2 pl-9 pr-8 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none focus:ring-1 focus:ring-clay-500"
             />
-            {query && (
+            {search && (
               <button
                 type="button"
-                onClick={() => setQuery("")}
-                className="absolute right-3 top-3 text-ink-400 hover:text-ink-600 p-0.5 rounded-full"
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-2.5 text-ink-400 hover:text-ink-700"
               >
                 <X className="h-4 w-4" />
               </button>
             )}
           </div>
 
-          {/* Reset & Status Summary */}
-          <div className="flex items-center justify-between sm:justify-end gap-2 shrink-0">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-paper-100/90 text-xs font-semibold text-ink-700">
-              <span>📊</span>
-              <span>
-                <strong className="text-ink-900">{filtered.length}</strong> / {expenses.length} {language === "te" ? "బిల్లులు" : "bills"}
+          {/* Advanced Filter Button */}
+          <button
+            type="button"
+            onClick={() => setFilterDrawerOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white px-3 py-2 text-xs font-bold text-ink-700 hover:bg-paper-50 transition shrink-0 shadow-2xs"
+          >
+            <Filter className="h-3.5 w-3.5 text-ink-500" />
+            <span>{language === "te" ? "ఫిల్టర్లు" : "Filters"}</span>
+            {activeFiltersCount > 0 && (
+              <span className="rounded-full bg-clay-600 px-1.5 py-0.2 text-[10px] font-bold text-white">
+                {activeFiltersCount}
               </span>
-            </div>
-
-            {hasActiveFilters && (
-              <button
-                type="button"
-                onClick={resetAllFilters}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200/80 px-3 py-1.5 text-xs font-bold transition active:scale-95"
-              >
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span>{language === "te" ? "రీసెట్" : "Reset"}</span>
-              </button>
             )}
-          </div>
-        </div>
+          </button>
 
-        {/* Row 2: 4 Smart Compact Dropdowns / Control Badges */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-2 border-t border-paper-100">
-          {/* Dropdown 1: Construction Stage Picker */}
-          <div>
-            <label className="block text-[11px] font-bold text-ink-500 uppercase tracking-wider mb-1">
-              🏗️ {t.passbook.stage}
-            </label>
-            <select
-              value={selectedStage}
-              onChange={(e) => setSelectedStage(e.target.value)}
-              className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-bold text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none shadow-2xs cursor-pointer"
+          {/* Reset button if any filter is active */}
+          {(activeFiltersCount > 0 || search || selectedType !== "ALL") && (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="rounded-xl border border-paper-200 bg-paper-100 p-2 text-ink-600 hover:bg-paper-200 transition shrink-0"
+              title="Reset all filters"
             >
-              <option value="ALL">
-                🏗️ {language === "te" ? "అన్ని దశలు" : "All Construction Stages"} ({expenses.length})
-              </option>
-              {availableStages.map(([stg, count]) => {
-                const conf = getStageConfig(stg);
-                const localizedName = getStageName(stg);
-                return (
-                  <option key={stg} value={stg}>
-                    {conf?.icon ?? "🏗️"} {localizedName} ({count})
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-
-          {/* Dropdown 2: Date Filter */}
-          <div>
-            <label className="block text-[11px] font-bold text-ink-500 uppercase tracking-wider mb-1">
-              📅 {t.passbook.date}
-            </label>
-            <select
-              value={activeDateFilter}
-              onChange={(e) => applyQuickDate(e.target.value)}
-              className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-bold text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none shadow-2xs cursor-pointer"
-            >
-              <option value="all">📅 {t.passbook.allDates}</option>
-              <option value="today">⚡ {t.passbook.today}</option>
-              <option value="month">🗓️ {t.passbook.thisMonth}</option>
-              <option value="last">⏮️ {t.passbook.lastMonth}</option>
-            </select>
-          </div>
-
-          {/* Dropdown 3: Payment Method Filter */}
-          <div>
-            <label className="block text-[11px] font-bold text-ink-500 uppercase tracking-wider mb-1">
-              💳 {language === "te" ? "చెల్లింపు విధానం" : "Payment Mode"}
-            </label>
-            <select
-              value={paymentMethod}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-bold text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none shadow-2xs cursor-pointer"
-            >
-              <option value="">💳 {language === "te" ? "అన్ని చెల్లింపులు" : "All Payment Modes"}</option>
-              <option value="UPI">📱 UPI (GPay / PhonePe / Paytm)</option>
-              <option value="CASH">💵 {language === "te" ? "నగదు (Cash)" : "Cash"}</option>
-              <option value="BANK_TRANSFER">🏦 {language === "te" ? "బ్యాంక్ బదిలీ (Bank Transfer)" : "Bank Transfer"}</option>
-              <option value="CHEQUE">📝 {language === "te" ? "చెక్ (Cheque)" : "Cheque"}</option>
-            </select>
-          </div>
-
-          {/* Dropdown 4: Sort Order */}
-          <div>
-            <label className="block text-[11px] font-bold text-ink-500 uppercase tracking-wider mb-1">
-              🔄 {language === "te" ? "వరుస క్రమం" : "Sort Order"}
-            </label>
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as "STAGE" | "DATE")}
-              className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-bold text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none shadow-2xs cursor-pointer"
-            >
-              <option value="STAGE">🏗️ {language === "te" ? "దశల క్రమం (1 → 20)" : "Stage Sequence (1 → 20)"}</option>
-              <option value="DATE">📅 {language === "te" ? "ఇటీవలి తేదీ" : "Recent Date (Newest First)"}</option>
-            </select>
-          </div>
-        </div>
-      </div>
-      {/* 2. Total Summary Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 rounded-2xl bg-gradient-to-r from-clay-50 to-paper-100 p-3.5 border border-clay-200/80 shadow-2xs">
-        <div>
-          <p className="text-[11px] font-bold uppercase text-ink-400">{t.passbook.filteredTotal}</p>
-          <p className="text-base sm:text-lg font-bold text-clay-800">{formatINR(totals.total)}</p>
-        </div>
-        <div>
-          <p className="text-[11px] font-bold uppercase text-ink-400">🧱 {t.types.materials}</p>
-          <p className="text-base sm:text-lg font-bold text-ink-800">{formatINR(totals.MATERIAL)}</p>
-        </div>
-        <div>
-          <p className="text-[11px] font-bold uppercase text-ink-400">👷 {t.types.labourWages}</p>
-          <p className="text-base sm:text-lg font-bold text-ink-800">{formatINR(totals.LABOUR)}</p>
-        </div>
-        <div>
-          <p className="text-[11px] font-bold uppercase text-ink-400">🚜 {t.types.machineryOther}</p>
-          <p className="text-base sm:text-lg font-bold text-ink-800">
-            {formatINR(addMoney(totals.SERVICE, totals.EQUIPMENT, totals.PROFESSIONAL, totals.OTHER))}
-          </p>
+              <RotateCcw className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* 3. Empty State */}
-      {filtered.length === 0 && (
-        <div className="rounded-3xl border border-paper-200 bg-white p-10 text-center space-y-3">
-          <div className="text-4xl">{activeTab === "RECEIPTS" ? "📸" : "🔍"}</div>
-          <p className="font-display text-lg font-bold text-ink-900">
-            {activeTab === "RECEIPTS" ? (language === "te" ? "ఇంకా బిల్లు ఫోటోలు అప్‌లోడ్ చేయలేదు" : "No paper bills uploaded yet") : t.passbook.noExpenses}
-          </p>
-          <p className="text-xs text-ink-500 max-w-sm mx-auto">
-            {activeTab === "RECEIPTS"
-              ? (language === "te" ? "ఖర్చు నమోదు చేసేటప్పుడు బిల్లు ఫోటోలు లేదా PDFలను జతచేయవచ్చు." : "You can attach camera photos or PDFs of physical bills whenever you record an expense.")
-              : t.passbook.noExpensesSub}
-          </p>
-          <Link
-            href="/expenses/new"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs"
-          >
-            <Plus className="h-4 w-4" /> {activeTab === "RECEIPTS" ? (language === "te" ? "బిల్లుతో ఖర్చు నమోదు చేయండి" : "Add Expense with Bill Photo") : t.passbook.addNewExpense}
-          </Link>
-        </div>
-      )}
-
-      {/* 3. Receipts & Bills Photo Gallery View */}
-      {activeTab === "RECEIPTS" && filtered.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((row) => (
-            <div key={row.id} className="rounded-3xl border border-paper-200 bg-white p-4 shadow-sm hover:shadow-md transition space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-clay-700 bg-clay-50 px-2 py-0.5 rounded-lg">
-                  {row.invoiceNumber ? `Bill #${row.invoiceNumber}` : (language === "te" ? "క్యాష్ మెమో" : "Cash Memo")}
-                </span>
-                <span className="text-xs text-ink-400 font-medium">
-                  {format(new Date(row.date), "dd MMM yyyy")}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3 bg-paper-50 p-3 rounded-2xl">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white border border-paper-200 text-2xl shadow-xs">
-                  📸
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-ink-900 leading-snug">{row.description}</p>
-                  <p className="text-xs text-ink-500">{row.vendorName ?? row.workerName ?? (language === "te" ? "ప్రత్యక్ష సైట్ ఖర్చు" : "Direct Site Expense")}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-1 border-t border-paper-100">
-                <p className="text-base font-bold text-ink-900">{formatINR(row.amount)}</p>
-                <Link
-                  href={`/expenses/${row.id}`}
-                  className="rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-clay-700"
-                >
-                  {language === "te" ? "బిల్లు చూడండి 👁️" : "View Bill 👁️"}
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 4. Mobile Passbook Cards View (Visible on Mobile & Tablet when not in Receipts grid) */}
-      {activeTab !== "RECEIPTS" && (
-        <div className="space-y-3 md:hidden">
-        {paginatedRows.map((row) => (
-          <div
-            key={row.id}
-            className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs space-y-2.5 transition active:bg-paper-50"
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">{getIconForType(row.expenseType)}</span>
-                <div>
-                  <p className="text-xs font-bold text-clay-800 uppercase tracking-wider">
-                    {getCategoryName(row)}
-                  </p>
-                  <p className="text-sm font-semibold text-ink-900 leading-snug">{row.description}</p>
-                </div>
-              </div>
-              <p className="text-lg font-bold text-ink-900 whitespace-nowrap">
-                {formatINR(row.amount)}
-              </p>
-            </div>
-
-            {/* Details line: Qty, Vendor/Worker, Stage */}
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-500 border-t border-paper-100 pt-2">
-              {row.quantity && (
-                <span className="font-medium text-ink-700">
-                  📦 {row.quantity} {row.unit ? ((language === "te" && (t.units as Record<string, string>)[row.unit]) ? (t.units as Record<string, string>)[row.unit] : row.unit) : ""}
-                  {row.rate ? ` @ ${formatINR(row.rate)}` : ""}
-                </span>
-              )}
-              {(row.vendorName || row.workerName) && (
-                <span>👤 {row.vendorName ?? row.workerName}</span>
-              )}
-              {row.floorName && <span>🏢 {row.floorName}</span>}
-              {row.constructionStageName && (
-                <span className="inline-flex items-center gap-1 font-bold text-clay-800 bg-clay-50 px-2 py-0.5 rounded-md border border-clay-200/60">
-                  <span>{getStageConfig(row.constructionStageName)?.icon ?? "🏗️"}</span>
-                  <span>{getStageName(row.constructionStageName)}</span>
-                </span>
-              )}
-            </div>
-
-            {/* Bottom Footer: Date, Payment mode & Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-paper-100 text-xs">
-              <div className="flex items-center gap-2 text-ink-400 font-medium">
-                <span>{format(new Date(row.date), "dd MMM yyyy")}</span>
-                <span>·</span>
-                <span className="rounded-md bg-paper-100 px-1.5 py-0.5 font-semibold text-ink-700">
-                  {row.paymentMethod?.replaceAll("_", " ")}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Link
-                  href={`/expenses/${row.id}`}
-                  className="flex items-center gap-1 font-bold text-clay-700 hover:underline"
-                >
-                  <Pencil className="h-3.5 w-3.5" /> {t.passbook.edit}
-                </Link>
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => {
-                    if (confirm(language === "te" ? "ఈ ఖర్చు నమోదును తొలగించాలా?" : "Delete this expense entry?")) {
-                      start(async () => {
-                        await deleteExpense(projectId, row.id!);
-                        router.refresh();
-                      });
-                    }
-                  }}
-                  className="text-ink-400 hover:text-red-600 p-1"
-                  title={t.passbook.delete}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+      {/* 3. Expenses List */}
+      {filtered.length > 0 ? (
+        <div className="space-y-4">
+          {/* Mobile View: Clean Cards */}
+          <div className="grid gap-2.5 sm:hidden">
+            {paginatedExpenses.map((expense) => (
+              <ExpenseMobileCard key={expense.id} expense={expense} />
+            ))}
           </div>
-        ))}
-      </div>
-      )}
 
-      {/* 5. Desktop Tabular View (Visible on Medium & Large Screens when not in receipts gallery) */}
-      {activeTab !== "RECEIPTS" && (
-        <div className="hidden md:block overflow-hidden rounded-3xl border border-paper-200 bg-white shadow-xs">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-paper-100 text-[11px] font-bold uppercase tracking-wider text-ink-500 border-b border-paper-200">
-              <tr>
-                <th className="px-4 py-3">{t.passbook.date}</th>
-                <th className="px-4 py-3">{t.passbook.type}</th>
-                <th className="px-4 py-3">{t.passbook.stage}</th>
-                <th className="px-4 py-3">{t.passbook.category}</th>
-                <th className="px-4 py-3">{t.passbook.description}</th>
-                <th className="px-4 py-3">{t.passbook.quantity}</th>
-                <th className="px-4 py-3">{t.passbook.rate}</th>
-                <th className="px-4 py-3 text-right">{t.passbook.amount}</th>
-                <th className="px-4 py-3">{t.passbook.vendorWorker}</th>
-                <th className="px-4 py-3">{t.passbook.floor}</th>
-                <th className="px-4 py-3">{t.passbook.payment}</th>
-                <th className="px-4 py-3 text-right">{t.passbook.actions}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-paper-100">
-              {paginatedRows.map((row) => (
-                <tr key={row.id} className="hover:bg-paper-50/80 transition">
-                  <td className="whitespace-nowrap px-4 py-3 text-xs font-semibold text-ink-500">
-                    {format(new Date(row.date), "dd-MMM-yyyy")}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-paper-100 px-2 py-0.5 text-xs font-bold text-ink-800">
-                      <span>{getIconForType(row.expenseType)}</span>
-                      {row.expenseType}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-xs">
-                    {row.constructionStageName ? (
-                      <span className="inline-flex items-center gap-1 rounded-md bg-clay-50 px-2 py-0.5 font-bold text-clay-800 border border-clay-200/60">
-                        <span>{getStageConfig(row.constructionStageName)?.icon ?? "🏗️"}</span>
-                        <span>{getStageName(row.constructionStageName)}</span>
-                      </span>
-                    ) : (
-                      <span className="text-ink-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 font-semibold text-ink-900 text-xs">
-                    {getCategoryName(row)}
-                  </td>
-                  <td className="px-4 py-3 text-ink-700 max-w-xs truncate text-xs">
-                    {row.description}
-                  </td>
-                  <td className="px-4 py-3 text-ink-600 text-xs whitespace-nowrap">
-                    {row.quantity ? `${row.quantity} ${row.unit ? ((language === "te" && (t.units as Record<string, string>)[row.unit]) ? (t.units as Record<string, string>)[row.unit] : row.unit) : ""}` : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-ink-600 text-xs whitespace-nowrap">
-                    {row.rate ? formatINR(row.rate) : "—"}
-                  </td>
-                  <td className="px-4 py-3 font-bold text-ink-900 text-right whitespace-nowrap">
-                    {formatINR(row.amount)}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-ink-600 whitespace-nowrap">
-                    {row.vendorName ?? row.workerName ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-xs text-ink-500 whitespace-nowrap">
-                    {row.floorName ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap text-xs text-ink-500">
-                    {row.paymentMethod?.replaceAll("_", " ")}
-                  </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap text-xs">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/expenses/${row.id}`}
-                        className="rounded-lg p-1 text-clay-700 hover:bg-paper-100 font-semibold"
-                      >
-                        {t.passbook.edit}
-                      </Link>
-                      <button
-                        type="button"
-                        disabled={pending}
-                        onClick={() => {
-                          if (confirm(language === "te" ? "ఈ ఖర్చు నమోదును తొలగించాలా?" : "Delete this expense entry?")) {
-                            start(async () => {
-                              await deleteExpense(projectId, row.id!);
-                              router.refresh();
-                            });
-                          }
-                        }}
-                        className="rounded-lg p-1 text-ink-400 hover:text-red-600"
-                        title={t.passbook.delete}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+          {/* Desktop View: Clean Table */}
+          <div className="hidden sm:block overflow-hidden rounded-2xl border border-paper-200 bg-white shadow-xs">
+            <table className="w-full text-left text-xs text-ink-700">
+              <thead className="border-b border-paper-200 bg-paper-50/70 font-bold uppercase tracking-wider text-ink-500 text-[10px]">
+                <tr>
+                  <th className="py-3 px-4">{language === "te" ? "తేదీ" : "Date"}</th>
+                  <th className="py-3 px-4">{language === "te" ? "వివరాలు" : "Description"}</th>
+                  <th className="py-3 px-3">{language === "te" ? "రకం" : "Type"}</th>
+                  <th className="py-3 px-4">{language === "te" ? "వర్గం" : "Category"}</th>
+                  <th className="py-3 px-4">{language === "te" ? "దుకాణం / వర్కర్" : "Vendor / Worker"}</th>
+                  <th className="py-3 px-4 text-right">{language === "te" ? "మొత్తం" : "Amount"}</th>
+                  <th className="py-3 px-3 text-right">{language === "te" ? "చర్యలు" : "Actions"}</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-paper-100">
+                {paginatedExpenses.map((expense) => (
+                  <tr key={expense.id} className="hover:bg-paper-50/50 transition">
+                    <td className="py-3 px-4 font-medium text-ink-600 whitespace-nowrap">
+                      {expense.date}
+                    </td>
+                    <td className="py-3 px-4 font-bold text-ink-900 max-w-[220px] truncate">
+                      {expense.description || expense.category.name}
+                      {expense.quantity && expense.rate && (
+                        <span className="block text-[11px] font-normal text-ink-400">
+                          {expense.quantity} {expense.unit} @ ₹{expense.rate}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <Badge tone={expenseTone(expense.type)} className="text-[10px]">
+                        {expense.type}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4 font-medium text-ink-800">
+                      {expense.category.name}
+                    </td>
+                    <td className="py-3 px-4 text-ink-600 truncate max-w-[160px]">
+                      {expense.vendorName ?? "—"}
+                    </td>
+                    <td className="py-3 px-4 text-right font-display text-sm font-bold text-ink-900 whitespace-nowrap">
+                      {formatINR(Number(expense.amount))}
+                    </td>
+                    <td className="py-3 px-3 text-right whitespace-nowrap">
+                      <Link
+                        href={`/expenses/${expense.id}`}
+                        className="inline-flex items-center justify-center rounded-lg p-1.5 text-ink-400 hover:bg-paper-100 hover:text-clay-700 transition"
+                        title="Edit expense"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {filtered.length > pageSize && (
+            <TablePagination
+              currentPage={page}
+              totalItems={filtered.length}
+              pageSize={pageSize}
+              onPageChange={setPage}
+            />
+          )}
+        </div>
+      ) : (
+        /* Empty State */
+        <div className="rounded-2xl border border-dashed border-paper-300 bg-white p-10 text-center space-y-3">
+          <Receipt className="mx-auto h-10 w-10 text-ink-300" />
+          <div>
+            <h3 className="font-display text-base font-bold text-ink-900">
+              {language === "te" ? "ఖర్చులు ఏవీ కనుగొనబడలేదు" : "No expenses found"}
+            </h3>
+            <p className="text-xs text-ink-500 mt-0.5 max-w-sm mx-auto">
+              {search || activeFiltersCount > 0
+                ? (language === "te" ? "మీ ఫిల్టర్లకు సరిపోలే రికార్డులు ఏవీ లేవు. దయచేసి ఫిల్టర్లను రీసెట్ చేయండి." : "No records match your active filters. Try clearing filters.")
+                : (language === "te" ? "మీ ఇంటి నిర్మాణ ఖర్చులను ట్రాక్ చేయడానికి మొదటి బిల్లు లేదా కూలీని నమోదు చేయండి." : "Start tracking your construction spending by recording your first expense.")}
+            </p>
+          </div>
+
+          {search || activeFiltersCount > 0 ? (
+            <button
+              type="button"
+              onClick={handleResetFilters}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2 text-xs font-bold text-ink-800 hover:bg-paper-100 transition"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              <span>{language === "te" ? "ఫిల్టర్లు క్లియర్ చేయండి" : "Clear Filters"}</span>
+            </button>
+          ) : (
+            <Link
+              href="/expenses/new"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2 text-xs font-bold text-white hover:bg-clay-700 transition shadow-xs"
+            >
+              <Plus className="h-4 w-4" />
+              <span>{language === "te" ? "+ మొదటి ఖర్చు నమోదు" : "+ Add First Expense"}</span>
+            </Link>
+          )}
         </div>
       )}
 
-      {/* 6. Pagination Navigation */}
-      {activeTab !== "RECEIPTS" && filtered.length > 0 && (
-        <TablePagination
-          currentPage={currentPage}
-          totalItems={filtered.length}
-          pageSize={pageSize}
-          onPageChange={setCurrentPage}
-          onPageSizeChange={setPageSize}
-          pageSizeOptions={[10, 15, 25, 50, 100]}
-        />
-      )}
+      {/* Advanced Filters Slide-Over Drawer */}
+      <ExpenseFiltersDrawer
+        open={filterDrawerOpen}
+        onClose={() => setFilterDrawerOpen(false)}
+        filters={advancedFilters}
+        onChange={handleFilterChange}
+        onReset={handleResetFilters}
+        stages={stages}
+      />
     </div>
   );
 }

@@ -81,16 +81,16 @@ const STAGE_GROUP_ORDER: Record<string, number> = {
 };
 
 const WORKER_TYPES = [
-  { value: "MASON", labelEn: "🧱 Mason (Mistri)", labelTe: "🧱 మేస్త్రీ (Mason)" },
-  { value: "GENERAL_LABOUR", labelEn: "👷 General Labour (Mazdoor)", labelTe: "👷 రోజువారీ కూలీ (Mazdoor)" },
-  { value: "CARPENTER", labelEn: "🪚 Carpenter / Woodworker", labelTe: "🪚 వడ్రంగి (Carpenter)" },
-  { value: "PLUMBER", labelEn: "🔧 Plumber & Sanitary", labelTe: "🔧 ప్లంబర్ (Plumber)" },
-  { value: "ELECTRICIAN", labelEn: "⚡ Electrician & Wiring", labelTe: "⚡ ఎలక్ట్రీషియన్ (Electrician)" },
-  { value: "TILE_WORKER", labelEn: "🔲 Tile & Marble Mason", labelTe: "🔲 టైల్స్ & మార్బుల్ మేస్త్రీ" },
-  { value: "PAINTER", labelEn: "🎨 Painter & Putty", labelTe: "🎨 పెయింటర్ & పుట్టీ" },
-  { value: "FABRICATOR", labelEn: "🚪 Welder / SS Fabricator", labelTe: "🚪 వెల్డర్ / గ్రిల్స్ ఫ్యాబ్రికేటర్" },
-  { value: "CONTRACTOR", labelEn: "👔 Labour Contractor", labelTe: "👔 కాంట్రాక్టర్ (Contractor)" },
-  { value: "OTHER", labelEn: "🔨 Other Worker", labelTe: "🔨 ఇతర వర్కర్" },
+  { value: "MASON", labelEn: "Mason (Mistri)", labelTe: "మేస్త్రీ (Mason)" },
+  { value: "GENERAL_LABOUR", labelEn: "General Labour (Mazdoor)", labelTe: "రోజువారీ కూలీ (Mazdoor)" },
+  { value: "CARPENTER", labelEn: "Carpenter / Woodworker", labelTe: "వడ్రంగి (Carpenter)" },
+  { value: "PLUMBER", labelEn: "Plumber & Sanitary", labelTe: "ప్లంబర్ (Plumber)" },
+  { value: "ELECTRICIAN", labelEn: "Electrician & Wiring", labelTe: "ఎలక్ట్రీషియన్ (Electrician)" },
+  { value: "TILE_WORKER", labelEn: "Tile & Marble Mason", labelTe: "టైల్స్ & మార్బుల్ మేస్త్రీ" },
+  { value: "PAINTER", labelEn: "Painter & Putty", labelTe: "పెయింటర్ & పుట్టీ" },
+  { value: "FABRICATOR", labelEn: "Welder / SS Fabricator", labelTe: "వెల్డర్ / గ్రిల్స్ ఫ్యాబ్రికేటర్" },
+  { value: "CONTRACTOR", labelEn: "Labour Contractor", labelTe: "కాంట్రాక్టర్ (Contractor)" },
+  { value: "OTHER", labelEn: "Other Worker", labelTe: "ఇతర వర్కర్" },
 ];
 
 const SHOP_CATEGORY_PRESETS = [
@@ -219,30 +219,27 @@ export function MasterForms({
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Quick Action Buttons */}
-      <div className="rounded-3xl bg-gradient-to-r from-clay-900 via-clay-800 to-clay-700 text-white p-6 sm:p-7 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">📒</span>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight">
-              {t.masters.title}
-            </h1>
-          </div>
-          <p className="text-xs sm:text-sm text-clay-200 max-w-2xl font-medium">
+      {/* Top Header & Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-paper-200/80 pb-4">
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 tracking-tight">
+            {t.masters.title}
+          </h1>
+          <p className="text-xs sm:text-sm text-ink-500 mt-0.5">
             {t.masters.subtitle}
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => {
               setActiveTab("VENDORS");
               setShowAddModal("VENDOR");
             }}
-            className="flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-clay-900 shadow-sm hover:bg-clay-50 transition active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-clay-700 transition"
           >
-            <Plus className="h-4 w-4 text-clay-600" />
+            <Plus className="h-4 w-4" />
             <span>{t.masters.addNewShop}</span>
           </button>
 
@@ -252,7 +249,7 @@ export function MasterForms({
               setActiveTab("WORKERS");
               setShowAddModal("WORKER");
             }}
-            className="flex items-center gap-2 rounded-2xl bg-clay-500 border border-clay-400/50 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm hover:bg-clay-400 transition active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white px-3.5 py-2 text-xs font-bold text-ink-800 shadow-2xs hover:bg-paper-50 transition"
           >
             <Plus className="h-4 w-4" />
             <span>{t.masters.addNewWorker}</span>

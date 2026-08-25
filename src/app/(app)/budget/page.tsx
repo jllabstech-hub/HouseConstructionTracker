@@ -3,11 +3,12 @@ import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
 import { loadProjectExpenses } from "@/lib/finance/queries";
 import { getBudgetVariance, getCategoryTotal, getTypeTotals } from "@/lib/finance/aggregations";
-import { formatINR } from "@/lib/money";
+import { formatINR, toChartNumber } from "@/lib/money";
 import { EmptyState } from "@/components/ui/page-header";
 import { BudgetEditor } from "@/components/budget/budget-editor";
-import { CategoryBudgetsTable } from "@/components/budget/category-budgets-table";
-import { BudgetOverview } from "@/components/budget/budget-overview";
+import { BudgetOverview, type CategoryRiskItem, type TypeBudgetRow } from "@/components/budget/budget-overview";
+
+export const dynamic = "force-dynamic";
 
 export default async function BudgetPage() {
   const user = await requireUser();
@@ -29,68 +30,85 @@ export default async function BudgetPage() {
   const totals = getTypeTotals(expenses);
   const overall = getBudgetVariance(project.totalBudget, totals.total);
 
-  const typeRows = (["MATERIAL", "LABOUR", "SERVICE", "EQUIPMENT", "PROFESSIONAL", "OTHER"] as const).map((type) => {
-    const budget = typeBudgets.find((row) => row.expenseType === type)?.amount ?? 0;
-    const actual = totals[type];
-    const result = getBudgetVariance(budget, actual);
-    return {
-      type,
-      budget,
-      actual,
-      remaining: result.remaining,
-      variance: result.variance,
-      isOver: result.isOver,
-    };
-  });
+  // Type-wise budgets (Material, Labour, Other)
+  const materialBudget = typeBudgets.find((b) => b.expenseType === "MATERIAL")?.amount ?? 0;
+  const labourBudget = typeBudgets.find((b) => b.expenseType === "LABOUR")?.amount ?? 0;
+  const otherBudget = typeBudgets.filter((b) => b.expenseType !== "MATERIAL" && b.expenseType !== "LABOUR").reduce((sum, b) => sum + Number(b.amount), 0);
+
+  const otherActual = Number(totals.SERVICE) + Number(totals.EQUIPMENT) + Number(totals.PROFESSIONAL) + Number(totals.OTHER);
+
+  const matVariance = getBudgetVariance(materialBudget, totals.MATERIAL);
+  const labVariance = getBudgetVariance(labourBudget, totals.LABOUR);
+  const othVariance = getBudgetVariance(otherBudget, otherActual);
+
+  const typeRows: TypeBudgetRow[] = [
+    {
+      type: "MATERIAL",
+      budget: Number(materialBudget),
+      actual: Number(totals.MATERIAL),
+      remaining: Number(matVariance.remaining),
+      variance: Number(matVariance.variance),
+      isOver: matVariance.isOver,
+    },
+    {
+      type: "LABOUR",
+      budget: Number(labourBudget),
+      actual: Number(totals.LABOUR),
+      remaining: Number(labVariance.remaining),
+      variance: Number(labVariance.variance),
+      isOver: labVariance.isOver,
+    },
+    {
+      type: "OTHER",
+      budget: Number(otherBudget),
+      actual: otherActual,
+      remaining: Number(othVariance.remaining),
+      variance: Number(othVariance.variance),
+      isOver: othVariance.isOver,
+    },
+  ];
+
+  // Identify categories at risk
+  const categoriesAtRisk: CategoryRiskItem[] = [];
+  for (const item of categoryBudgets) {
+    const name =
+      item.materialCategory?.name ??
+      item.labourCategory?.name ??
+      item.serviceCategory?.name ??
+      item.professionalCategory?.name ??
+      item.expenseType;
+    const categoryId = item.materialCategoryId ?? item.labourCategoryId ?? item.serviceCategoryId ?? item.professionalCategoryId ?? "";
+    const actual = getCategoryTotal(expenses, categoryId, item.expenseType);
+    const result = getBudgetVariance(item.amount, actual);
+    if (result.isOver || Number(result.usedPercent) > 85) {
+      categoriesAtRisk.push({
+        name,
+        type: item.expenseType,
+        budget: Number(item.amount),
+        spent: Number(actual),
+        variance: Number(result.variance),
+        isOver: result.isOver,
+      });
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      <BudgetOverview
-        totalBudget={project.totalBudget.toString()}
-        actualSpent={totals.total.toString()}
-        remainingCash={overall.remaining.toString()}
-        usedPercent={overall.usedPercent.toString()}
-        isOverallOver={overall.isOver}
-        typeRows={typeRows.map((row) => ({
-          type: row.type,
-          budget: row.budget.toString(),
-          actual: row.actual.toString(),
-          remaining: row.remaining.toString(),
-          variance: row.variance.toString(),
-          isOver: row.isOver,
-        }))}
-      />
-
-      {/* Category budgets with pagination and search */}
-      <CategoryBudgetsTable
-        items={categoryBudgets.map((item) => {
-          const name =
-            item.materialCategory?.name ??
-            item.labourCategory?.name ??
-            item.serviceCategory?.name ??
-            item.professionalCategory?.name ??
-            item.expenseType;
-          const categoryId = item.materialCategoryId ?? item.labourCategoryId ?? item.serviceCategoryId ?? item.professionalCategoryId ?? "";
-          const actual = getCategoryTotal(expenses, categoryId, item.expenseType);
-          const result = getBudgetVariance(item.amount, actual);
-          return {
-            id: item.id,
-            name,
-            planned: formatINR(item.amount),
-            actual: formatINR(actual),
-            variance: formatINR(result.variance),
-            isOver: result.isOver,
-          };
-        })}
-      />
-
+    <BudgetOverview
+      totalBudget={project.totalBudget.toString()}
+      actualSpent={totals.total.toString()}
+      remainingCash={overall.remaining.toString()}
+      usedPercent={overall.usedPercent.toString()}
+      isOverallOver={overall.isOver}
+      typeRows={typeRows}
+      categoriesAtRisk={categoriesAtRisk}
+      projectId={projectId}
+    >
       <BudgetEditor
         projectId={projectId}
         currentTotal={project.totalBudget.toString()}
         materials={materials.map((item) => ({ id: item.id, name: `${item.name} (${item.groupName})` }))}
         labours={labours.map((item) => ({ id: item.id, name: `${item.name} (${item.groupName})` }))}
       />
-    </div>
+    </BudgetOverview>
   );
 }
-

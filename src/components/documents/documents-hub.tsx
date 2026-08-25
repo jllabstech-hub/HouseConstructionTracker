@@ -52,14 +52,14 @@ export type DocumentItem = {
 };
 
 const CATEGORIES = [
-  { value: "FLOOR_PLAN", labelEn: "📐 Floor Plans", labelTe: "📐 ఫ్లోర్ ప్లాన్లు", color: "bg-blue-50 text-blue-800 border-blue-200" },
-  { value: "ELEVATION", labelEn: "🏡 3D Elevations", labelTe: "🏡 3D ఎలివేషన్లు", color: "bg-emerald-50 text-emerald-800 border-emerald-200" },
-  { value: "STRUCTURAL", labelEn: "🏗️ Structural Drawings", labelTe: "🏗️ స్ట్రక్చరల్ డ్రాయింగ్స్", color: "bg-amber-50 text-amber-900 border-amber-200" },
-  { value: "MEP", labelEn: "⚡ Electrical & Plumbing", labelTe: "⚡ ఎలక్ట్రికల్ & ప్లంబింగ్", color: "bg-purple-50 text-purple-800 border-purple-200" },
-  { value: "APPROVAL", labelEn: "🏛️ Sanctions & Permits", labelTe: "🏛️ ప్రభుత్వ అనుమతులు", color: "bg-rose-50 text-rose-800 border-rose-200" },
-  { value: "SITE_PHOTO", labelEn: "📸 Site Progress Photos", labelTe: "📸 సైట్ ఫోటోలు", color: "bg-cyan-50 text-cyan-800 border-cyan-200" },
-  { value: "CONTRACT", labelEn: "📄 Contracts & Deeds", labelTe: "📄 అగ్రిమెంట్లు", color: "bg-slate-50 text-slate-800 border-slate-200" },
-  { value: "OTHER", labelEn: "📁 Other Files", labelTe: "📁 ఇతర ఫైళ్ళు", color: "bg-gray-50 text-gray-800 border-gray-200" },
+  { value: "FLOOR_PLAN", labelEn: "Floor Plans", labelTe: "ఫ్లోర్ ప్లాన్లు", color: "bg-blue-50 text-blue-800 border-blue-200" },
+  { value: "ELEVATION", labelEn: "3D Elevations", labelTe: "3D ఎలివేషన్లు", color: "bg-emerald-50 text-emerald-800 border-emerald-200" },
+  { value: "STRUCTURAL", labelEn: "Structural Drawings", labelTe: "స్ట్రక్చరల్ డ్రాయింగ్స్", color: "bg-amber-50 text-amber-900 border-amber-200" },
+  { value: "MEP", labelEn: "Electrical & Plumbing", labelTe: "ఎలక్ట్రికల్ & ప్లంబింగ్", color: "bg-purple-50 text-purple-800 border-purple-200" },
+  { value: "APPROVAL", labelEn: "Sanctions & Permits", labelTe: "ప్రభుత్వ అనుమతులు", color: "bg-rose-50 text-rose-800 border-rose-200" },
+  { value: "SITE_PHOTO", labelEn: "Site Progress Photos", labelTe: "సైట్ ఫోటోలు", color: "bg-cyan-50 text-cyan-800 border-cyan-200" },
+  { value: "CONTRACT", labelEn: "Contracts & Deeds", labelTe: "అగ్రిమెంట్లు", color: "bg-slate-50 text-slate-800 border-slate-200" },
+  { value: "OTHER", labelEn: "Other Files", labelTe: "ఇతర ఫైళ్ళు", color: "bg-gray-50 text-gray-800 border-gray-200" },
 ] as const;
 
 const QUICK_TITLE_SUGGESTIONS = [
