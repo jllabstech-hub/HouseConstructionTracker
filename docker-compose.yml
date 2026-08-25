@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: hct-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hct
+      POSTGRES_PASSWORD: hct_dev_password
+      POSTGRES_DB: house_construction_tracker
+    ports:
+      - "5433:5432"
+    volumes:
+      - hct_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hct -d house_construction_tracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  hct_pgdata:

@@ -1,0 +1,570 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ExpenseType {
+  MATERIAL
+  LABOUR
+  SERVICE
+  EQUIPMENT
+  PROFESSIONAL
+  OTHER
+}
+
+enum ProjectStatus {
+  PLANNING
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+}
+
+enum StageStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  BANK_TRANSFER
+  CHEQUE
+  CARD
+  CREDIT
+  OTHER
+}
+
+enum WorkerType {
+  MASON
+  CARPENTER
+  ELECTRICIAN
+  PLUMBER
+  PAINTER
+  TILE_WORKER
+  FABRICATOR
+  GENERAL_LABOUR
+  CONTRACTOR
+  OTHER
+}
+
+enum LabourCalcMethod {
+  DAILY_WAGE
+  FIXED_CONTRACT
+  WORK_BASED
+}
+
+enum ReportType {
+  TOTAL_EXPENDITURE
+  MATERIAL_EXPENDITURE
+  LABOUR_EXPENDITURE
+  CATEGORY_WISE
+  WORK_WISE
+  MONTHLY
+  BUDGET_VS_ACTUAL
+  CONSTRUCTION_STAGE
+  VENDOR
+  WORKER
+  PAYMENT_METHOD
+  FLOOR_WISE
+  CUSTOM_DATE_RANGE
+}
+
+enum OcrStatus {
+  PENDING
+  SKIPPED
+  COMPLETED
+  FAILED
+}
+
+enum DocumentCategory {
+  FLOOR_PLAN
+  STRUCTURAL
+  ELEVATION
+  MEP
+  APPROVAL
+  SITE_PHOTO
+  CONTRACT
+  OTHER
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts                 Account[]
+  sessions                 Session[]
+  projects                 Project[]
+  materialCategories       MaterialCategory[]
+  labourCategories         LabourCategory[]
+  serviceCategories        ServiceCategory[]
+  equipmentCategories      EquipmentCategory[]
+  professionalCategories   ProfessionalCategory[]
+  vendors                  Vendor[]
+  workers                  Worker[]
+  workAreas                WorkArea[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Project {
+  id                     String        @id @default(cuid())
+  userId                 String
+  user                   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                   String
+  location               String?
+  plotArea               Decimal?      @db.Decimal(14, 2)
+  builtUpArea            Decimal?      @db.Decimal(14, 2)
+  numberOfFloors         Int?
+  startDate              DateTime?     @db.Date
+  expectedCompletionDate DateTime?     @db.Date
+  actualCompletionDate   DateTime?     @db.Date
+  totalBudget            Decimal       @db.Decimal(14, 2) @default(0)
+  status                 ProjectStatus @default(PLANNING)
+  notes                  String?       @db.Text
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+
+  floors           Floor[]
+  stages           ConstructionStage[]
+  expenses         Expense[]
+  budgets          Budget[]
+  budgetCategories BudgetCategory[]
+  reports          Report[]
+  documents        ProjectDocument[]
+
+  @@index([userId])
+}
+
+model Floor {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int      @default(0)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses  Expense[]
+  documents ProjectDocument[]
+
+  @@index([projectId])
+}
+
+model ConstructionStage {
+  id                 String      @id @default(cuid())
+  projectId          String
+  project            Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  name               String
+  sortOrder          Int
+  status             StageStatus @default(NOT_STARTED)
+  percentageComplete Int         @default(0)
+  startDate          DateTime?   @db.Date
+  expectedEndDate    DateTime?   @db.Date
+  actualEndDate      DateTime?   @db.Date
+  notes              String?     @db.Text
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+
+  expenses  Expense[]
+  documents ProjectDocument[]
+
+  @@index([projectId])
+}
+
+model MaterialCategory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  groupName String
+  sortOrder Int      @default(0)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subcategories MaterialSubcategory[]
+  expenses      Expense[]
+  budgetItems   BudgetCategory[]
+  workAreaLinks WorkAreaMaterial[]
+
+  @@unique([userId, groupName, name])
+  @@index([userId])
+}
+
+model MaterialSubcategory {
+  id         String           @id @default(cuid())
+  categoryId String
+  category   MaterialCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String
+  sortOrder  Int              @default(0)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  expenses Expense[]
+
+  @@index([categoryId])
+}
+
+model LabourCategory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  groupName String
+  sortOrder Int      @default(0)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  subcategories LabourSubcategory[]
+  expenses      Expense[]
+  budgetItems   BudgetCategory[]
+  workAreaLinks WorkAreaLabour[]
+
+  @@unique([userId, groupName, name])
+  @@index([userId])
+}
+
+model LabourSubcategory {
+  id         String         @id @default(cuid())
+  categoryId String
+  category   LabourCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String
+  sortOrder  Int            @default(0)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  expenses Expense[]
+
+  @@index([categoryId])
+}
+
+model ServiceCategory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int      @default(0)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses    Expense[]
+  budgetItems BudgetCategory[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model EquipmentCategory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int      @default(0)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses Expense[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model ProfessionalCategory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int      @default(0)
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses    Expense[]
+  budgetItems BudgetCategory[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model Vendor {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  company   String?
+  phone     String?
+  address   String?
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses Expense[]
+
+  @@index([userId])
+}
+
+model Worker {
+  id             String     @id @default(cuid())
+  userId         String
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  type           WorkerType @default(OTHER)
+  phone          String?
+  specialization String?
+  notes          String?    @db.Text
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  expenses Expense[]
+
+  @@index([userId])
+}
+
+model WorkArea {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  materials WorkAreaMaterial[]
+  labours   WorkAreaLabour[]
+
+  @@unique([userId, name])
+  @@index([userId])
+}
+
+model WorkAreaMaterial {
+  workAreaId String
+  categoryId String
+  workArea   WorkArea         @relation(fields: [workAreaId], references: [id], onDelete: Cascade)
+  category   MaterialCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([workAreaId, categoryId])
+  @@index([categoryId])
+}
+
+model WorkAreaLabour {
+  workAreaId String
+  categoryId String
+  workArea   WorkArea       @relation(fields: [workAreaId], references: [id], onDelete: Cascade)
+  category   LabourCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([workAreaId, categoryId])
+  @@index([categoryId])
+}
+
+model Expense {
+  id                      String            @id @default(cuid())
+  projectId               String
+  project                 Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  date                    DateTime          @db.Date
+  expenseType             ExpenseType
+  materialCategoryId      String?
+  materialCategory        MaterialCategory? @relation(fields: [materialCategoryId], references: [id])
+  materialSubcategoryId   String?
+  materialSubcategory     MaterialSubcategory? @relation(fields: [materialSubcategoryId], references: [id])
+  labourCategoryId        String?
+  labourCategory          LabourCategory?   @relation(fields: [labourCategoryId], references: [id])
+  labourSubcategoryId     String?
+  labourSubcategory       LabourSubcategory? @relation(fields: [labourSubcategoryId], references: [id])
+  serviceCategoryId       String?
+  serviceCategory         ServiceCategory?  @relation(fields: [serviceCategoryId], references: [id])
+  equipmentCategoryId     String?
+  equipmentCategory       EquipmentCategory? @relation(fields: [equipmentCategoryId], references: [id])
+  professionalCategoryId  String?
+  professionalCategory    ProfessionalCategory? @relation(fields: [professionalCategoryId], references: [id])
+  description             String
+  quantity                Decimal?          @db.Decimal(14, 4)
+  unit                    String?
+  rate                    Decimal?          @db.Decimal(14, 2)
+  amount                  Decimal           @db.Decimal(14, 2)
+  vendorId                String?
+  vendor                  Vendor?           @relation(fields: [vendorId], references: [id])
+  workerId                String?
+  worker                  Worker?           @relation(fields: [workerId], references: [id])
+  constructionStageId     String?
+  constructionStage       ConstructionStage? @relation(fields: [constructionStageId], references: [id])
+  floorId                 String?
+  floor                   Floor?            @relation(fields: [floorId], references: [id])
+  paymentMethod           PaymentMethod     @default(CASH)
+  invoiceNumber           String?
+  notes                   String?           @db.Text
+  labourCalcMethod        LabourCalcMethod?
+  numberOfWorkers         Int?
+  numberOfDays            Decimal?          @db.Decimal(8, 2)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+
+  receipts Receipt[]
+
+  @@index([projectId])
+  @@index([date])
+  @@index([expenseType])
+  @@index([materialCategoryId])
+  @@index([labourCategoryId])
+  @@index([constructionStageId])
+  @@index([vendorId])
+  @@index([workerId])
+  @@index([floorId])
+  @@index([projectId, date])
+  @@index([projectId, expenseType])
+}
+
+model Budget {
+  id          String      @id @default(cuid())
+  projectId   String
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  expenseType ExpenseType
+  amount      Decimal     @db.Decimal(14, 2)
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([projectId, expenseType])
+  @@index([projectId])
+}
+
+model BudgetCategory {
+  id                     String                 @id @default(cuid())
+  projectId              String
+  project                Project                @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  expenseType            ExpenseType
+  materialCategoryId     String?
+  materialCategory       MaterialCategory?      @relation(fields: [materialCategoryId], references: [id])
+  labourCategoryId       String?
+  labourCategory         LabourCategory?        @relation(fields: [labourCategoryId], references: [id])
+  serviceCategoryId      String?
+  serviceCategory        ServiceCategory?       @relation(fields: [serviceCategoryId], references: [id])
+  professionalCategoryId String?
+  professionalCategory   ProfessionalCategory?  @relation(fields: [professionalCategoryId], references: [id])
+  amount                 Decimal                @db.Decimal(14, 2)
+  notes                  String?
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+
+  @@index([projectId])
+  @@index([materialCategoryId])
+  @@index([labourCategoryId])
+}
+
+model Receipt {
+  id               String    @id @default(cuid())
+  expenseId        String
+  expense          Expense   @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  fileName         String
+  storedName       String
+  mimeType         String
+  sizeBytes        Int
+  storagePath      String
+  ocrStatus        OcrStatus @default(SKIPPED)
+  ocrVendor        String?
+  ocrDate          DateTime?
+  ocrInvoiceNumber String?
+  ocrMaterial      String?
+  ocrQuantity      Decimal?  @db.Decimal(14, 4)
+  ocrRate          Decimal?  @db.Decimal(14, 2)
+  ocrGst           Decimal?  @db.Decimal(14, 2)
+  ocrTotal         Decimal?  @db.Decimal(14, 2)
+  ocrRawJson       Json?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([expenseId])
+}
+
+model Report {
+  id              String     @id @default(cuid())
+  projectId       String
+  project         Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  type            ReportType
+  title           String
+  dateFrom        DateTime?  @db.Date
+  dateTo          DateTime?  @db.Date
+  filters         Json?
+  lastGeneratedAt DateTime?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([projectId])
+}
+
+model ProjectDocument {
+  id                  String           @id @default(cuid())
+  projectId           String
+  project             Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  category            DocumentCategory @default(FLOOR_PLAN)
+  title               String
+  description         String?          @db.Text
+  floorId             String?
+  floor               Floor?           @relation(fields: [floorId], references: [id], onDelete: SetNull)
+  constructionStageId String?
+  constructionStage   ConstructionStage? @relation(fields: [constructionStageId], references: [id], onDelete: SetNull)
+  fileName            String
+  storedName          String
+  mimeType            String
+  sizeBytes           Int
+  storagePath         String
+  version             String?
+  isPinned            Boolean          @default(false)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  @@index([projectId])
+  @@index([category])
+}
+

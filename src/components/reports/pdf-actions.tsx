@@ -1,0 +1,119 @@
+"use client";
+
+import { useState } from "react";
+import { Download, Eye, Share2 } from "lucide-react";
+
+export function PdfActions({
+  projectId,
+  kind,
+  from,
+  to,
+}: {
+  projectId: string;
+  kind: string;
+  from?: string;
+  to?: string;
+}) {
+  const [message, setMessage] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const query = new URLSearchParams({ projectId, kind, ...(from ? { from } : {}), ...(to ? { to } : {}) });
+  const previewUrl = `/api/reports/pdf?${query.toString()}`;
+  const downloadUrl = `${previewUrl}&download=1`;
+
+  async function share() {
+    setMessage(null);
+    setLoading(true);
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        setMessage("Could not generate the PDF.");
+        setLoading(false);
+        return;
+      }
+      const blob = await response.blob();
+      const filename = filenameFromHeader(response.headers.get("content-disposition")) ?? `house-${kind}-report.pdf`;
+      const file = new File([blob], filename, { type: "application/pdf" });
+      const payload = {
+        files: [file],
+        title: "House Construction Statement",
+        text: "Here is the construction expenditure statement for our house project.",
+      };
+
+      if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share(payload);
+          setLoading(false);
+          return;
+        } catch (error) {
+          if ((error as Error).name === "AbortError") {
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      triggerDownload(blob, filename);
+      setMessage("PDF downloaded! You can now attach and send it on WhatsApp.");
+    } catch {
+      setMessage("Failed to share PDF. Please use Download button.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <a
+          href={previewUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white px-3.5 py-2 text-xs font-bold text-ink-700 hover:bg-paper-50 transition active:scale-95 shadow-2xs"
+        >
+          <Eye className="h-4 w-4 text-ink-400" />
+          Preview
+        </a>
+
+        <a
+          href={downloadUrl}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white px-3.5 py-2 text-xs font-bold text-ink-700 hover:bg-paper-50 transition active:scale-95 shadow-2xs"
+        >
+          <Download className="h-4 w-4 text-ink-400" />
+          Download PDF
+        </a>
+
+        <button
+          type="button"
+          onClick={() => void share()}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-clay-700 transition active:scale-95 shadow-xs"
+        >
+          <Share2 className="h-4 w-4" />
+          {loading ? "Preparing..." : "Share / WhatsApp"}
+        </button>
+      </div>
+
+      {message && (
+        <p className="text-xs text-clay-800 bg-clay-50 p-2 rounded-lg border border-clay-200">
+          💡 {message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function filenameFromHeader(header: string | null) {
+  if (!header) return null;
+  const match = /filename="([^"]+)"/.exec(header);
+  return match?.[1] ?? null;
+}
+
+function triggerDownload(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
