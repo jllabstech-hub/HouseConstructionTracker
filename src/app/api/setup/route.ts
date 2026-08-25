@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { seedUserMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
+import { ensureDatabaseSchema } from "@/lib/db/init-db";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +11,8 @@ export async function GET(request: Request) {
   const shouldRedirect = searchParams.get("redirect") === "true";
 
   try {
-    // 1. Verify DB connection
-    await prisma.$queryRaw`SELECT 1`;
+    // 1. Verify DB connection and auto-create tables if missing
+    await ensureDatabaseSchema();
 
     // 2. Ensure admin user exists
     const passwordHash = await bcrypt.hash("test123", 10);

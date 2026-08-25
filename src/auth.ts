@@ -7,6 +7,8 @@ import { loginSchema } from "@/lib/validations";
 import { authConfig } from "@/auth.config";
 import { seedUserMasters } from "@/lib/catalog/seed-masters";
 
+import { ensureDatabaseSchema } from "@/lib/db/init-db";
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
@@ -42,8 +44,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
           });
         } catch (dbError) {
-          console.error("Database lookup error in authorize:", dbError);
-          throw new Error("DATABASE_CONNECTION_ERROR");
+          console.warn("Database lookup failed, attempting schema auto-init:", dbError);
+          try {
+            await ensureDatabaseSchema();
+            user = await prisma.user.findFirst({
+              where: {
+                OR: [{ email: lower }, { email: input }, { email: "admin" }],
+              },
+            });
+          } catch (initErr) {
+            console.error("Schema init error in authorize:", initErr);
+            throw new Error("DATABASE_CONNECTION_ERROR");
+          }
         }
 
         const isAdminDemo =
