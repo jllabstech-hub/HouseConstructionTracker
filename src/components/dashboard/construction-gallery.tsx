@@ -246,6 +246,13 @@ export function ConstructionGallery({
             </p>
           </div>
 
+          <Link
+            href="/stages"
+            className="inline-flex items-center gap-1.5 rounded-2xl border border-paper-300 bg-paper-50 px-4 py-2 text-xs font-bold text-ink-800 hover:bg-clay-50 hover:text-clay-700 hover:border-clay-300 transition shrink-0 self-start md:self-auto shadow-2xs"
+          >
+            <span>{language === "te" ? "అన్ని 20 దశలను చూడండి →" : "View All 20 Stages →"}</span>
+          </Link>
+
           {/* Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
             {[
@@ -334,9 +341,12 @@ export function ConstructionGallery({
                   {/* Card Content */}
                   <div className="p-4 space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-display font-bold text-ink-900 text-sm sm:text-base leading-snug">
+                      <Link
+                        href={`/stages/${stage.step}`}
+                        className="font-display font-bold text-ink-900 text-sm sm:text-base leading-snug hover:text-clay-600 transition"
+                      >
                         {title}
-                      </h4>
+                      </Link>
                     </div>
                     <p className="text-xs text-ink-500 line-clamp-2 leading-relaxed">
                       {desc}

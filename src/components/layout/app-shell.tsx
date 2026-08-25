@@ -17,6 +17,7 @@ import {
   X,
   Plus,
   Layers,
+  Milestone,
 } from "lucide-react";
 import { useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,7 @@ export function AppShell({
 
   const mainNav = [
     { href: "/dashboard", label: t.nav.overview, icon: Home, desc: language === "te" ? "ఖర్చు & లెక్కలు" : "Spent, left & charts" },
+    { href: "/stages", label: t.nav.stages, icon: Milestone, desc: language === "te" ? "20 దశల వరుస క్రమం" : "20 sequential stages" },
     { href: "/expenses", label: t.nav.expenses, icon: ReceiptText, desc: language === "te" ? "పాస్‌బుక్ & బిల్లులు" : "Passbook & bills" },
     { href: "/expenses/new", label: t.nav.addExpense, icon: Hammer, desc: language === "te" ? "బిల్లు / కూలీ నమోదు" : "Record bill / wage" },
     { href: "/documents", label: t.nav.documents, icon: Layers, desc: language === "te" ? "ప్లాన్లు & ఎలివేషన్" : "Plans & 3D elevations" },
@@ -281,7 +283,7 @@ export function AppShell({
         </aside>
 
         {/* Main Content Area */}
-        <main className="px-4 py-5 sm:px-6 lg:px-8 pb-28 lg:pb-12 max-w-7xl w-full mx-auto">
+        <main className={cn("px-4 py-5 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto", isExpenseComposer ? "pb-24 lg:pb-12" : "pb-28 lg:pb-12")}>
           {children}
         </main>
       </div>
@@ -395,6 +397,18 @@ export function AppShell({
             </div>
 
             <div className="grid grid-cols-2 gap-2.5">
+              <Link
+                href="/stages"
+                onClick={() => setMobileDrawerOpen(false)}
+                className="flex items-center gap-3 rounded-2xl border border-paper-200 bg-paper-50 p-3 hover:bg-paper-100"
+              >
+                <Milestone className="h-5 w-5 text-clay-600" />
+                <div>
+                  <p className="text-sm font-bold text-ink-900">{t.nav.stages}</p>
+                  <p className="text-[11px] text-ink-500">{language === "te" ? "20 నిర్మాణ దశలు" : "20 House Stages"}</p>
+                </div>
+              </Link>
+
               <Link
                 href="/documents"
                 onClick={() => setMobileDrawerOpen(false)}

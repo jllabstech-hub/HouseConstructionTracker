@@ -498,29 +498,6 @@ export function ExpenseForm({
         <span className="min-w-0 flex-1 truncate">
           {receiptName ?? (language === "te" ? t.form.takePhotoOrUpload : "Receipt photo (optional)")}
         </span>
-        {receiptName ? (
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(event) => {
-              event.stopPropagation();
-              if (receiptRef.current) receiptRef.current.value = "";
-              setReceiptName(null);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                event.stopPropagation();
-                if (receiptRef.current) receiptRef.current.value = "";
-                setReceiptName(null);
-              }
-            }}
-            className="rounded-full p-1 text-ink-400 hover:bg-paper-100 hover:text-ink-700"
-            aria-label="Remove receipt"
-          >
-            <X className="h-4 w-4" />
-          </span>
-        ) : null}
       </button>
       <input
         ref={receiptRef}
