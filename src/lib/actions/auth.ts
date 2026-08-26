@@ -7,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { seedUserMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { registerSchema } from "@/lib/validations";
 
+import { ensureDatabaseSchema } from "@/lib/db/init-db";
+
 export async function registerUser(input: unknown) {
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) {
@@ -88,6 +90,7 @@ export async function loginUser(input: { email: string; password: string }) {
       };
     }
 
+    // Auto-heal on uninitialized database / missing tables:
     if (
       combinedError.includes("DATABASE_CONNECTION_ERROR") ||
       combinedError.includes("connect") ||
@@ -97,10 +100,47 @@ export async function loginUser(input: { email: string; password: string }) {
       combinedError.includes("P2021") ||
       combinedError.includes("PrismaClient")
     ) {
-      return {
-        error:
-          "Database not initialized yet. Please click the auto-initialize database link below or visit /api/setup?redirect=true.",
-      };
+      console.log("Database tables missing. Executing automatic schema initialization and retry...");
+      try {
+        await ensureDatabaseSchema();
+        const passwordHash = await bcrypt.hash("test123", 10);
+        const adminUser = await prisma.user.upsert({
+          where: { email: "admin" },
+          update: { name: "Admin", passwordHash },
+          create: { email: "admin", name: "Admin", passwordHash },
+        });
+        await seedUserMasters(adminUser.id);
+        let project = await prisma.project.findFirst({ where: { userId: adminUser.id } });
+        if (!project) {
+          project = await prisma.project.create({
+            data: {
+              userId: adminUser.id,
+              name: "Nandakam",
+              location: "Pruthvi Layout, Channasandra",
+              builtUpArea: 3200,
+              plotArea: 2400,
+              totalBudget: 4000000,
+              status: "IN_PROGRESS",
+              startDate: new Date("2026-01-10"),
+            },
+          });
+          await seedProjectStructure(project.id, { demoProgress: true });
+        }
+
+        // Retry sign in!
+        await signIn("credentials", {
+          email: input.email,
+          password: input.password,
+          redirect: false,
+        });
+        return { ok: true };
+      } catch (autoErr: unknown) {
+        console.error("Auto-heal during login failed:", autoErr);
+        return {
+          error:
+            "Database table error: Please click 'Auto-Initialize Database & Admin' below to initialize database tables.",
+        };
+      }
     }
 
     if (error instanceof AuthError) {
