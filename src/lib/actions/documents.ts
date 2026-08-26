@@ -172,3 +172,112 @@ export async function deleteDocument(documentId: string) {
   revalidatePath(`/projects/${doc.projectId}`);
   return { ok: true };
 }
+
+export async function seedSampleDocuments(projectId: string) {
+  const user = await requireUser();
+  await requireProject(projectId, user.id);
+
+  const samples = [
+    {
+      projectId,
+      category: "ELEVATION" as const,
+      title: "Front 3D Elevation & Landscaping Design",
+      description: "Modern 2-floor villa contemporary design with warm spotlights, teak wood paneling, and compound gate.",
+      fileName: "elevation_front_view_3d.jpg",
+      storedName: "elevation.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 1024 * 750,
+      storagePath: "/images/stages/elevation.jpg",
+      version: "v2.1 Approved",
+      isPinned: true,
+    },
+    {
+      projectId,
+      category: "FLOOR_PLAN" as const,
+      title: "Ground & First Floor Architectural Working Plan",
+      description: "Vastu compliant 4BHK architectural layout with car parking, pooja room, modular kitchen, and balconies.",
+      fileName: "architectural_floor_plan_approved.pdf",
+      storedName: "floor_plan.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 1024 * 1850,
+      storagePath: "/images/stages/elevation.jpg",
+      version: "v3.0 Final Sanctioned",
+      isPinned: true,
+    },
+    {
+      projectId,
+      category: "STRUCTURAL" as const,
+      title: "Column Footing & Plinth Beam Structural Drawing",
+      description: "Structural engineer rebar reinforcement details: 16mm/20mm Fe550D steel cage schedules and M25 mix design.",
+      fileName: "structural_footing_reinforcement.jpg",
+      storedName: "foundation.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 1024 * 620,
+      storagePath: "/images/stages/foundation.jpg",
+      version: "Rev 1",
+      isPinned: false,
+    },
+    {
+      projectId,
+      category: "STRUCTURAL" as const,
+      title: "Roof Slab Shuttering & Reinforcement Schedule",
+      description: "Two-way slab bar bending schedule, crank bar details, and electrical conduit routing map.",
+      fileName: "slab_reinforcement_schedule.jpg",
+      storedName: "slab.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 1024 * 890,
+      storagePath: "/images/stages/slab.jpg",
+      version: "v1.2",
+      isPinned: false,
+    },
+    {
+      projectId,
+      category: "MEP" as const,
+      title: "Electrical Conduit & Plumbing Layout Drawing",
+      description: "Distribution board circuits, AC point locations, concealed CPVC water supply, and drainage line slope markings.",
+      fileName: "mep_electrical_plumbing_layout.jpg",
+      storedName: "interior.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 1024 * 510,
+      storagePath: "/images/stages/interior.jpg",
+      version: "v1.0",
+      isPinned: false,
+    },
+    {
+      projectId,
+      category: "APPROVAL" as const,
+      title: "BBMP / Gram Panchayat Building Plan Sanction Permit",
+      description: "Official municipal building permit LP no. 482/2026 with BESCOM electricity sanction and borewell clearance.",
+      fileName: "bbmp_building_sanction_permit.pdf",
+      storedName: "sanction_permit.pdf",
+      mimeType: "application/pdf",
+      sizeBytes: 1024 * 1200,
+      storagePath: "/images/stages/elevation.jpg",
+      version: "Official Sanction",
+      isPinned: true,
+    },
+    {
+      projectId,
+      category: "SITE_PHOTO" as const,
+      title: "Site Footing Excavation & Concrete Pouring Progress",
+      description: "Live photo taken at site during column footing concreting and vibrating.",
+      fileName: "site_excavation_photo_aug.jpg",
+      storedName: "foundation.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 1024 * 670,
+      storagePath: "/images/stages/foundation.jpg",
+      version: "Site Progress",
+      isPinned: false,
+    },
+  ];
+
+  await prisma.projectDocument.createMany({
+    data: samples,
+  });
+
+  revalidatePath("/documents");
+  revalidatePath(`/projects/${projectId}`);
+  revalidatePath("/dashboard");
+  return { ok: true, count: samples.length };
+}
+

@@ -24,56 +24,66 @@ function dateOrNull(value?: string | null) {
 }
 
 export async function createProject(input: unknown) {
-  const user = await requireUser();
-  const parsed = projectSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid project" };
+  try {
+    const user = await requireUser();
+    const parsed = projectSchema.safeParse(input);
+    if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid project" };
 
-  const project = await prisma.project.create({
-    data: {
-      userId: user.id,
-      name: parsed.data.name,
-      location: emptyToNull(parsed.data.location),
-      plotArea: decimalOrNull(parsed.data.plotArea),
-      builtUpArea: decimalOrNull(parsed.data.builtUpArea),
-      numberOfFloors: parsed.data.numberOfFloors ? Number(parsed.data.numberOfFloors) : null,
-      startDate: dateOrNull(parsed.data.startDate),
-      expectedCompletionDate: dateOrNull(parsed.data.expectedCompletionDate),
-      actualCompletionDate: dateOrNull(parsed.data.actualCompletionDate),
-      totalBudget: decimalOrNull(parsed.data.totalBudget) ?? new Prisma.Decimal(0),
-      status: parsed.data.status,
-      notes: emptyToNull(parsed.data.notes),
-    },
-  });
-  await seedProjectStructure(project.id);
-  await setActiveProjectId(project.id);
-  revalidatePath("/");
-  return { ok: true, id: project.id };
+    const project = await prisma.project.create({
+      data: {
+        userId: user.id,
+        name: parsed.data.name,
+        location: emptyToNull(parsed.data.location),
+        plotArea: decimalOrNull(parsed.data.plotArea),
+        builtUpArea: decimalOrNull(parsed.data.builtUpArea),
+        numberOfFloors: parsed.data.numberOfFloors ? Number(parsed.data.numberOfFloors) : null,
+        startDate: dateOrNull(parsed.data.startDate),
+        expectedCompletionDate: dateOrNull(parsed.data.expectedCompletionDate),
+        actualCompletionDate: dateOrNull(parsed.data.actualCompletionDate),
+        totalBudget: decimalOrNull(parsed.data.totalBudget) ?? new Prisma.Decimal(0),
+        status: parsed.data.status,
+        notes: emptyToNull(parsed.data.notes),
+      },
+    });
+    await seedProjectStructure(project.id);
+    await setActiveProjectId(project.id);
+    revalidatePath("/");
+    return { ok: true, id: project.id };
+  } catch (error: unknown) {
+    console.error("createProject error:", error);
+    return { error: error instanceof Error ? error.message : "Failed to create project" };
+  }
 }
 
 export async function updateProject(projectId: string, input: unknown) {
-  const user = await requireUser();
-  await requireProject(projectId, user.id);
-  const parsed = projectSchema.safeParse(input);
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid project" };
+  try {
+    const user = await requireUser();
+    await requireProject(projectId, user.id);
+    const parsed = projectSchema.safeParse(input);
+    if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid project" };
 
-  await prisma.project.update({
-    where: { id: projectId },
-    data: {
-      name: parsed.data.name,
-      location: emptyToNull(parsed.data.location),
-      plotArea: decimalOrNull(parsed.data.plotArea),
-      builtUpArea: decimalOrNull(parsed.data.builtUpArea),
-      numberOfFloors: parsed.data.numberOfFloors ? Number(parsed.data.numberOfFloors) : null,
-      startDate: dateOrNull(parsed.data.startDate),
-      expectedCompletionDate: dateOrNull(parsed.data.expectedCompletionDate),
-      actualCompletionDate: dateOrNull(parsed.data.actualCompletionDate),
-      totalBudget: decimalOrNull(parsed.data.totalBudget) ?? new Prisma.Decimal(0),
-      status: parsed.data.status,
-      notes: emptyToNull(parsed.data.notes),
-    },
-  });
-  revalidatePath("/");
-  return { ok: true };
+    await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        name: parsed.data.name,
+        location: emptyToNull(parsed.data.location),
+        plotArea: decimalOrNull(parsed.data.plotArea),
+        builtUpArea: decimalOrNull(parsed.data.builtUpArea),
+        numberOfFloors: parsed.data.numberOfFloors ? Number(parsed.data.numberOfFloors) : null,
+        startDate: dateOrNull(parsed.data.startDate),
+        expectedCompletionDate: dateOrNull(parsed.data.expectedCompletionDate),
+        actualCompletionDate: dateOrNull(parsed.data.actualCompletionDate),
+        totalBudget: decimalOrNull(parsed.data.totalBudget) ?? new Prisma.Decimal(0),
+        status: parsed.data.status,
+        notes: emptyToNull(parsed.data.notes),
+      },
+    });
+    revalidatePath("/");
+    return { ok: true };
+  } catch (error: unknown) {
+    console.error("updateProject error:", error);
+    return { error: error instanceof Error ? error.message : "Failed to update project" };
+  }
 }
 
 export async function updateProjectName(
