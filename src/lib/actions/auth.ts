@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { signIn } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { seedUserMasters } from "@/lib/catalog/seed-masters";
+import { seedUserMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { registerSchema } from "@/lib/validations";
 
 export async function registerUser(input: unknown) {
@@ -27,6 +27,21 @@ export async function registerUser(input: unknown) {
       },
     });
     await seedUserMasters(user.id);
+
+    const project = await prisma.project.create({
+      data: {
+        userId: user.id,
+        name: "My Dream House",
+        location: "Main Plot",
+        builtUpArea: 2500,
+        plotArea: 2000,
+        totalBudget: 3500000,
+        status: "IN_PROGRESS",
+        startDate: new Date(),
+      },
+    });
+    await seedProjectStructure(project.id);
+
     return { ok: true };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

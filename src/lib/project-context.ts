@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
+import { seedProjectStructure } from "@/lib/catalog/seed-masters";
 import type { Project } from "@prisma/client";
 
 export const PROJECT_COOKIE = "hct-project-id";
@@ -17,7 +18,7 @@ export type ActiveProjectContext = {
  * 2. Fetches all owned projects.
  * 3. Matches active project from cookie.
  * 4. Self-heals if cookie is missing/stale/deleted by selecting another valid project.
- * 5. Returns null if user has 0 projects without throwing.
+ * 5. If user has 0 projects, auto-provisions default "Nandakam" house project with 20 construction stages!
  */
 export async function getActiveProject(userId?: string): Promise<ActiveProjectContext | null> {
   const user = userId
@@ -29,14 +30,32 @@ export async function getActiveProject(userId?: string): Promise<ActiveProjectCo
 
   if (!user) return null;
 
-  const projects = await prisma.project.findMany({
+  let projects = await prisma.project.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "asc" },
   });
 
   if (projects.length === 0) {
-    await clearActiveProjectId();
-    return null;
+    try {
+      const newProject = await prisma.project.create({
+        data: {
+          userId: user.id,
+          name: "Nandakam",
+          location: "Pruthvi Layout, Channasandra",
+          builtUpArea: 3200,
+          plotArea: 2400,
+          totalBudget: 4000000,
+          status: "IN_PROGRESS",
+          startDate: new Date("2026-01-10"),
+        },
+      });
+      await seedProjectStructure(newProject.id, { demoProgress: true });
+      projects = [newProject];
+    } catch (healErr) {
+      console.warn("Auto-create project failed:", healErr);
+      await clearActiveProjectId();
+      return null;
+    }
   }
 
   const jar = await cookies();

@@ -1,17 +1,19 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
 import { authConfig } from "@/auth.config";
-import { seedUserMasters } from "@/lib/catalog/seed-masters";
-
+import { seedUserMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { ensureDatabaseSchema } from "@/lib/db/init-db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
+  trustHost: true,
+  secret:
+    process.env.AUTH_SECRET ||
+    process.env.NEXTAUTH_SECRET ||
+    "hct_secret_auth_construction_tracker_secure_token_key_2026",
   providers: [
     Credentials({
       name: "Credentials",
@@ -79,6 +81,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               },
             });
             await seedUserMasters(user.id);
+
+            // Ensure default project exists for admin
+            let project = await prisma.project.findFirst({ where: { userId: user.id } });
+            if (!project) {
+              project = await prisma.project.create({
+                data: {
+                  userId: user.id,
+                  name: "Nandakam",
+                  location: "Pruthvi Layout, Channasandra",
+                  builtUpArea: 3200,
+                  plotArea: 2400,
+                  totalBudget: 4000000,
+                  status: "IN_PROGRESS",
+                  startDate: new Date("2026-01-10"),
+                },
+              });
+              await seedProjectStructure(project.id, { demoProgress: true });
+            }
           } catch (seedErr) {
             console.error("Auto-seed admin error:", seedErr);
           }
