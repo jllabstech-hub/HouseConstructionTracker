@@ -129,8 +129,14 @@ export function StageDetailView({
             <span className="rounded-md bg-clay-100 px-2 py-0.5 text-xs font-bold text-clay-800">
               Stage {stageConfig.step} of 20
             </span>
-            <span className="rounded-md bg-paper-100 px-2 py-0.5 text-xs font-bold uppercase text-ink-600">
-              {stageConfig.phase}
+            <span className="rounded-md bg-paper-100 px-2.5 py-0.5 text-xs font-bold text-ink-700">
+              {stageConfig.phase === "STRUCTURAL"
+                ? language === "te" ? "దశ 1: పునాది & బేస్‌మెంట్" : "Phase 1: Substructure & Foundation"
+                : stageConfig.phase === "ROUGH_IN"
+                ? language === "te" ? "దశ 2: గోడలు, స్లాబ్ & పైపులు" : "Phase 2: Superstructure & Framing"
+                : stageConfig.phase === "FINISHING"
+                ? language === "te" ? "దశ 3: ఫినిషింగ్ & అమరికలు" : "Phase 3: Finishing & Enclosure"
+                : language === "te" ? "దశ 4: ఇంటీరియర్స్ & గృహప్రవేశం" : "Phase 4: Interiors & Handover"}
             </span>
           </div>
 
@@ -149,7 +155,7 @@ export function StageDetailView({
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition w-full sm:w-auto"
           >
             <Plus className="h-4 w-4 stroke-[2.5]" />
-            <span>{language === "te" ? "+ ఈ దశకు ఖర్చు నమోదు" : "+ Record Expense for this Stage"}</span>
+            <span>{language === "te" ? "ఈ దశకు ఖర్చు నమోదు" : "Record Expense for this Stage"}</span>
           </Link>
         </div>
       </div>
@@ -306,7 +312,7 @@ export function StageDetailView({
         <div className="flex items-center justify-between border-b border-paper-100 pb-3">
           <div>
             <h3 className="font-display text-base font-bold text-ink-900">
-              {language === "te" ? "ఈ దశకు ప్లాన్లు & డ్రాయింగ్స్" : "Linked Blueprints & Drawings"}
+              {language === "te" ? "ఈ దశకు డాక్యుమెంట్లు" : "Linked Documents & Plans"}
             </h3>
             <p className="text-xs text-ink-500 mt-0.5">
               {language === "te" ? "స్ట్రక్చరల్ మరియు వర్కింగ్ ప్లాన్లు" : "Relevant architectural and structural drawings"}

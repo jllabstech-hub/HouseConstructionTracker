@@ -49,6 +49,11 @@ export async function uploadDocument(projectId: string, formData: FormData) {
     return { error: "File must be under 20 MB" };
   }
 
+  const mimeType = file.type || "application/octet-stream";
+  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
+    return { error: "Unsupported file type. Please upload a PDF, JPG, PNG, or WEBP file." };
+  }
+
   const raw = {
     title: formData.get("title"),
     category: formData.get("category"),
@@ -63,11 +68,19 @@ export async function uploadDocument(projectId: string, formData: FormData) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid document details" };
   }
 
-  const ext = extensionFor(file.type, file.name);
+  // Sanitize filename to prevent path traversal
+  const sanitizedOriginalName = path.basename(file.name).replace(/[^a-zA-Z0-9._-]/g, "_");
+  const ext = extensionFor(mimeType, sanitizedOriginalName);
   const storedName = `${randomUUID()}${ext}`;
   const relative = path.join("documents", user.id, projectId, storedName);
   const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
   const fullPath = path.join(root, relative);
+
+  // Security check: Ensure path does not escape upload directory
+  if (!fullPath.startsWith(root)) {
+    return { error: "Invalid storage path" };
+  }
+
   await mkdir(path.dirname(fullPath), { recursive: true });
   await writeFile(fullPath, Buffer.from(await file.arrayBuffer()));
 
@@ -80,9 +93,9 @@ export async function uploadDocument(projectId: string, formData: FormData) {
       version: emptyToNull(parsed.data.version),
       floorId: emptyToNull(parsed.data.floorId),
       constructionStageId: emptyToNull(parsed.data.constructionStageId),
-      fileName: file.name,
+      fileName: sanitizedOriginalName,
       storedName,
-      mimeType: file.type || "application/octet-stream",
+      mimeType,
       sizeBytes: file.size,
       storagePath: relative.replaceAll("\\", "/"),
       isPinned: formData.get("isPinned") === "true",
@@ -162,7 +175,9 @@ export async function deleteDocument(documentId: string) {
     if (!doc.storagePath.startsWith("/images/")) {
       const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
       const fullPath = path.join(root, doc.storagePath);
-      await unlink(fullPath).catch(() => {});
+      if (fullPath.startsWith(root)) {
+        await unlink(fullPath).catch(() => {});
+      }
     }
   } catch {}
 
@@ -196,11 +211,11 @@ export async function seedSampleDocuments(projectId: string) {
       category: "FLOOR_PLAN" as const,
       title: "Ground & First Floor Architectural Working Plan",
       description: "Vastu compliant 4BHK architectural layout with car parking, pooja room, modular kitchen, and balconies.",
-      fileName: "architectural_floor_plan_approved.pdf",
-      storedName: "floor_plan.pdf",
-      mimeType: "application/pdf",
-      sizeBytes: 1024 * 1850,
-      storagePath: "/images/stages/elevation.jpg",
+      fileName: "architectural_floor_plan_approved.jpg",
+      storedName: "brickwork.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 1024 * 850,
+      storagePath: "/images/stages/brickwork.jpg",
       version: "v3.0 Final Sanctioned",
       isPinned: true,
     },
@@ -248,11 +263,11 @@ export async function seedSampleDocuments(projectId: string) {
       category: "APPROVAL" as const,
       title: "BBMP / Gram Panchayat Building Plan Sanction Permit",
       description: "Official municipal building permit LP no. 482/2026 with BESCOM electricity sanction and borewell clearance.",
-      fileName: "bbmp_building_sanction_permit.pdf",
-      storedName: "sanction_permit.pdf",
-      mimeType: "application/pdf",
-      sizeBytes: 1024 * 1200,
-      storagePath: "/images/stages/elevation.jpg",
+      fileName: "bbmp_building_sanction_permit.jpg",
+      storedName: "flooring.jpg",
+      mimeType: "image/jpeg",
+      sizeBytes: 1024 * 920,
+      storagePath: "/images/stages/flooring.jpg",
       version: "Official Sanction",
       isPinned: true,
     },

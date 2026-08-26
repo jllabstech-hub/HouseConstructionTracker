@@ -249,6 +249,7 @@ export function BudgetOverview({
           onClose={() => setEditorOpen(false)}
           title={language === "te" ? "బడ్జెట్ పరిమితులు సవరించండి" : "Manage Budget Allocations"}
           subtitle={language === "te" ? "మొత్తం బడ్జెట్ మరియు వర్గాల వారీ పరిమితులను సర్దుబాటు చేయండి" : "Set planned allocation targets for materials, labour and specific categories"}
+          className="max-w-lg sm:max-w-xl"
         >
           {children}
         </Drawer>

@@ -38,12 +38,18 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
   const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
   const fullPath = path.join(root, doc.storagePath);
+
+  if (!fullPath.startsWith(root)) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
+
   try {
     const file = await readFile(fullPath);
     return new NextResponse(file, {
       headers: {
         "Content-Type": doc.mimeType,
-        "Content-Disposition": `inline; filename="${doc.fileName}"`,
+        "Content-Disposition": `inline; filename="${encodeURIComponent(doc.fileName)}"`,
+        "Cache-Control": "private, max-age=3600",
       },
     });
   } catch {

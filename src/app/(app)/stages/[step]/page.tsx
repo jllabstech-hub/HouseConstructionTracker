@@ -46,7 +46,7 @@ export default async function StageDetailPage({
   const nextStage = stepNum < 20 ? CHRONOLOGICAL_CONSTRUCTION_STAGES[stepNum] : null;
 
   const [project, dbStages, allExpenses, rawDocuments] = await Promise.all([
-    prisma.project.findFirstOrThrow({ where: { id: projectId, userId: user.id } }),
+    prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
     prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
     prisma.expense.findMany({
       where: { projectId },
@@ -68,6 +68,10 @@ export default async function StageDetailPage({
       orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
     }),
   ]);
+
+  if (!project) {
+    notFound();
+  }
 
   // Find matching stage in database
   const matchedDbStage = dbStages.find(

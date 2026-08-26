@@ -12,7 +12,7 @@ export default async function DocumentsPage() {
   if (!projectId) return <EmptyState title="No project found" body="Create or select a house project to manage blueprints and elevations." />;
 
   const [project, rawDocuments, floors, stages] = await Promise.all([
-    prisma.project.findFirstOrThrow({ where: { id: projectId, userId: user.id } }),
+    prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
     prisma.projectDocument.findMany({
       where: { projectId },
       orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
@@ -20,6 +20,10 @@ export default async function DocumentsPage() {
     prisma.floor.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
     prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
   ]);
+
+  if (!project) {
+    return <EmptyState title="No project found" body="Create or select a house project to manage blueprints and elevations." />;
+  }
 
   const documents: DocumentItem[] = rawDocuments.map((d) => ({
     id: d.id,

@@ -57,40 +57,59 @@ export function buildReportData(input: {
   workAreas?: WorkAreaDefinition[];
   from?: Date;
   to?: Date;
+  categoryId?: string;
   categoryName?: string;
+  vendorId?: string;
+  vendorName?: string;
+  workerId?: string;
+  workerName?: string;
+  stageId?: string;
+  stageName?: string;
   budgets?: { expenseType: string; amount: { toString(): string } }[];
   categoryBudgets?: { name: string; budget: { toString(): string }; actual: { toString(): string } }[];
   stages?: { name: string; status: string; percentageComplete: number; amount: { toString(): string } }[];
 }): PdfReportData {
-  const scoped = scopeExpenses(input.kind, input.expenses);
+  const scoped = scopeExpenses(input.kind, input.expenses, input);
   const totals = getTypeTotals(scoped);
   const generatedAt = format(new Date(), "dd-MMM-yyyy HH:mm");
   const remaining = getBudgetVariance(input.totalBudget, totals.total);
 
+  let dynamicTitle = TITLES[input.kind];
+  if (input.categoryName) {
+    dynamicTitle = `${input.categoryName} Purchases & Usage Report`;
+  } else if (input.vendorName) {
+    dynamicTitle = `${input.vendorName} - Vendor Purchases & Ledger`;
+  } else if (input.workerName) {
+    dynamicTitle = `${input.workerName} - Wages & Contractor Ledger`;
+  } else if (input.stageName) {
+    dynamicTitle = `${input.stageName} Construction Cost Report`;
+  }
+
   const kpis = [
     { label: "Total Budget", value: formatINR(input.totalBudget) },
-    { label: "Total Spent", value: formatINR(totals.total) },
+    { label: "Report Total Spent", value: formatINR(totals.total) },
     { label: "Remaining", value: formatINR(remaining.remaining) },
     { label: "Budget Used", value: `${remaining.usedPercent.toString()}%` },
   ];
 
-  if (input.kind === "material") {
+  if (input.kind === "material" && !input.categoryName) {
     kpis.splice(1, 2, { label: "Material Spent", value: formatINR(totals.MATERIAL) });
   }
-  if (input.kind === "labour") {
+  if (input.kind === "labour" && !input.workerName) {
     kpis.splice(1, 2, { label: "Labour Spent", value: formatINR(totals.LABOUR) });
   }
 
   const tables = buildTables(input.kind, scoped, input);
+  const nameSlug = input.categoryName ?? input.vendorName ?? input.workerName ?? input.stageName ?? "";
   const filename = buildPdfFilename(
-    ["house", input.kind === "total" ? "total-expenses" : `${input.kind}-expenses`, input.categoryName ?? ""],
+    ["house", input.kind === "total" ? "total-expenses" : `${input.kind}-expenses`, nameSlug],
     input.from,
     input.to,
   );
 
   return {
     projectName: input.projectName,
-    reportTitle: TITLES[input.kind],
+    reportTitle: dynamicTitle,
     periodLabel: periodLabel(input.from, input.to),
     generatedAt,
     filename,
@@ -109,12 +128,42 @@ export function buildReportData(input: {
   };
 }
 
-function scopeExpenses(kind: ReportKind, expenses: ExpenseRecord[]) {
-  if (kind === "material") return expenses.filter((row) => row.expenseType === "MATERIAL");
-  if (kind === "labour") return expenses.filter((row) => row.expenseType === "LABOUR");
-  if (kind === "vendor") return expenses.filter((row) => row.vendorId);
-  if (kind === "worker") return expenses.filter((row) => row.workerId);
-  return expenses;
+function scopeExpenses(
+  kind: ReportKind,
+  expenses: ExpenseRecord[],
+  input?: {
+    categoryId?: string;
+    vendorId?: string;
+    workerId?: string;
+    stageId?: string;
+  }
+) {
+  let list = expenses;
+  if (input?.categoryId) {
+    list = list.filter(
+      (row) =>
+        row.materialCategoryId === input.categoryId ||
+        row.labourCategoryId === input.categoryId ||
+        row.serviceCategoryId === input.categoryId ||
+        row.equipmentCategoryId === input.categoryId ||
+        row.professionalCategoryId === input.categoryId
+    );
+  }
+  if (input?.vendorId) {
+    list = list.filter((row) => row.vendorId === input.vendorId);
+  }
+  if (input?.workerId) {
+    list = list.filter((row) => row.workerId === input.workerId);
+  }
+  if (input?.stageId) {
+    list = list.filter((row) => row.stageId === input.stageId || row.constructionStageId === input.stageId);
+  }
+
+  if (kind === "material") return list.filter((row) => row.expenseType === "MATERIAL");
+  if (kind === "labour") return list.filter((row) => row.expenseType === "LABOUR");
+  if (kind === "vendor") return list.filter((row) => row.vendorId);
+  if (kind === "worker") return list.filter((row) => row.workerId);
+  return list;
 }
 
 function buildTables(

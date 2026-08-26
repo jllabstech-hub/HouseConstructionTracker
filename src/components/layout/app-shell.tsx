@@ -15,16 +15,18 @@ import {
   Milestone,
   Plus,
   Receipt,
+  Search,
   Settings,
   Sparkles,
   Users,
   Wallet,
   X,
 } from "lucide-react";
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { switchProject } from "@/lib/actions/projects";
 import { useLanguage } from "@/context/language-context";
+import { GlobalSearchModal } from "@/components/search/global-search-modal";
 
 export function AppShell({
   children,
@@ -39,8 +41,21 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [, start] = useTransition();
   const { language, setLanguage, toggleLanguage, t } = useLanguage();
+
+  // Keyboard shortcut: Ctrl+K / Cmd+K to open global search
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   const isExpensesActive =
     pathname.startsWith("/expenses") && pathname !== "/expenses/new";
@@ -60,7 +75,7 @@ export function AppShell({
 
   const moreNav = [
     { href: "/leads", label: "Inquiries & Leads", icon: Sparkles, active: pathname === "/leads" },
-    { href: "/masters", label: t.nav?.shopsWorkers ?? "Vendors & Workers", icon: Users, active: pathname === "/masters" },
+    { href: "/phonedirectory", label: t.nav?.shopsWorkers ?? "Phone Directory", icon: Users, active: pathname === "/phonedirectory" || pathname === "/masters" },
     { href: "/documents", label: t.nav?.documents ?? "Documents", icon: Files, active: pathname === "/documents" },
     { href: "/settings", label: t.nav?.settings ?? "Settings", icon: Settings, active: pathname === "/settings" },
   ];
@@ -86,6 +101,17 @@ export function AppShell({
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Global Search Button */}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-paper-300 bg-paper-50 text-ink-700 hover:bg-paper-100 transition active:scale-95 shadow-2xs"
+            title="Search / ఏదైనా వెతకండి (Ctrl+K)"
+            aria-label="Search"
+          >
+            <Search className="h-4 w-4 text-clay-600" />
+          </button>
+
           {/* Language Toggle Button */}
           <button
             type="button"
@@ -268,10 +294,53 @@ export function AppShell({
           </div>
         </aside>
 
-        {/* Main Content Viewport */}
-        <main className="px-4 py-5 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto pb-24 lg:pb-12">
-          {children}
-        </main>
+        {/* Desktop Main Content Container with Top-Right Search Header */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* Top Desktop Bar with Top-Right Global Search & Quick Actions */}
+          <header className="hidden lg:flex items-center justify-between border-b border-paper-200/90 bg-white/90 backdrop-blur-md px-8 py-2.5 sticky top-0 z-20 shadow-2xs">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
+                {language === "te" ? "ప్రస్తుత ఇల్లు" : "Active Project"}:
+              </span>
+              <span className="text-xs font-bold text-ink-900 bg-paper-100 px-2.5 py-1 rounded-xl border border-paper-200/80 shadow-2xs">
+                🏡 {activeProject?.name ?? (language === "te" ? "నా ఇల్లు" : "My House")}
+              </span>
+            </div>
+
+            {/* Top-Right Search & Action Controls */}
+            <div className="flex items-center gap-3">
+              {/* Top-Right Global Search Bar Trigger */}
+              <button
+                type="button"
+                onClick={() => setSearchOpen(true)}
+                className="flex items-center gap-3 rounded-2xl border border-paper-300 bg-paper-50/90 hover:bg-white hover:border-clay-400 px-3.5 py-1.5 text-xs text-ink-600 shadow-2xs transition group w-80"
+                title="Universal Search (Ctrl+K)"
+              >
+                <Search className="h-4 w-4 text-clay-600 group-hover:text-clay-800 shrink-0" />
+                <span className="flex-1 text-left text-xs font-medium text-ink-500 truncate">
+                  {language === "te" ? "వెతకండి / అడగండి (Ctrl+K)..." : "Search files, pages, reports (Ctrl+K)..."}
+                </span>
+                <kbd className="rounded-md border border-paper-300 bg-white px-1.5 py-0.5 text-[10px] font-bold text-ink-400 shadow-2xs">
+                  Ctrl+K
+                </kbd>
+              </button>
+
+              {/* Quick Record Expense CTA */}
+              <Link
+                href="/expenses/new"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 shrink-0"
+              >
+                <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
+                <span>{t.nav?.addExpense ?? "+ Add Expense"}</span>
+              </Link>
+            </div>
+          </header>
+
+          {/* Main Content Viewport */}
+          <main className="px-4 py-5 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto pb-24 lg:pb-12">
+            {children}
+          </main>
+        </div>
       </div>
 
       {/* Mobile Fixed 5-Item Bottom Bar */}
@@ -430,14 +499,14 @@ export function AppShell({
               </Link>
 
               <Link
-                href="/masters"
+                href="/phonedirectory"
                 onClick={() => setMobileDrawerOpen(false)}
                 className="flex items-center gap-2.5 rounded-xl border border-paper-200 bg-paper-50 p-3 hover:bg-paper-100 transition"
               >
                 <Users className="h-4.5 w-4.5 text-clay-600 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-ink-900 truncate">{t.nav?.shopsWorkers ?? "Vendors & Workers"}</p>
-                  <p className="text-[10px] text-ink-500 truncate">{language === "te" ? "కాంటాక్టులు" : "Contacts"}</p>
+                  <p className="text-xs font-bold text-ink-900 truncate">{t.nav?.shopsWorkers ?? "Phone Directory"}</p>
+                  <p className="text-[10px] text-ink-500 truncate">{language === "te" ? "ఫోన్ నంబర్లు" : "Directory"}</p>
                 </div>
               </Link>
 
@@ -483,6 +552,13 @@ export function AppShell({
           </div>
         </div>
       )}
+
+      {/* Global Command / Search Modal */}
+      <GlobalSearchModal
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        projectId={activeProjectId}
+      />
     </div>
   );
 }

@@ -45,6 +45,24 @@ export default async function DashboardPage() {
     }),
   ]);
 
+  if (!data) {
+    return (
+      <EmptyState
+        title="Start your house project"
+        body="Track every rupee spent on cement, steel, bricks, and mason wages with zero confusion."
+        action={
+          <Link
+            href="/projects"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-5 py-2.5 font-bold text-white shadow-xs hover:bg-clay-700 transition"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Add Your House</span>
+          </Link>
+        }
+      />
+    );
+  }
+
   const overall = getBudgetVariance(data.project.totalBudget, data.totals.total);
 
   // Monthly Spending Trend

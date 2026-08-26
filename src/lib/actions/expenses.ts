@@ -56,12 +56,29 @@ export async function saveExpense(input: unknown, expenseId?: string) {
     numberOfDays: decimalOrNull(data.numberOfDays),
   };
 
-  const saved = expenseId
-    ? await prisma.expense.update({ where: { id: expenseId }, data: payload })
-    : await prisma.expense.create({ data: payload });
+  try {
+    if (expenseId) {
+      const existing = await prisma.expense.findFirst({
+        where: { id: expenseId, projectId: data.projectId },
+      });
+      if (!existing) {
+        return { error: "Expense not found or unauthorized" };
+      }
+    }
 
-  revalidatePath("/");
-  return { ok: true, id: saved.id };
+    const saved = expenseId
+      ? await prisma.expense.update({ where: { id: expenseId }, data: payload })
+      : await prisma.expense.create({ data: payload });
+
+    revalidatePath("/");
+    revalidatePath(`/expenses`);
+    revalidatePath(`/expenses/${saved.id}`);
+    revalidatePath(`/projects/${data.projectId}`);
+    return { ok: true, id: saved.id };
+  } catch (error) {
+    console.error("saveExpense error:", error);
+    return { error: error instanceof Error ? error.message : "Failed to save expense" };
+  }
 }
 
 export async function deleteExpense(projectId: string, expenseId: string) {
@@ -71,6 +88,7 @@ export async function deleteExpense(projectId: string, expenseId: string) {
   if (!expense) return { error: "Expense not found" };
   await prisma.expense.delete({ where: { id: expenseId } });
   revalidatePath("/");
+  revalidatePath("/expenses");
   return { ok: true };
 }
 

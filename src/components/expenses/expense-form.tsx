@@ -33,6 +33,30 @@ import { cn } from "@/lib/utils";
 type Option = { id: string; name: string; groupName?: string; type?: string; phone?: string | null };
 type ExpenseKind = "MATERIAL" | "LABOUR" | "SERVICE" | "EQUIPMENT" | "PROFESSIONAL" | "OTHER";
 
+const UNITS = [
+  { value: "bags", labelEn: "Bags", labelTe: "బస్తాలు (Bags)" },
+  { value: "kg", labelEn: "Kg", labelTe: "కిలోలు (Kg)" },
+  { value: "tons", labelEn: "Tons", labelTe: "టన్నులు (Tons)" },
+  { value: "loads", labelEn: "Loads (Tractor / Tipper)", labelTe: "లోడ్లు (ట్రాక్టర్ / టిప్పర్)" },
+  { value: "sqft", labelEn: "Sqft (Square Feet)", labelTe: "చ.అడుగులు (Sqft)" },
+  { value: "cum", labelEn: "Cum (Cubic Meter)", labelTe: "ఘన మీటర్లు (Cum)" },
+  { value: "nos", labelEn: "Nos (Pieces / Units)", labelTe: "సంఖ్య / పీసులు" },
+  { value: "litres", labelEn: "Litres", labelTe: "లీటర్లు" },
+  { value: "coils", labelEn: "Coils", labelTe: "కాయిల్స్" },
+  { value: "brass", labelEn: "Brass (100 cu ft)", labelTe: "బ్రాస్ (100 ఘ.అ.)" },
+  { value: "units", labelEn: "Units", labelTe: "యూనిట్లు" },
+] as const;
+
+const PAYMENT_METHODS = [
+  { value: "UPI", labelEn: "UPI (GPay / PhonePe / Paytm)", labelTe: "యూపీఐ (UPI / GPay / PhonePe)" },
+  { value: "CASH", labelEn: "Cash", labelTe: "నగదు (Cash)" },
+  { value: "BANK_TRANSFER", labelEn: "Bank Transfer / NEFT / IMPS", labelTe: "బ్యాంక్ బదిలీ (Bank Transfer / NEFT)" },
+  { value: "CHEQUE", labelEn: "Cheque", labelTe: "చెక్ (Cheque)" },
+  { value: "CARD", labelEn: "Credit / Debit Card", labelTe: "కార్డ్ (Card)" },
+  { value: "CREDIT", labelEn: "Store Credit / Khata (ఉద్దెర)", labelTe: "ఖాతా / ఉద్దెర (Khata / Credit)" },
+  { value: "OTHER", labelEn: "Other", labelTe: "ఇతర పద్ధతి" },
+] as const;
+
 function grouped(options: Option[]) {
   const groups = new Map<string, Option[]>();
   for (const option of options) {
@@ -441,15 +465,11 @@ export function ExpenseForm({
                   onChange={(e) => setUnit(e.target.value)}
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
                 >
-                  <option value="bags">Bags / బస్తాలు</option>
-                  <option value="kg">Kg / కిలోలు</option>
-                  <option value="tons">Tons / టన్నులు</option>
-                  <option value="loads">Loads / లోడ్లు</option>
-                  <option value="sqft">Sqft / చ.అడుగులు</option>
-                  <option value="cum">Cum / ఘ.మీటర్లు</option>
-                  <option value="nos">Nos / సంఖ్య</option>
-                  <option value="litres">Litres / లీటర్లు</option>
-                  <option value="coils">Coils / కాయిల్స్</option>
+                  {UNITS.map((u) => (
+                    <option key={u.value} value={u.value}>
+                      {language === "te" ? u.labelTe : u.labelEn}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -703,12 +723,13 @@ export function ExpenseForm({
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 text-xs font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
+              className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
             >
-              <option value="UPI">UPI / GPay / PhonePe</option>
-              <option value="CASH">Cash / నగదు</option>
-              <option value="BANK_TRANSFER">Bank Transfer / NEFT</option>
-              <option value="CHEQUE">Cheque</option>
+              {PAYMENT_METHODS.map((pm) => (
+                <option key={pm.value} value={pm.value}>
+                  {language === "te" ? pm.labelTe : pm.labelEn}
+                </option>
+              ))}
             </select>
           </div>
         </div>

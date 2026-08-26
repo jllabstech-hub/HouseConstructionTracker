@@ -17,6 +17,7 @@ import { formatINR } from "@/lib/money";
 import { getVendorTotal, getWorkerTotal, type ExpenseRecord } from "@/lib/finance/aggregations";
 import { Button } from "@/components/ui/button";
 import { TablePagination } from "@/components/ui/table-pagination";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import {
@@ -34,7 +35,9 @@ import {
   Briefcase,
   X,
   Check,
+  IndianRupee,
 } from "lucide-react";
+import { UpiPayModal, type PayRecipient } from "@/components/masters/upi-pay-modal";
 
 type MaterialItem = { id: string; name: string; groupName: string | null };
 type LabourItem = { id: string; name: string; groupName: string | null };
@@ -135,6 +138,9 @@ export function MasterForms({
   const [editingVendor, setEditingVendor] = useState<VendorItem | null>(null);
   const [editingWorker, setEditingWorker] = useState<WorkerItem | null>(null);
   const [showAddModal, setShowAddModal] = useState<"VENDOR" | "WORKER" | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ type: "vendor" | "worker"; id: string; name: string } | null>(null);
+  const [payRecipient, setPayRecipient] = useState<PayRecipient | null>(null);
+  const [showPayModal, setShowPayModal] = useState<boolean>(false);
 
   // Clean phone numbers for tel: and wa.me links
   const cleanPhone = (phone?: string | null) => {
@@ -377,31 +383,52 @@ export function MasterForms({
                               <span>{vendor.phone || <span className="text-ink-400 font-normal italic">{t.masters.noPhone}</span>}</span>
                             </div>
 
-                            {vendor.phone && (
-                              <div className="flex items-center gap-1.5">
-                                <a
-                                  href={`tel:${telPhone}`}
-                                  className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
-                                  title="Call directly"
-                                >
-                                  <PhoneCall className="h-3 w-3" />
-                                  <span>{t.masters.call}</span>
-                                </a>
-
-                                {waLink && (
+                            <div className="flex items-center gap-1.5">
+                              {vendor.phone && (
+                                <>
                                   <a
-                                    href={waLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 rounded-xl bg-[#25D366] hover:bg-[#20ba59] px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
-                                    title="Open WhatsApp chat"
+                                    href={`tel:${telPhone}`}
+                                    className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                    title="Call directly"
                                   >
-                                    <MessageCircle className="h-3 w-3" />
-                                    <span>WA</span>
+                                    <PhoneCall className="h-3 w-3" />
+                                    <span>{t.masters.call}</span>
                                   </a>
-                                )}
-                              </div>
-                            )}
+
+                                  {waLink && (
+                                    <a
+                                      href={waLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 rounded-xl bg-[#25D366] hover:bg-[#20ba59] px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                      title="Open WhatsApp chat"
+                                    >
+                                      <MessageCircle className="h-3 w-3" />
+                                      <span>WA</span>
+                                    </a>
+                                  )}
+                                </>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPayRecipient({
+                                    id: vendor.id,
+                                    name: vendor.name,
+                                    phone: vendor.phone,
+                                    type: "VENDOR",
+                                    notes: vendor.notes,
+                                  });
+                                  setShowPayModal(true);
+                                }}
+                                className="inline-flex items-center gap-1 rounded-xl bg-purple-600 hover:bg-purple-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                title="Pay via UPI"
+                              >
+                                <IndianRupee className="h-3 w-3 stroke-[2.5]" />
+                                <span>{language === "te" ? "పే (Pay)" : "Pay"}</span>
+                              </button>
+                            </div>
                           </div>
 
                           {vendor.address && (
@@ -432,14 +459,7 @@ export function MasterForms({
 
                         <button
                           type="button"
-                          onClick={() => {
-                            if (confirm(t.masters.confirmDelete)) {
-                              start(async () => {
-                                await deleteVendor(vendor.id);
-                                router.refresh();
-                              });
-                            }
-                          }}
+                          onClick={() => setDeleteTarget({ type: "vendor", id: vendor.id, name: vendor.name })}
                           className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -732,31 +752,52 @@ export function MasterForms({
                               <span>{worker.phone || <span className="text-ink-400 font-normal italic">{t.masters.noPhone}</span>}</span>
                             </div>
 
-                            {worker.phone && (
-                              <div className="flex items-center gap-1.5">
-                                <a
-                                  href={`tel:${telPhone}`}
-                                  className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
-                                  title="Call worker directly"
-                                >
-                                  <PhoneCall className="h-3 w-3" />
-                                  <span>{t.masters.call}</span>
-                                </a>
-
-                                {waLink && (
+                            <div className="flex items-center gap-1.5">
+                              {worker.phone && (
+                                <>
                                   <a
-                                    href={waLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 rounded-xl bg-[#25D366] hover:bg-[#20ba59] px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
-                                    title="Open WhatsApp chat"
+                                    href={`tel:${telPhone}`}
+                                    className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                    title="Call worker directly"
                                   >
-                                    <MessageCircle className="h-3 w-3" />
-                                    <span>WA</span>
+                                    <PhoneCall className="h-3 w-3" />
+                                    <span>{t.masters.call}</span>
                                   </a>
-                                )}
-                              </div>
-                            )}
+
+                                  {waLink && (
+                                    <a
+                                      href={waLink}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1 rounded-xl bg-[#25D366] hover:bg-[#20ba59] px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                      title="Open WhatsApp chat"
+                                    >
+                                      <MessageCircle className="h-3 w-3" />
+                                      <span>WA</span>
+                                    </a>
+                                  )}
+                                </>
+                              )}
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPayRecipient({
+                                    id: worker.id,
+                                    name: worker.name,
+                                    phone: worker.phone,
+                                    type: "WORKER",
+                                    notes: worker.notes,
+                                  });
+                                  setShowPayModal(true);
+                                }}
+                                className="inline-flex items-center gap-1 rounded-xl bg-purple-600 hover:bg-purple-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                title="Pay via UPI"
+                              >
+                                <IndianRupee className="h-3 w-3 stroke-[2.5]" />
+                                <span>{language === "te" ? "పే (Pay)" : "Pay"}</span>
+                              </button>
+                            </div>
                           </div>
 
                           {worker.specialization && (
@@ -787,14 +828,7 @@ export function MasterForms({
 
                         <button
                           type="button"
-                          onClick={() => {
-                            if (confirm(t.masters.confirmDelete)) {
-                              start(async () => {
-                                await deleteWorker(worker.id);
-                                router.refresh();
-                              });
-                            }
-                          }}
+                          onClick={() => setDeleteTarget({ type: "worker", id: worker.id, name: worker.name })}
                           className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -1178,6 +1212,34 @@ export function MasterForms({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          start(async () => {
+            if (deleteTarget.type === "vendor") {
+              await deleteVendor(deleteTarget.id);
+            } else {
+              await deleteWorker(deleteTarget.id);
+            }
+            setDeleteTarget(null);
+            router.refresh();
+          });
+        }}
+        title={deleteTarget?.type === "vendor" ? "Delete Vendor / Store" : "Delete Construction Worker"}
+        description={`Are you sure you want to delete ${deleteTarget?.name ?? "this entry"}? This action cannot be undone.`}
+        confirmText="Delete"
+        loading={pending}
+      />
+
+      <UpiPayModal
+        isOpen={showPayModal}
+        onClose={() => setShowPayModal(false)}
+        recipient={payRecipient}
+        language={language}
+      />
     </div>
   );
 }

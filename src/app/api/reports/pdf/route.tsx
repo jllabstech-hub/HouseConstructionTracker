@@ -43,6 +43,15 @@ export async function GET(request: Request) {
 
   const from = url.searchParams.get("from") ? new Date(url.searchParams.get("from")!) : undefined;
   const to = url.searchParams.get("to") ? new Date(url.searchParams.get("to")!) : undefined;
+  const categoryId = url.searchParams.get("categoryId") || undefined;
+  const categoryName = url.searchParams.get("categoryName") || undefined;
+  const vendorId = url.searchParams.get("vendorId") || undefined;
+  const vendorName = url.searchParams.get("vendorName") || undefined;
+  const workerId = url.searchParams.get("workerId") || undefined;
+  const workerName = url.searchParams.get("workerName") || undefined;
+  const stageId = url.searchParams.get("stageId") || undefined;
+  const stageName = url.searchParams.get("stageName") || undefined;
+
   const [expenses, workAreas, budgetCategories, stages] = await Promise.all([
     loadProjectExpenses(projectId, { from, to }),
     loadWorkAreas(session.user.id),
@@ -61,6 +70,14 @@ export async function GET(request: Request) {
     workAreas,
     from,
     to,
+    categoryId,
+    categoryName,
+    vendorId,
+    vendorName,
+    workerId,
+    workerName,
+    stageId,
+    stageName,
     categoryBudgets: budgetCategories.map((item) => ({
       name: item.materialCategory?.name ?? item.labourCategory?.name ?? item.expenseType,
       budget: item.amount,
@@ -78,15 +95,20 @@ export async function GET(request: Request) {
     })),
   });
 
-  const blob = await pdf(<ConstructionReportPdf data={data} />).toBlob();
-  const buffer = Buffer.from(await blob.arrayBuffer());
-  const disposition = url.searchParams.get("download") === "1" ? "attachment" : "inline";
+  try {
+    const blob = await pdf(<ConstructionReportPdf data={data} />).toBlob();
+    const buffer = Buffer.from(await blob.arrayBuffer());
+    const disposition = url.searchParams.get("download") === "1" ? "attachment" : "inline";
 
-  return new NextResponse(buffer, {
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `${disposition}; filename="${data.filename}"`,
-      "Cache-Control": "no-store",
-    },
-  });
+    return new NextResponse(buffer, {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `${disposition}; filename="${encodeURIComponent(data.filename)}"`,
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (error) {
+    console.error("PDF generation error:", error);
+    return NextResponse.json({ error: "Failed to generate report PDF" }, { status: 500 });
+  }
 }

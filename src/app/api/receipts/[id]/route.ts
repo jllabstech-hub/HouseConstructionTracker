@@ -21,11 +21,21 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
   const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
   const fullPath = path.join(root, receipt.storagePath);
-  const file = await readFile(fullPath);
-  return new NextResponse(file, {
-    headers: {
-      "Content-Type": receipt.mimeType,
-      "Content-Disposition": `inline; filename="${receipt.fileName}"`,
-    },
-  });
+
+  if (!fullPath.startsWith(root)) {
+    return NextResponse.json({ error: "Access denied" }, { status: 403 });
+  }
+
+  try {
+    const file = await readFile(fullPath);
+    return new NextResponse(file, {
+      headers: {
+        "Content-Type": receipt.mimeType,
+        "Content-Disposition": `inline; filename="${encodeURIComponent(receipt.fileName)}"`,
+        "Cache-Control": "private, max-age=3600",
+      },
+    });
+  } catch {
+    return NextResponse.json({ error: "Receipt file not found on disk" }, { status: 404 });
+  }
 }

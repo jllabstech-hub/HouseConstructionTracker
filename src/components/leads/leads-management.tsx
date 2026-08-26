@@ -12,6 +12,7 @@ import {
 import { LeadStatus } from "@prisma/client";
 import { updateLeadStatus, deleteLead } from "@/lib/actions/leads";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export type SerializedLead = {
   id: string;
@@ -44,6 +45,7 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
   const [search, setSearch] = useState("");
   const [pending, start] = useTransition();
+  const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
 
   const filtered = leads.filter((lead) => {
     if (selectedStatus !== "ALL" && lead.status !== selectedStatus) return false;
@@ -69,11 +71,7 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
   };
 
   const handleDelete = (leadId: string) => {
-    if (!confirm("Are you sure you want to delete this lead?")) return;
-    start(async () => {
-      await deleteLead(leadId);
-      setLeads((prev) => prev.filter((l) => l.id !== leadId));
-    });
+    setLeadToDelete(leadId);
   };
 
   const counts: Record<string, number> = {
@@ -247,6 +245,15 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
                       <option value="WON">Won (Started)</option>
                       <option value="LOST">Lost</option>
                     </select>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(lead.id)}
+                      className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      title="Delete lead"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -262,6 +269,23 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
           </p>
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!leadToDelete}
+        onClose={() => setLeadToDelete(null)}
+        onConfirm={() => {
+          if (!leadToDelete) return;
+          start(async () => {
+            await deleteLead(leadToDelete);
+            setLeads((prev) => prev.filter((l) => l.id !== leadToDelete));
+            setLeadToDelete(null);
+          });
+        }}
+        title="Delete Customer Lead"
+        description="Are you sure you want to delete this lead inquiry? This cannot be undone."
+        confirmText="Delete Lead"
+        loading={pending}
+      />
     </div>
   );
 }

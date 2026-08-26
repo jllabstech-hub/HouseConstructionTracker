@@ -101,8 +101,10 @@ export async function loadWorkAreas(userId: string): Promise<WorkAreaDefinition[
 }
 
 export async function getDashboardData(projectId: string, userId: string, range?: DateRange) {
-  const [project, expenses, workAreas, budgets, budgetCategories] = await Promise.all([
-    prisma.project.findFirstOrThrow({ where: { id: projectId, userId } }),
+  const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
+  if (!project) return null;
+
+  const [expenses, workAreas, budgets, budgetCategories] = await Promise.all([
     loadProjectExpenses(projectId, range),
     loadWorkAreas(userId),
     prisma.budget.findMany({ where: { projectId } }),

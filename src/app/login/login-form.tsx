@@ -67,7 +67,7 @@ export default function LoginForm() {
             name="email"
             type="text"
             required
-            defaultValue="admin"
+            defaultValue={process.env.NEXT_PUBLIC_ENABLE_DEMO === "true" ? "admin" : ""}
             placeholder="admin or user@example.com"
             autoCapitalize="none"
             autoCorrect="off"
@@ -79,7 +79,7 @@ export default function LoginForm() {
             name="password"
             type="password"
             required
-            defaultValue="test123"
+            defaultValue={process.env.NEXT_PUBLIC_ENABLE_DEMO === "true" ? "test123" : ""}
             placeholder="Password"
           />
         </Field>

@@ -8,15 +8,44 @@ export function PdfActions({
   kind,
   from,
   to,
+  categoryId,
+  categoryName,
+  vendorId,
+  vendorName,
+  workerId,
+  workerName,
+  stageId,
+  stageName,
 }: {
   projectId: string;
   kind: string;
   from?: string;
   to?: string;
+  categoryId?: string;
+  categoryName?: string;
+  vendorId?: string;
+  vendorName?: string;
+  workerId?: string;
+  workerName?: string;
+  stageId?: string;
+  stageName?: string;
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const query = new URLSearchParams({ projectId, kind, ...(from ? { from } : {}), ...(to ? { to } : {}) });
+  const query = new URLSearchParams({
+    projectId,
+    kind,
+    ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
+    ...(categoryId ? { categoryId } : {}),
+    ...(categoryName ? { categoryName } : {}),
+    ...(vendorId ? { vendorId } : {}),
+    ...(vendorName ? { vendorName } : {}),
+    ...(workerId ? { workerId } : {}),
+    ...(workerName ? { workerName } : {}),
+    ...(stageId ? { stageId } : {}),
+    ...(stageName ? { stageName } : {}),
+  });
   const previewUrl = `/api/reports/pdf?${query.toString()}`;
   const downloadUrl = `${previewUrl}&download=1`;
 

@@ -40,6 +40,8 @@ export type ExpenseRecord = {
   workerName?: string | null;
   constructionStageId?: string | null;
   constructionStageName?: string | null;
+  stageId?: string | null;
+  stageName?: string | null;
   floorId?: string | null;
   floorName?: string | null;
   paymentMethod?: string | null;

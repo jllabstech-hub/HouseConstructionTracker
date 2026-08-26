@@ -21,10 +21,19 @@ export default async function StagesOverviewPage() {
   }
 
   const [project, dbStages, rawExpenses] = await Promise.all([
-    prisma.project.findFirstOrThrow({ where: { id: projectId, userId: user.id } }),
+    prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
     prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
     loadProjectExpenses(projectId),
   ]);
+
+  if (!project) {
+    return (
+      <EmptyState
+        title="No active project"
+        body="Create or select a house project to view the construction stages."
+      />
+    );
+  }
 
   let totalProjectSpent = 0;
 
