@@ -71,40 +71,43 @@ export async function loginUser(input: { email: string; password: string }) {
     } catch {
       // ignore serialization error
     }
-    console.error("Login action caught error:", errorStr);
+    const cause = (error as { cause?: { err?: Error; message?: string } })?.cause;
+    const causeMsg = cause?.err?.message || cause?.message || "";
+    const combinedError = `${message} ${errorStr} ${causeMsg}`;
+
+    console.error("Login action caught error:", combinedError);
 
     if (
-      errorStr.includes("empty string") ||
-      errorStr.includes("nonempty URL") ||
-      errorStr.includes("DATABASE_URL") ||
-      message.includes("empty string") ||
-      message.includes("nonempty URL")
+      combinedError.includes("empty string") ||
+      combinedError.includes("nonempty URL") ||
+      combinedError.includes("DATABASE_URL")
     ) {
       return {
         error:
-          "Database connection string missing: Please add DATABASE_URL in Vercel Project Settings → Environment Variables.",
+          "Database connection string missing: Please configure DATABASE_URL in Vercel Dashboard → Settings → Environment Variables.",
+      };
+    }
+
+    if (
+      combinedError.includes("DATABASE_CONNECTION_ERROR") ||
+      combinedError.includes("connect") ||
+      combinedError.includes("relation") ||
+      combinedError.includes("does not exist") ||
+      combinedError.includes("P1001") ||
+      combinedError.includes("P2021") ||
+      combinedError.includes("PrismaClient")
+    ) {
+      return {
+        error:
+          "Database not initialized yet. Please click the auto-initialize database link below or visit /api/setup?redirect=true.",
       };
     }
 
     if (error instanceof AuthError) {
       if (error.type === "CredentialsSignin") {
-        return { error: "Invalid user ID or password" };
+        return { error: "Invalid credentials. Use User ID: admin and Password: test123" };
       }
-      if (
-        errorStr.includes("DATABASE_CONNECTION_ERROR") ||
-        errorStr.includes("connect") ||
-        errorStr.includes("relation") ||
-        errorStr.includes("does not exist") ||
-        errorStr.includes("P1001") ||
-        errorStr.includes("P2021") ||
-        errorStr.includes("PrismaClient")
-      ) {
-        return {
-          error:
-            "Database table error: The database tables have not been created yet. Please visit /api/setup or verify DATABASE_URL in Vercel.",
-        };
-      }
-      return { error: "Authentication failed. Please verify your user ID and password." };
+      return { error: "Authentication failed. Please verify your credentials or click auto-initialize database below." };
     }
 
     const digest =
@@ -116,21 +119,8 @@ export async function loginUser(input: { email: string; password: string }) {
       return { ok: true };
     }
 
-    if (
-      message.includes("DATABASE_CONNECTION_ERROR") ||
-      message.includes("connect") ||
-      message.includes("relation") ||
-      message.includes("does not exist") ||
-      message.includes("database")
-    ) {
-      return {
-        error:
-          "Database connection error. Please verify DATABASE_URL in your Vercel environment variables.",
-      };
-    }
-
     return {
-      error: "Invalid user ID or password.",
+      error: "Invalid user ID or password. Use 'admin' and 'test123'.",
     };
   }
 }
