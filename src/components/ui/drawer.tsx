@@ -46,10 +46,10 @@ export function Drawer({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-labelledby="drawer-heading">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-ink-900/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
+        className="fixed inset-0 bg-ink-900/50 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -68,14 +68,14 @@ export function Drawer({
         {/* Header */}
         <div className="flex items-start justify-between border-b border-paper-200 px-5 py-4">
           <div>
-            <h2 className="font-display text-lg font-bold text-ink-900 leading-snug">{title}</h2>
+            <h2 id="drawer-heading" className="font-display text-lg font-bold text-ink-900 leading-snug">{title}</h2>
             {subtitle && <p className="text-xs text-ink-500 mt-0.5">{subtitle}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
-            aria-label="Close"
-            className="rounded-lg p-1.5 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition"
+            aria-label="Close panel"
+            className="rounded-xl p-2 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500 min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <X className="h-5 w-5" />
           </button>

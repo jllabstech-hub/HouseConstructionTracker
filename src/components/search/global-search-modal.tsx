@@ -174,19 +174,20 @@ export function GlobalSearchModal({
     (data?.navigation && data.navigation.length > 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 md:pt-14 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 md:pt-14 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" role="dialog" aria-modal="true" aria-label="Global Project Search">
       <div
         className="relative w-full max-w-2xl rounded-3xl bg-white shadow-2xl border border-paper-200 overflow-hidden flex flex-col max-h-[88vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 1. Search Input Bar */}
         <div className="flex items-center gap-3 border-b border-paper-200 bg-white px-4 py-3.5 sm:px-5">
-          <Search className="h-5 w-5 text-clay-600 shrink-0" />
+          <Search className="h-5 w-5 text-clay-600 shrink-0" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search expenses, workers, materials, and reports"
             placeholder={
               language === "te"
                 ? "ఏదైనా అడగండి... ఉదా: painter bill report, cement, ramesh mason, stage 3..."
@@ -195,13 +196,14 @@ export function GlobalSearchModal({
             className="flex-1 bg-transparent text-sm sm:text-base font-semibold text-ink-900 placeholder:text-ink-400 focus:outline-none"
           />
 
-          {loading && <Loader2 className="h-4 w-4 text-clay-600 animate-spin shrink-0" />}
+          {loading && <Loader2 className="h-4 w-4 text-clay-600 animate-spin shrink-0" aria-hidden="true" />}
 
           {query && !loading && (
             <button
               type="button"
               onClick={() => setQuery("")}
-              className="rounded-full p-1 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition"
+              aria-label="Clear search input"
+              className="rounded-full p-2 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
               <X className="h-4 w-4" />
             </button>

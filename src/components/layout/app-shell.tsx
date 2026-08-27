@@ -433,7 +433,7 @@ export function AppShell({
 
       {/* Center + Action Sheet: Add Material | Add Labour | Other Expense */}
       {addSheetOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true" aria-labelledby="add-action-sheet-title">
           <div
             className="fixed inset-0 bg-ink-900/50 backdrop-blur-xs transition-opacity"
             onClick={() => setAddSheetOpen(false)}
@@ -443,9 +443,9 @@ export function AppShell({
           <div className="relative z-10 mt-auto flex w-full flex-col rounded-t-3xl bg-white shadow-2xl p-5 space-y-4 max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between border-b border-paper-200 pb-3">
               <div>
-                <p className="font-display text-base font-bold text-ink-900 leading-tight">
+                <h2 id="add-action-sheet-title" className="font-display text-base font-bold text-ink-900 leading-tight">
                   {language === "te" ? "ఖర్చు నమోదు చేయండి" : "What are you recording?"}
-                </p>
+                </h2>
                 <p className="text-xs text-ink-500 font-medium mt-0.5">
                   {language === "te" ? "రకం ఎంచుకోండి (సామాగ్రి లేదా కూలీలు)" : "Select expense type to record in 15 seconds"}
                 </p>
@@ -525,7 +525,7 @@ export function AppShell({
 
       {/* Mobile More Sheet / Drawer */}
       {mobileDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true" aria-labelledby="mobile-more-title">
           <div
             className="fixed inset-0 bg-ink-900/40 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileDrawerOpen(false)}
@@ -535,9 +535,9 @@ export function AppShell({
           <div className="relative z-10 mt-auto flex w-full flex-col rounded-t-3xl bg-white shadow-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
             <div className="flex items-center justify-between border-b border-paper-200 pb-3">
               <div>
-                <p className="font-display text-base font-bold text-ink-900 leading-tight">
+                <h2 id="mobile-more-title" className="font-display text-base font-bold text-ink-900 leading-tight">
                   {language === "te" ? "మరిన్ని విభాగాలు" : "More Options"}
-                </p>
+                </h2>
                 <p className="text-xs text-ink-500 font-medium">
                   {userName} · {activeProject?.name ?? "My House"}
                 </p>

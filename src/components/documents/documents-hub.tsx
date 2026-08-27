@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/language-context";
@@ -180,6 +180,24 @@ export function DocumentsHub({
   const [activeMenuDocId, setActiveMenuDocId] = useState<string | null>(null);
   const [copiedDocId, setCopiedDocId] = useState<string | null>(null);
   const [previewErrors, setPreviewErrors] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        if (lightboxDoc) {
+          setLightboxDoc(null);
+        } else if (showUploadModal || editingDoc) {
+          setShowUploadModal(false);
+          setEditingDoc(null);
+          setUploadError(null);
+        }
+      }
+    }
+    if (lightboxDoc || showUploadModal || editingDoc) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxDoc, showUploadModal, editingDoc]);
 
   const clearAllFilters = () => {
     setSearch("");
@@ -989,11 +1007,11 @@ export function DocumentsHub({
 
       {/* 5. Upload / Edit Modal */}
       {(showUploadModal || editingDoc) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
           <div className="relative w-full max-w-lg rounded-3xl border border-paper-200 bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-paper-100 pb-3">
               <div>
-                <h2 className="font-display text-lg font-bold text-ink-900">
+                <h2 id="upload-modal-title" className="font-display text-lg font-bold text-ink-900">
                   {editingDoc ? "Edit Document Details" : "Upload Document / Blueprint"}
                 </h2>
                 <p className="text-xs text-ink-500 mt-0.5">
@@ -1007,7 +1025,8 @@ export function DocumentsHub({
                   setEditingDoc(null);
                   setUploadError(null);
                 }}
-                className="rounded-xl p-1.5 text-ink-400 hover:bg-paper-100 hover:text-ink-900"
+                aria-label="Close upload dialog"
+                className="rounded-xl p-2 text-ink-400 hover:bg-paper-100 hover:text-ink-900 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1183,12 +1202,12 @@ export function DocumentsHub({
 
       {/* 6. Preview Lightbox Modal */}
       {lightboxDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn" role="dialog" aria-modal="true" aria-labelledby="lightbox-doc-title">
           <div className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl bg-stone-950 border border-stone-800 shadow-2xl flex flex-col justify-between text-white">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-stone-800 bg-stone-900/90">
               <div className="min-w-0 pr-4">
-                <h3 className="font-display text-base font-bold truncate text-white">{lightboxDoc.title}</h3>
+                <h3 id="lightbox-doc-title" className="font-display text-base font-bold truncate text-white">{lightboxDoc.title}</h3>
                 <p className="text-xs text-stone-400 truncate mt-0.5">
                   {lightboxDoc.fileName} · {formatFileSize(lightboxDoc.sizeBytes)}
                 </p>
@@ -1197,7 +1216,7 @@ export function DocumentsHub({
                 <a
                   href={lightboxDoc.storagePath.startsWith("/images/") ? lightboxDoc.storagePath : `/api/documents/${lightboxDoc.id}`}
                   download={lightboxDoc.fileName}
-                  className="inline-flex items-center gap-1 rounded-xl bg-stone-800 hover:bg-stone-700 px-3 py-1.5 text-xs font-bold text-white transition"
+                  className="inline-flex items-center gap-1 rounded-xl bg-stone-800 hover:bg-stone-700 px-3 py-1.5 text-xs font-bold text-white transition min-h-[44px]"
                 >
                   <Download className="h-3.5 w-3.5" />
                   <span>Download</span>
@@ -1205,7 +1224,8 @@ export function DocumentsHub({
                 <button
                   type="button"
                   onClick={() => setLightboxDoc(null)}
-                  className="rounded-xl bg-stone-800 hover:bg-stone-700 p-1.5 text-stone-300 hover:text-white transition"
+                  aria-label="Close document preview"
+                  className="rounded-xl bg-stone-800 hover:bg-stone-700 p-2 text-stone-300 hover:text-white transition min-h-[44px] min-w-[44px] flex items-center justify-center"
                 >
                   <X className="h-5 w-5" />
                 </button>

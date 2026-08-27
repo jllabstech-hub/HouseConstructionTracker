@@ -5,27 +5,51 @@ export function Field({
   label,
   children,
   hint,
+  error,
+  required,
 }: {
   label: React.ReactNode;
   children: React.ReactNode;
   hint?: string;
+  error?: string;
+  required?: boolean;
 }) {
   const ariaLabel = typeof label === "string" ? label : undefined;
   const control = isValidElement(children)
-    ? cloneElement(children as React.ReactElement<{ "aria-label"?: string }>, ariaLabel ? { "aria-label": ariaLabel } : {})
+    ? cloneElement(
+        children as React.ReactElement<{
+          "aria-label"?: string;
+          "aria-invalid"?: boolean;
+          "aria-required"?: boolean;
+        }>,
+        {
+          ...(ariaLabel ? { "aria-label": ariaLabel } : {}),
+          ...(error ? { "aria-invalid": true } : {}),
+          ...(required ? { "aria-required": true } : {}),
+        }
+      )
     : children;
 
   return (
     <div className="block space-y-1.5">
-      <span className="text-sm font-medium text-ink-700">{label}</span>
+      <label className="text-xs sm:text-sm font-bold text-ink-800 flex items-center justify-between">
+        <span>
+          {label} {required && <span className="text-danger" aria-hidden="true">*</span>}
+        </span>
+      </label>
       {control}
-      {hint ? <p className="text-xs text-ink-500">{hint}</p> : null}
+      {hint && !error ? <p className="text-xs text-ink-500">{hint}</p> : null}
+      {error ? (
+        <p className="text-xs font-semibold text-danger" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
 
 export const inputClass =
-  "w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-ink-900 outline-none ring-clay-500/30 placeholder:text-ink-400 focus:border-clay-500 focus:ring-4";
+  "w-full rounded-xl border border-paper-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/40 transition";
 
 export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={cn(inputClass, props.className)} />;

@@ -48,10 +48,16 @@ export function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-dialog-title"
+      aria-describedby="confirm-dialog-desc"
+    >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
+        className="fixed inset-0 bg-ink-900/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
         onClick={() => {
           if (!loading) onClose();
         }}
@@ -67,13 +73,18 @@ export function ConfirmDialog({
           <div className="flex items-center gap-3">
             <div
               className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-                variant === "danger" ? "bg-red-50 text-red-600 border border-red-100" : "bg-clay-50 text-clay-700 border border-clay-100"
+                variant === "danger"
+                  ? "bg-danger-50 text-danger border border-danger-100"
+                  : "bg-clay-50 text-clay-700 border border-clay-100"
               }`}
+              aria-hidden="true"
             >
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-serif text-base sm:text-lg font-bold text-stone-900 leading-snug">{title}</h3>
+              <h3 id="confirm-dialog-title" className="font-display text-base sm:text-lg font-bold text-ink-900 leading-snug">
+                {title}
+              </h3>
             </div>
           </div>
 
@@ -81,13 +92,16 @@ export function ConfirmDialog({
             type="button"
             onClick={onClose}
             disabled={loading}
-            className="rounded-full p-1 text-stone-400 hover:bg-stone-100 hover:text-stone-700 transition"
+            aria-label="Close dialog"
+            className="rounded-xl p-2 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500 min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <p className="text-xs sm:text-sm text-stone-600 leading-relaxed pl-1">{description}</p>
+        <p id="confirm-dialog-desc" className="text-xs sm:text-sm text-ink-600 leading-relaxed pl-1">
+          {description}
+        </p>
 
         <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-paper-100">
           <Button
@@ -95,7 +109,7 @@ export function ConfirmDialog({
             variant="secondary"
             onClick={onClose}
             disabled={loading}
-            className="px-4 text-xs font-semibold"
+            className="px-4 text-xs font-semibold min-h-[44px]"
           >
             {cancelText}
           </Button>
@@ -104,10 +118,10 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition active:scale-95 disabled:opacity-50 ${
+            className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 disabled:opacity-50 min-h-[44px] ${
               variant === "danger"
-                ? "bg-red-600 hover:bg-red-700 active:bg-red-800"
-                : "bg-clay-600 hover:bg-clay-700 active:bg-clay-800"
+                ? "bg-danger hover:bg-red-700 focus-visible:ring-red-600"
+                : "bg-clay-600 hover:bg-clay-700 focus-visible:ring-clay-500"
             }`}
           >
             {loading ? "Processing..." : confirmText}

@@ -422,62 +422,68 @@ export function ExpenseForm({
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Step 1: "What are you recording?" */}
         <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-3">
-          <label className="text-xs font-bold uppercase tracking-wider text-ink-500 block">
+          <label className="text-xs font-bold uppercase tracking-wider text-ink-500 block" id="expense-type-group-label">
             {language === "te" ? "మీరు ఏమి నమోదు చేస్తున్నారు?" : "What are you recording?"}
           </label>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5" role="radiogroup" aria-labelledby="expense-type-group-label">
             {/* Material Button */}
             <button
               type="button"
+              role="radio"
+              aria-checked={type === "MATERIAL"}
               onClick={() => {
                 setType("MATERIAL");
                 setError(null);
               }}
               className={cn(
-                "flex items-center justify-center gap-2 rounded-2xl border p-3.5 text-xs sm:text-sm font-bold transition shadow-2xs",
+                "flex items-center justify-center gap-2 rounded-2xl border p-3.5 text-xs sm:text-sm font-bold transition shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500",
                 type === "MATERIAL"
                   ? "border-clay-600 bg-clay-50/70 text-clay-900 ring-2 ring-clay-600/20"
                   : "border-paper-200 bg-paper-50 text-ink-700 hover:bg-paper-100"
               )}
             >
-              <Package className={cn("h-4 w-4", type === "MATERIAL" ? "text-clay-600" : "text-ink-400")} />
+              <Package className={cn("h-4 w-4", type === "MATERIAL" ? "text-clay-600" : "text-ink-400")} aria-hidden="true" />
               <span>{language === "te" ? "సామాగ్రి (Material)" : "Material"}</span>
             </button>
 
             {/* Labour Button */}
             <button
               type="button"
+              role="radio"
+              aria-checked={type === "LABOUR"}
               onClick={() => {
                 setType("LABOUR");
                 setError(null);
               }}
               className={cn(
-                "flex items-center justify-center gap-2 rounded-2xl border p-3.5 text-xs sm:text-sm font-bold transition shadow-2xs",
+                "flex items-center justify-center gap-2 rounded-2xl border p-3.5 text-xs sm:text-sm font-bold transition shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600",
                 type === "LABOUR"
                   ? "border-emerald-600 bg-emerald-50/70 text-emerald-900 ring-2 ring-emerald-600/20"
                   : "border-paper-200 bg-paper-50 text-ink-700 hover:bg-paper-100"
               )}
             >
-              <HardHat className={cn("h-4 w-4", type === "LABOUR" ? "text-emerald-700" : "text-ink-400")} />
+              <HardHat className={cn("h-4 w-4", type === "LABOUR" ? "text-emerald-700" : "text-ink-400")} aria-hidden="true" />
               <span>{language === "te" ? "కూలీలు (Labour)" : "Labour"}</span>
             </button>
 
             {/* Other Button */}
             <button
               type="button"
+              role="radio"
+              aria-checked={type === "OTHER"}
               onClick={() => {
                 setType("OTHER");
                 setError(null);
               }}
               className={cn(
-                "col-span-2 sm:col-span-1 flex items-center justify-center gap-2 rounded-2xl border p-3.5 text-xs sm:text-sm font-bold transition shadow-2xs",
+                "col-span-2 sm:col-span-1 flex items-center justify-center gap-2 rounded-2xl border p-3.5 text-xs sm:text-sm font-bold transition shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ink-800",
                 type === "OTHER"
                   ? "border-ink-800 bg-ink-50 text-ink-900 ring-2 ring-ink-800/20"
                   : "border-paper-200 bg-paper-50 text-ink-700 hover:bg-paper-100"
               )}
             >
-              <MoreHorizontal className={cn("h-4 w-4", type === "OTHER" ? "text-ink-800" : "text-ink-400")} />
+              <MoreHorizontal className={cn("h-4 w-4", type === "OTHER" ? "text-ink-800" : "text-ink-400")} aria-hidden="true" />
               <span>{language === "te" ? "ఇతర (Other)" : "Other"}</span>
             </button>
           </div>
