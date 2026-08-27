@@ -17,6 +17,7 @@ export async function saveExpense(input: unknown, expenseId?: string) {
   const user = await requireUser();
   const parsed = expenseSchema.safeParse(input);
   if (!parsed.success) {
+    console.error("saveExpense validation failure:", JSON.stringify(parsed.error.issues, null, 2), "Input was:", JSON.stringify(input, null, 2));
     return { error: parsed.error.issues[0]?.message ?? "Please check the expense details" };
   }
 

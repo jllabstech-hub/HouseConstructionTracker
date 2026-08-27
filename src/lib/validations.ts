@@ -1,14 +1,23 @@
 import { z } from "zod";
 import { parseMoneyInput, toDecimal } from "@/lib/money";
 
-const optionalText = z.string().trim().optional().or(z.literal(""));
+const optionalText = z
+  .union([z.string(), z.number(), z.null(), z.undefined()])
+  .transform((val) => {
+    if (val === null || val === undefined) return undefined;
+    const str = String(val).trim();
+    return str.length > 0 ? str : undefined;
+  });
+
 const requiredDate = z.string().min(1, "Date is required");
 
 function moneyField(label: string, { allowEmpty = false, allowZero = false } = {}) {
   return z
-    .string()
-    .optional()
-    .transform((value) => (value ?? "").trim())
+    .union([z.string(), z.number(), z.null(), z.undefined()])
+    .transform((value) => {
+      if (value === null || value === undefined) return "";
+      return String(value).trim();
+    })
     .superRefine((value, ctx) => {
       if (!value) {
         if (allowEmpty) return;
