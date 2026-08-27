@@ -6,7 +6,7 @@ import { formatINR } from "@/lib/money";
 export function AnimatedNumber({
   value,
   format = "inr",
-  duration = 800,
+  duration = 350,
 }: {
   value: number;
   format?: "inr" | "percent" | "raw";
@@ -32,7 +32,7 @@ export function AnimatedNumber({
     const step = (timestamp: number) => {
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-      // Ease-out cubic
+      // Ease-out cubic for smooth, natural deceleration without bouncing
       const easeOut = 1 - Math.pow(1 - progress, 3);
       const current = startValue + (value - startValue) * easeOut;
 
