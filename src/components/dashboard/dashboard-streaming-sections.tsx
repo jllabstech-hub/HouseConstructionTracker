@@ -1,13 +1,25 @@
+import dynamic from "next/dynamic";
 import {
   getMonthlyTrendOptimized,
   getTopCategoriesAndAlertsOptimized,
   getConstructionProgressSummary,
   getRecentExpensesOptimized,
 } from "@/lib/finance/financial-aggregates";
-import { MonthlyChart } from "@/components/charts/finance-charts";
 import { TopExpensesAndAlerts } from "@/components/dashboard/top-expenses";
 import { ConstructionProgressCard } from "@/components/dashboard/construction-progress-card";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
+
+// Lazy-load recharts chunk asynchronously into a separate bundle chunk
+const MonthlyChart = dynamic(
+  () => import("@/components/charts/finance-charts").then((mod) => mod.MonthlyChart),
+  {
+    loading: () => (
+      <div className="h-[280px] w-full animate-pulse bg-paper-100/60 rounded-xl flex items-center justify-center text-xs text-ink-400 font-medium">
+        Loading chart...
+      </div>
+    ),
+  }
+);
 
 export async function DashboardMonthlySection({ projectId }: { projectId: string }) {
   const monthly = await getMonthlyTrendOptimized(projectId);
