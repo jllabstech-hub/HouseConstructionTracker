@@ -51,15 +51,19 @@ export function StagesTable({ stages }: { stages: StageRow[] }) {
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-20 sm:w-28 h-2 rounded-full bg-paper-200 overflow-hidden">
-                      <div
-                        className="h-full bg-clay-600 rounded-full"
-                        style={{ width: `${stage.percentageComplete}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-ink-700">{stage.percentageComplete}%</span>
-                  </div>
+                    {stage.percentageComplete > 0 || stage.status !== "NOT_STARTED" ? (
+                      <>
+                        <div className="w-16 sm:w-24 h-2 rounded-full bg-paper-200 overflow-hidden">
+                          <div
+                            className="h-full bg-clay-600 rounded-full"
+                            style={{ width: `${stage.percentageComplete}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-ink-700">{stage.percentageComplete}%</span>
+                      </>
+                    ) : (
+                      <span className="text-[11px] font-medium text-ink-400 italic">Progress not updated</span>
+                    )}
                 </td>
                 <td className="px-4 py-3 text-right font-bold text-clay-700 text-xs">
                   {stage.spend}

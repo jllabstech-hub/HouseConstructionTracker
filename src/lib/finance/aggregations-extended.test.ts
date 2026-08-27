@@ -4,6 +4,12 @@ import {
   getCategoryTotal,
   getTypeTotals,
   getStageTotal,
+  getVendorTotal,
+  getWorkerTotal,
+  getFloorTotal,
+  getBudgetVariance,
+  getRemainingBudget,
+  getBudgetPercentage,
   type ExpenseRecord,
 } from "@/lib/finance/aggregations";
 import { formatINR } from "@/lib/money";
@@ -70,6 +76,16 @@ describe("Decimal Financial Precision & Non-Inferrable Progress", () => {
 
     expect(sampleDbStage.percentageComplete).toBe(65);
     expect(sampleDbStage.percentageComplete).not.toBe(100);
+
+    // Unrecorded progress state
+    const unrecordedStage = {
+      id: "stage-unstarted",
+      name: "Painting",
+      status: "NOT_STARTED",
+      percentageComplete: 0,
+    };
+    const isProgressUpdated = unrecordedStage.percentageComplete > 0 || unrecordedStage.status !== "NOT_STARTED";
+    expect(isProgressUpdated).toBe(false);
   });
 
   it("enforces strict separation between Material, Labour, and Service expenses", () => {
@@ -79,12 +95,16 @@ describe("Decimal Financial Precision & Non-Inferrable Progress", () => {
         expenseType: "MATERIAL",
         amount: 100000,
         materialCategoryId: "cement",
+        vendorId: "vendor-sri-balaji",
+        floorId: "floor-ground",
       },
       {
         date: "2026-08-01",
         expenseType: "LABOUR",
         amount: 40000,
         labourCategoryId: "mason",
+        workerId: "worker-ramesh",
+        floorId: "floor-ground",
       },
       {
         date: "2026-08-01",
@@ -103,5 +123,27 @@ describe("Decimal Financial Precision & Non-Inferrable Progress", () => {
     // Ensure material lookup doesn't accidentally pick up labour with similar name or id
     expect(getCategoryTotal(mixedExpenses, "cement", "MATERIAL").toNumber()).toBe(100000);
     expect(getCategoryTotal(mixedExpenses, "cement", "LABOUR").toNumber()).toBe(0);
+
+    // Vendor and worker totals
+    expect(getVendorTotal(mixedExpenses, "vendor-sri-balaji").toNumber()).toBe(100000);
+    expect(getWorkerTotal(mixedExpenses, "worker-ramesh").toNumber()).toBe(40000);
+    expect(getFloorTotal(mixedExpenses, "floor-ground").toNumber()).toBe(140000);
+  });
+
+  it("calculates budget variance, remaining and percentage with Decimal precision", () => {
+    const budget = 4000000;
+    const spent = 2500000;
+    const variance = getBudgetVariance(budget, spent);
+    expect(variance.remaining.toNumber()).toBe(1500000);
+    expect(variance.isOver).toBe(false);
+    expect(getBudgetPercentage(budget, spent).toString()).toBe("62.5");
+    expect(getRemainingBudget(budget, spent).toNumber()).toBe(1500000);
+
+    // Over-budget scenario
+    const overSpent = 4500000;
+    const overVariance = getBudgetVariance(budget, overSpent);
+    expect(overVariance.isOver).toBe(true);
+    expect(overVariance.remaining.toNumber()).toBe(-500000);
+    expect(overVariance.variance.toNumber()).toBe(500000);
   });
 });

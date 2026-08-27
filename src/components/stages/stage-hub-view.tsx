@@ -366,16 +366,24 @@ export function StageHubView({
                           </p>
                         </div>
 
-                        <div className="hidden sm:block w-16">
-                          <div className="text-[10px] text-ink-500 font-medium mb-0.5">
-                            {stage.percentageComplete}%
-                          </div>
-                          <div className="h-1.5 w-full rounded-full bg-paper-100 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-clay-600"
-                              style={{ width: `${stage.percentageComplete}%` }}
-                            />
-                          </div>
+                        <div className="hidden sm:block w-20">
+                          {stage.percentageComplete > 0 || stage.status !== "NOT_STARTED" ? (
+                            <>
+                              <div className="text-[10px] text-ink-500 font-medium mb-0.5">
+                                {stage.percentageComplete}%
+                              </div>
+                              <div className="h-1.5 w-full rounded-full bg-paper-100 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-clay-600"
+                                  style={{ width: `${stage.percentageComplete}%` }}
+                                />
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-[10px] font-medium text-ink-400 italic">
+                              {language === "te" ? "నవీకరించబడలేదు" : "Not updated"}
+                            </span>
+                          )}
                         </div>
 
                         <Link
