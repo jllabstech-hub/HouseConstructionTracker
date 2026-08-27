@@ -14,8 +14,9 @@ import {
   Plus,
   Receipt,
   RotateCcw,
+  Trash2,
 } from "lucide-react";
-import { saveExpense } from "@/lib/actions/expenses";
+import { saveExpense, deleteExpense } from "@/lib/actions/expenses";
 import { uploadReceipt } from "@/lib/actions/receipts";
 import { computeLabourAmount, computeMaterialAmount } from "@/lib/finance/aggregations";
 import { formatINR, parseMoneyInput } from "@/lib/money";
@@ -28,6 +29,7 @@ import { useLanguage } from "@/context/language-context";
 import { Button } from "@/components/ui/button";
 import { Field, Select, TextInput } from "@/components/ui/fields";
 import { FileDropzone } from "@/components/ui/file-dropzone";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 
 type Option = { id: string; name: string; groupName?: string; type?: string; phone?: string | null };
@@ -97,6 +99,7 @@ export function ExpenseForm({
   const { language, t, getStageName } = useLanguage();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Success State for 1-tap fast workflows
   const [savedSuccess, setSavedSuccess] = useState<{ id: string; amount: number; title: string } | null>(null);
@@ -820,19 +823,61 @@ export function ExpenseForm({
             </p>
           </div>
 
-          <Button
-            type="submit"
-            disabled={pending || computedTotal <= 0}
-            className="min-w-36 rounded-xl bg-clay-600 px-6 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 transition"
-          >
-            {pending
-              ? (language === "te" ? "భద్రపరుస్తోంది..." : "Saving...")
-              : expenseId
-              ? (language === "te" ? "సవరణలు భద్రపరచండి" : "Save Changes")
-              : (language === "te" ? "ఖర్చు భద్రపరచండి" : "Save Expense")}
-          </Button>
+          <div className="flex items-center gap-2">
+            {expenseId && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={pending}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 px-3.5 py-2 text-xs font-bold text-red-700 transition"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>{language === "te" ? "తొలగించు" : "Delete"}</span>
+              </button>
+            )}
+
+            <Button
+              type="submit"
+              disabled={pending || computedTotal <= 0}
+              className="min-w-36 rounded-xl bg-clay-600 px-6 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 transition"
+            >
+              {pending
+                ? (language === "te" ? "భద్రపరుస్తోంది..." : "Saving...")
+                : expenseId
+                ? (language === "te" ? "సవరణలు భద్రపరచండి" : "Save Changes")
+                : (language === "te" ? "ఖర్చు భద్రపరచండి" : "Save Expense")}
+            </Button>
+          </div>
         </div>
       </div>
+
+      {expenseId && (
+        <ConfirmDialog
+          open={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={() => {
+            start(async () => {
+              const res = await deleteExpense(projectId, expenseId);
+              if ("error" in res && res.error) {
+                setError(res.error);
+                setShowDeleteConfirm(false);
+                return;
+              }
+              setShowDeleteConfirm(false);
+              router.push("/expenses");
+              router.refresh();
+            });
+          }}
+          title={language === "te" ? "ఈ ఖర్చును తొలగించాలా?" : "Delete Expense Record?"}
+          description={
+            language === "te"
+              ? "మీరు ఖచ్చితంగా ఈ ఖర్చును శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేరు."
+              : "Are you sure you want to delete this expense record? This action cannot be undone."
+          }
+          confirmText={pending ? "Deleting..." : (language === "te" ? "శాశ్వతంగా తొలగించు" : "Delete Expense")}
+          variant="danger"
+        />
+      )}
     </form>
   );
 }

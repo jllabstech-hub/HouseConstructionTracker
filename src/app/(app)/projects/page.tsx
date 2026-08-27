@@ -1,27 +1,32 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth-guard";
+import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
 import { formatINR } from "@/lib/money";
 import { getProjectsSummaryBatch } from "@/lib/finance/financial-aggregates";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ProjectCardActions } from "@/components/projects/project-card-actions";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
   const user = await requireUser();
-  const projects = await prisma.project.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-  });
+  const [projects, activeProjectId] = await Promise.all([
+    prisma.project.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+    }),
+    getActiveProjectId(user.id),
+  ]);
 
   const projectIds = projects.map((p) => p.id);
   const summaryMap = await getProjectsSummaryBatch(projectIds);
 
   const cards = projects.map((project) => {
     const totals = summaryMap.get(project.id) ?? { total: 0, MATERIAL: 0, LABOUR: 0, OTHER: 0 };
-    return { project, totals };
+    return { project, totals, isActive: project.id === activeProjectId };
   });
 
   return (
@@ -36,12 +41,19 @@ export default async function ProjectsPage() {
         }
       />
       <div className="grid gap-4 md:grid-cols-2">
-        {cards.map(({ project, totals }) => (
-          <Card key={project.id}>
+        {cards.map(({ project, totals, isActive }) => (
+          <Card key={project.id} className={isActive ? "border-clay-400 bg-clay-50/10" : ""}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="font-display text-xl font-bold">{project.name}</h2>
-                <p className="text-sm text-ink-500">{project.location}</p>
+                <div className="flex items-center gap-2">
+                  <h2 className="font-display text-xl font-bold">{project.name}</h2>
+                  {isActive && (
+                    <span className="rounded-full bg-clay-600 px-2 py-0.5 text-[10px] font-extrabold text-white uppercase tracking-wider">
+                      Active House
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-ink-500">{project.location || "No location set"}</p>
               </div>
               <Badge>{project.status.replaceAll("_", " ")}</Badge>
             </div>
@@ -63,11 +75,11 @@ export default async function ProjectsPage() {
                 <dd className="font-semibold text-ink-900">{formatINR(totals.LABOUR)}</dd>
               </div>
             </dl>
-            <div className="mt-4 flex gap-3 text-sm font-semibold text-clay-700">
-              <Link href={`/projects/${project.id}`} className="hover:underline">Overview</Link>
-              <Link href={`/projects/${project.id}/stages`} className="hover:underline">Stages</Link>
-              <Link href={`/projects/${project.id}/floors`} className="hover:underline">Floors</Link>
-            </div>
+            <ProjectCardActions
+              projectId={project.id}
+              projectName={project.name}
+              isActive={isActive}
+            />
           </Card>
         ))}
       </div>

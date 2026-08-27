@@ -1,10 +1,12 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createFloor, createStage, deleteFloor, updateStage } from "@/lib/actions/projects";
+import { createFloor, createStage, deleteFloor, deleteStage, updateStage } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
 import { Field, Select, TextInput } from "@/components/ui/fields";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Trash2 } from "lucide-react";
 
 export function FloorManager({
   projectId,
@@ -15,6 +17,16 @@ export function FloorManager({
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    start(async () => {
+      await deleteFloor(projectId, deleteTarget.id);
+      setDeleteTarget(null);
+      router.refresh();
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -31,26 +43,34 @@ export function FloorManager({
           });
         }}
       >
-        <TextInput name="name" placeholder="Floor name" required />
-        <Button type="submit" disabled={pending}>Add floor</Button>
+        <TextInput name="name" placeholder="Floor name (e.g. Ground Floor, 1st Floor)" required />
+        <Button type="submit" disabled={pending} className="bg-clay-600 hover:bg-clay-700">Add floor</Button>
       </form>
-      <ul className="divide-y divide-paper-200 rounded-2xl bg-white">
+      <ul className="divide-y divide-paper-200 rounded-2xl bg-white border border-paper-200 shadow-xs">
         {floors.map((floor) => (
-          <li key={floor.id} className="flex items-center justify-between px-4 py-3">
-            <span>{floor.name}</span>
+          <li key={floor.id} className="flex items-center justify-between px-4 py-3 text-sm">
+            <span className="font-semibold text-ink-900">{floor.name}</span>
             <button
               type="button"
-              className="text-sm text-red-700"
-              onClick={() => start(async () => {
-                await deleteFloor(projectId, floor.id);
-                router.refresh();
-              })}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-800 p-1 rounded-lg hover:bg-red-50 transition"
+              onClick={() => setDeleteTarget({ id: floor.id, name: floor.name })}
             >
-              Remove
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Remove</span>
             </button>
           </li>
         ))}
       </ul>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Remove Floor?"
+        description={`Are you sure you want to remove "${deleteTarget?.name}"?`}
+        confirmText={pending ? "Removing..." : "Remove Floor"}
+        variant="danger"
+      />
     </div>
   );
 }
@@ -70,11 +90,21 @@ export function StageManager({
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+
+  const handleDelete = () => {
+    if (!deleteTarget) return;
+    start(async () => {
+      await deleteStage(projectId, deleteTarget.id);
+      setDeleteTarget(null);
+      router.refresh();
+    });
+  };
 
   return (
     <div className="space-y-6">
       <form
-        className="grid gap-3 rounded-2xl bg-white p-4 sm:grid-cols-4"
+        className="grid gap-3 rounded-2xl bg-white p-4 sm:grid-cols-4 border border-paper-200 shadow-xs"
         onSubmit={(event) => {
           event.preventDefault();
           const formElement = event.currentTarget;
@@ -98,14 +128,14 @@ export function StageManager({
           ))}
         </Select>
         <TextInput name="percentageComplete" type="number" min={0} max={100} defaultValue="0" />
-        <Button type="submit" disabled={pending}>Add stage</Button>
+        <Button type="submit" disabled={pending} className="bg-clay-600 hover:bg-clay-700">Add stage</Button>
       </form>
 
       <div className="space-y-3">
         {stages.map((stage) => (
           <form
             key={stage.id}
-            className="grid gap-2 rounded-2xl bg-white p-4 md:grid-cols-[1.4fr_1fr_90px_auto]"
+            className="grid gap-2 rounded-2xl bg-white p-4 md:grid-cols-[1.4fr_1fr_90px_auto_auto] items-end border border-paper-200 shadow-xs"
             onSubmit={(event) => {
               event.preventDefault();
               const form = new FormData(event.currentTarget);
@@ -131,10 +161,29 @@ export function StageManager({
             <Field label="%">
               <TextInput name="percentageComplete" type="number" min={0} max={100} defaultValue={String(stage.percentageComplete)} />
             </Field>
-            <Button type="submit" disabled={pending} className="self-end">Save</Button>
+            <Button type="submit" disabled={pending} className="self-end bg-clay-600 hover:bg-clay-700">Save</Button>
+            <button
+              type="button"
+              onClick={() => setDeleteTarget({ id: stage.id, name: stage.name })}
+              disabled={pending}
+              className="self-end p-2 text-ink-400 hover:text-red-700 hover:bg-red-50 rounded-xl transition"
+              title="Delete Stage"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
           </form>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Delete Construction Stage?"
+        description={`Are you sure you want to delete "${deleteTarget?.name}"?`}
+        confirmText={pending ? "Deleting..." : "Delete Stage"}
+        variant="danger"
+      />
     </div>
   );
 }

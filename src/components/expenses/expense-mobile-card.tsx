@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { formatINR } from "@/lib/money";
 import { useLanguage } from "@/context/language-context";
-import { Package, HardHat, MoreHorizontal } from "lucide-react";
+import { Package, HardHat, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 export type ExpenseRowData = {
   id: string;
@@ -22,7 +22,13 @@ export type ExpenseRowData = {
   receiptCount: number;
 };
 
-export function ExpenseMobileCard({ expense }: { expense: ExpenseRowData }) {
+export function ExpenseMobileCard({
+  expense,
+  onDelete,
+}: {
+  expense: ExpenseRowData;
+  onDelete?: (expense: ExpenseRowData) => void;
+}) {
   const { language } = useLanguage();
 
   const isMaterial = expense.type === "MATERIAL";
@@ -74,12 +80,26 @@ export function ExpenseMobileCard({ expense }: { expense: ExpenseRowData }) {
           )}
         </div>
 
-        <Link
-          href={`/expenses/${expense.id}`}
-          className="font-semibold text-clay-600 hover:text-clay-800"
-        >
-          {language === "te" ? "సవరించు" : "Edit"}
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/expenses/${expense.id}`}
+            className="inline-flex items-center gap-1 font-semibold text-clay-600 hover:text-clay-800"
+          >
+            <Pencil className="h-3 w-3" />
+            <span>{language === "te" ? "సవరించు" : "Edit"}</span>
+          </Link>
+
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(expense)}
+              className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800"
+            >
+              <Trash2 className="h-3 w-3" />
+              <span>{language === "te" ? "తొలగించు" : "Delete"}</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

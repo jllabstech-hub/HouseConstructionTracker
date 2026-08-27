@@ -194,3 +194,43 @@ export async function createStage(projectId: string, input: unknown) {
   revalidatePath("/projects");
   return { ok: true };
 }
+
+export async function deleteStage(projectId: string, stageId: string) {
+  const user = await requireUser();
+  await requireProject(projectId, user.id);
+  await prisma.constructionStage.delete({ where: { id: stageId } });
+  revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}/stages`);
+  revalidatePath("/stages");
+  return { ok: true };
+}
+
+export async function deleteProject(projectId: string) {
+  try {
+    const user = await requireUser();
+    await requireProject(projectId, user.id);
+
+    // Delete the project (cascades to stages, expenses, documents, floors, budgets)
+    await prisma.project.delete({ where: { id: projectId } });
+
+    // Find remaining projects for user
+    const remaining = await prisma.project.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (remaining.length > 0) {
+      await setActiveProjectId(remaining[0].id);
+    }
+
+    revalidatePath("/");
+    revalidatePath("/dashboard");
+    revalidatePath("/projects");
+    revalidatePath("/settings");
+    return { ok: true };
+  } catch (error: unknown) {
+    console.error("deleteProject error:", error);
+    return { error: error instanceof Error ? error.message : "Failed to delete house project" };
+  }
+}
+
