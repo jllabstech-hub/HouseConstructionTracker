@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function NewExpensePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ stageId?: string; description?: string; amount?: string }>;
+  searchParams?: Promise<{ stageId?: string; description?: string; amount?: string; type?: string }>;
 }) {
   const user = await requireUser();
   const projectId = await getActiveProjectId(user.id);
@@ -26,6 +26,7 @@ export default async function NewExpensePage({
         constructionStageId: params.stageId ?? "",
         description: params.description ?? "",
         amount: params.amount ?? "",
+        expenseType: params.type ?? "MATERIAL",
       }}
       materials={masters.materials}
       labours={masters.labours}

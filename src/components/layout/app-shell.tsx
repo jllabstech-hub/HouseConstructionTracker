@@ -9,10 +9,13 @@ import {
   FileText,
   Files,
   Globe,
+  HardHat,
   Home,
   LogOut,
   Menu,
   Milestone,
+  MoreHorizontal,
+  Package,
   Plus,
   Receipt,
   Search,
@@ -41,6 +44,7 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [, start] = useTransition();
   const { language, setLanguage, toggleLanguage, t } = useLanguage();
@@ -105,7 +109,7 @@ export function AppShell({
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-paper-300 bg-paper-50 text-ink-700 hover:bg-paper-100 transition active:scale-95 shadow-2xs"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-paper-300 bg-paper-50 text-ink-700 hover:bg-paper-100 transition active:scale-95 shadow-2xs"
             title="Search / ఏదైనా వెతకండి (Ctrl+K)"
             aria-label="Search"
           >
@@ -116,7 +120,7 @@ export function AppShell({
           <button
             type="button"
             onClick={toggleLanguage}
-            className="flex items-center gap-1 rounded-lg border border-paper-300 bg-paper-50 px-2 py-1 text-xs font-bold text-ink-700 hover:bg-paper-100 transition active:scale-95"
+            className="flex h-9 items-center gap-1 rounded-xl border border-paper-300 bg-paper-50 px-2.5 text-xs font-bold text-ink-700 hover:bg-paper-100 transition active:scale-95 shadow-2xs"
             title="Change language / భాష మార్చండి"
           >
             <Globe className="h-3.5 w-3.5 text-clay-600" />
@@ -126,11 +130,11 @@ export function AppShell({
           {/* More Menu Toggle */}
           <button
             type="button"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-paper-200 bg-paper-50 text-ink-700 hover:bg-paper-100 transition"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-paper-200 bg-paper-50 text-ink-700 hover:bg-paper-100 transition shadow-2xs"
             onClick={() => setMobileDrawerOpen(true)}
             aria-label="Open menu"
           >
-            <Menu className="h-4 w-4" />
+            <Menu className="h-4.5 w-4.5" />
           </button>
         </div>
       </header>
@@ -149,42 +153,46 @@ export function AppShell({
                 <h1 className="font-display text-sm font-bold text-ink-900 tracking-tight leading-tight">
                   {language === "te" ? "హౌస్ కన్‌స్ట్రక్షన్" : "HOUSE CONSTRUCTION"}
                 </h1>
-                <p className="text-[11px] text-ink-500 font-medium">
-                  {language === "te" ? "ఖర్చుల లెక్కల పుస్తకం" : "Tracker & Budget"}
-                </p>
+                <p className="text-[10px] text-ink-400 font-medium">Tracker & Budget</p>
               </div>
             </div>
+          </div>
 
-            {/* Compact Project Switcher */}
-            <div className="mt-3">
-              {projects.length > 1 ? (
-                <div className="relative">
-                  <select
-                    className="w-full appearance-none rounded-xl border border-paper-200 bg-paper-50 px-3 py-1.5 text-xs font-semibold text-ink-800 pr-7 focus:border-clay-500 focus:outline-none"
-                    value={activeProjectId ?? ""}
-                    onChange={(e) => {
-                      const id = e.target.value;
-                      start(() => void switchProject(id));
-                    }}
-                  >
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-2.5 top-2.5 h-3.5 w-3.5 text-ink-400" />
-                </div>
-              ) : (
-                <div className="rounded-xl border border-paper-200 bg-paper-50/70 px-3 py-1.5 text-xs font-semibold text-ink-800 truncate">
-                  {activeProject?.name ?? (language === "te" ? "నా ఇల్లు" : "My House")}
-                </div>
-              )}
+          {/* Project Switcher Dropdown */}
+          <div className="mb-4">
+            <label className="sr-only" htmlFor="desktop-project-select">
+              Select Active House Project
+            </label>
+            <div className="relative">
+              <select
+                id="desktop-project-select"
+                aria-label="Select Active House Project"
+                className="w-full appearance-none rounded-xl border border-paper-200 bg-paper-50/80 px-2.5 py-1.5 pr-7 text-xs font-semibold text-ink-800 hover:bg-paper-100 focus:border-clay-500 focus:outline-none transition cursor-pointer"
+                value={activeProjectId ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === "new") {
+                    window.location.href = "/projects/new";
+                  } else if (val) {
+                    start(async () => {
+                      await switchProject(val);
+                    });
+                  }
+                }}
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+                <option value="new">+ Create New Project...</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
             </div>
           </div>
 
           {/* Primary Navigation Links */}
-          <nav className="flex-1 space-y-1 px-1" aria-label="Main Navigation">
+          <nav className="space-y-1 flex-1 overflow-y-auto pr-1 scrollbar-thin" aria-label="Primary Navigation">
             {primaryNav.map((item) => {
               const Icon = item.icon;
               return (
@@ -192,28 +200,31 @@ export function AppShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "group flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition",
+                    "flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-semibold transition group",
                     item.active
-                      ? "bg-clay-600 text-white shadow-xs"
-                      : "text-ink-700 hover:bg-paper-100 hover:text-ink-900"
+                      ? "bg-clay-600 text-white shadow-xs font-bold"
+                      : "text-ink-600 hover:bg-paper-100 hover:text-ink-900"
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 shrink-0", item.active ? "text-white" : "text-ink-500 group-hover:text-ink-900")} />
+                  <Icon
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition",
+                      item.active ? "text-white" : "text-ink-400 group-hover:text-clay-600"
+                    )}
+                  />
                   <span className="truncate">{item.label}</span>
                 </Link>
               );
             })}
 
-            {/* Divider */}
+            {/* Subtle Divider */}
             <div className="pt-3 pb-1">
-              <div className="border-t border-paper-200/80 px-2 pt-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-ink-400">
-                  {language === "te" ? "మరిన్ని" : "More"}
-                </span>
-              </div>
+              <span className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-ink-400">
+                {language === "te" ? "మరిన్ని" : "More"}
+              </span>
             </div>
 
-            {/* Secondary Links */}
+            {/* More Links */}
             {moreNav.map((item) => {
               const Icon = item.icon;
               return (
@@ -221,28 +232,33 @@ export function AppShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "group flex items-center gap-3 rounded-xl px-3 py-2 text-xs font-semibold transition",
+                    "flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-semibold transition group",
                     item.active
-                      ? "bg-clay-600 text-white shadow-xs"
-                      : "text-ink-700 hover:bg-paper-100 hover:text-ink-900"
+                      ? "bg-clay-600 text-white shadow-xs font-bold"
+                      : "text-ink-600 hover:bg-paper-100 hover:text-ink-900"
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 shrink-0", item.active ? "text-white" : "text-ink-500 group-hover:text-ink-900")} />
+                  <Icon
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition",
+                      item.active ? "text-white" : "text-ink-400 group-hover:text-clay-600"
+                    )}
+                  />
                   <span className="truncate">{item.label}</span>
                 </Link>
               );
             })}
           </nav>
 
-          {/* Desktop Language Switcher & Profile Footer */}
-          <div className="border-t border-paper-200 pt-3 px-1 space-y-2.5">
-            {/* Language Toggle */}
-            <div className="flex items-center justify-between rounded-xl bg-paper-100 p-1 border border-paper-200/80">
-              <span className="flex items-center gap-1.5 px-2 text-[11px] font-bold text-ink-600">
+          {/* Desktop Footer (Language Toggle + User info + Sign Out) */}
+          <div className="pt-3 border-t border-paper-200/80 space-y-2">
+            {/* Language Switcher */}
+            <div className="flex items-center justify-between rounded-xl bg-paper-100 p-1 border border-paper-200">
+              <span className="text-[10px] font-bold text-ink-500 uppercase tracking-wider pl-1.5 flex items-center gap-1">
                 <Globe className="h-3 w-3 text-clay-600" />
-                {language === "te" ? "భాష" : "Lang"}:
+                <span>Lang:</span>
               </span>
-              <div className="flex gap-1">
+              <div className="flex gap-0.5">
                 <button
                   type="button"
                   onClick={() => setLanguage("en")}
@@ -341,13 +357,13 @@ export function AppShell({
           </header>
 
           {/* Main Content Viewport */}
-          <main className="px-4 py-5 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto pb-24 lg:pb-12">
+          <main className="px-3 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto pb-24 lg:pb-12">
             {children}
           </main>
         </div>
       </div>
 
-      {/* Mobile Fixed 5-Item Bottom Bar */}
+      {/* Mobile Fixed 5-Item Bottom Bar: Home | Expenses | + | Reports | More */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-paper-300 bg-white/98 px-2 py-1.5 backdrop-blur lg:hidden shadow-lg"
         aria-label="Mobile Bottom Navigation"
@@ -356,11 +372,11 @@ export function AppShell({
         <Link
           href="/dashboard"
           className={cn(
-            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition",
+            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
             isHomeActive ? "text-clay-600" : "text-ink-500 hover:text-ink-800"
           )}
         >
-          <Home className="h-4.5 w-4.5" />
+          <Home className="h-5 w-5" />
           <span>{t.nav?.overview ?? "Home"}</span>
         </Link>
 
@@ -368,33 +384,34 @@ export function AppShell({
         <Link
           href="/expenses"
           className={cn(
-            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition",
+            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
             isExpensesActive ? "text-clay-600" : "text-ink-500 hover:text-ink-800"
           )}
         >
-          <Receipt className="h-4.5 w-4.5" />
+          <Receipt className="h-5 w-5" />
           <span>{t.nav?.expenses ?? "Expenses"}</span>
         </Link>
 
-        {/* 3. Center Prominent Plus Action */}
-        <Link
-          href="/expenses/new"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-clay-600 text-white shadow-md hover:bg-clay-700 active:scale-95 transition -mt-4 border-2 border-white"
+        {/* 3. Center Prominent Plus Action (Opens Quick Add Sheet) */}
+        <button
+          type="button"
+          onClick={() => setAddSheetOpen(true)}
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-clay-600 text-white shadow-lg hover:bg-clay-700 active:scale-95 transition -mt-5 border-2 border-white ring-2 ring-clay-600/20"
           title={t.nav?.addExpense ?? "+ Add Expense"}
           aria-label={t.nav?.addExpense ?? "Add Expense"}
         >
           <Plus className="h-6 w-6 stroke-[2.5]" />
-        </Link>
+        </button>
 
         {/* 4. Reports */}
         <Link
           href="/reports"
           className={cn(
-            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition",
+            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
             isReportsActive ? "text-clay-600" : "text-ink-500 hover:text-ink-800"
           )}
         >
-          <FileText className="h-4.5 w-4.5" />
+          <FileText className="h-5 w-5" />
           <span>{t.nav?.reports ?? "Reports"}</span>
         </Link>
 
@@ -403,15 +420,107 @@ export function AppShell({
           type="button"
           onClick={() => setMobileDrawerOpen(true)}
           className={cn(
-            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition",
+            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
             mobileDrawerOpen ? "text-clay-600" : "text-ink-500 hover:text-ink-800"
           )}
           aria-label="More Options"
         >
-          <Menu className="h-4.5 w-4.5" />
+          <Menu className="h-5 w-5" />
           <span>{language === "te" ? "మరిన్ని" : "More"}</span>
         </button>
       </nav>
+
+      {/* Center + Action Sheet: Add Material | Add Labour | Other Expense */}
+      {addSheetOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true">
+          <div
+            className="fixed inset-0 bg-ink-900/50 backdrop-blur-xs transition-opacity"
+            onClick={() => setAddSheetOpen(false)}
+            aria-hidden="true"
+          />
+
+          <div className="relative z-10 mt-auto flex w-full flex-col rounded-t-3xl bg-white shadow-2xl p-5 space-y-4 max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
+            <div className="flex items-center justify-between border-b border-paper-200 pb-3">
+              <div>
+                <p className="font-display text-base font-bold text-ink-900 leading-tight">
+                  {language === "te" ? "ఖర్చు నమోదు చేయండి" : "What are you recording?"}
+                </p>
+                <p className="text-xs text-ink-500 font-medium mt-0.5">
+                  {language === "te" ? "రకం ఎంచుకోండి (సామాగ్రి లేదా కూలీలు)" : "Select expense type to record in 15 seconds"}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAddSheetOpen(false)}
+                className="rounded-xl p-2 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition"
+                aria-label="Close add menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* 3 Quick Selection Cards */}
+            <div className="space-y-2.5">
+              {/* Option 1: Add Material */}
+              <Link
+                href="/expenses/new?type=MATERIAL"
+                onClick={() => setAddSheetOpen(false)}
+                className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-4 hover:bg-amber-100/60 active:scale-[0.98] transition group"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs group-hover:scale-105 transition">
+                  <Package className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-amber-950">
+                    {language === "te" ? "📦 సామాగ్రి కొనుగోలు (Material)" : "📦 Add Material"}
+                  </p>
+                  <p className="text-xs text-amber-800/90 mt-0.5">
+                    {language === "te" ? "సిమెంట్, స్టీల్, ఇసుక, ఇటుకలు, టైల్స్, మొదలైనవి" : "Cement, Steel, Sand, Bricks, Tiles, Electrical"}
+                  </p>
+                </div>
+              </Link>
+
+              {/* Option 2: Add Labour */}
+              <Link
+                href="/expenses/new?type=LABOUR"
+                onClick={() => setAddSheetOpen(false)}
+                className="flex items-center gap-3.5 rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 p-4 hover:bg-emerald-100/60 active:scale-[0.98] transition group"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs group-hover:scale-105 transition">
+                  <HardHat className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-emerald-950">
+                    {language === "te" ? "👷 కూలీల చెల్లింపు (Labour)" : "👷 Add Labour"}
+                  </p>
+                  <p className="text-xs text-emerald-800/90 mt-0.5">
+                    {language === "te" ? "మేస్త్రీ, కార్పెంటర్, ప్లంబర్, ఎలక్ట్రీషియన్, రోజూవారీ వేతనాలు" : "Mason, Carpenter, Plumber, Electrician wages"}
+                  </p>
+                </div>
+              </Link>
+
+              {/* Option 3: Other Expense */}
+              <Link
+                href="/expenses/new?type=OTHER"
+                onClick={() => setAddSheetOpen(false)}
+                className="flex items-center gap-3.5 rounded-2xl border border-paper-200 bg-paper-50 p-4 hover:bg-paper-100 active:scale-[0.98] transition group"
+              >
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ink-700 text-white shadow-xs group-hover:scale-105 transition">
+                  <MoreHorizontal className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-ink-900">
+                    {language === "te" ? "⋯ ఇతర ఖర్చులు (Other Expense)" : "⋯ Other Expense"}
+                  </p>
+                  <p className="text-xs text-ink-500 mt-0.5">
+                    {language === "te" ? "బోర్‌వెల్, ప్లానింగ్, జేసీబీ, రవాణా ఖర్చులు" : "Borewell, Planning, JCB, Services & Transport"}
+                  </p>
+                </div>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mobile More Sheet / Drawer */}
       {mobileDrawerOpen && (
