@@ -463,6 +463,11 @@ model Expense {
   @@index([floorId])
   @@index([projectId, date])
   @@index([projectId, expenseType])
+  @@index([projectId, createdAt])
+  @@index([projectId, materialCategoryId])
+  @@index([projectId, labourCategoryId])
+  @@index([projectId, constructionStageId])
+  @@index([projectId, floorId])
 }
 
 model Budget {
@@ -566,6 +571,8 @@ model ProjectDocument {
 
   @@index([projectId])
   @@index([category])
+  @@index([projectId, category])
+  @@index([projectId, createdAt])
 }
 
 enum LeadStatus {

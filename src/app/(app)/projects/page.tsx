@@ -2,11 +2,12 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { formatINR } from "@/lib/money";
-import { getTypeTotals } from "@/lib/finance/aggregations";
-import { loadProjectExpenses } from "@/lib/finance/queries";
+import { getProjectsSummaryBatch } from "@/lib/finance/financial-aggregates";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
+export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
   const user = await requireUser();
@@ -15,12 +16,13 @@ export default async function ProjectsPage() {
     orderBy: { createdAt: "desc" },
   });
 
-  const cards = await Promise.all(
-    projects.map(async (project) => {
-      const expenses = await loadProjectExpenses(project.id);
-      return { project, totals: getTypeTotals(expenses) };
-    }),
-  );
+  const projectIds = projects.map((p) => p.id);
+  const summaryMap = await getProjectsSummaryBatch(projectIds);
+
+  const cards = projects.map((project) => {
+    const totals = summaryMap.get(project.id) ?? { total: 0, MATERIAL: 0, LABOUR: 0, OTHER: 0 };
+    return { project, totals };
+  });
 
   return (
     <div>
@@ -28,8 +30,8 @@ export default async function ProjectsPage() {
         title="Projects"
         subtitle="Each house is a project with its own budget, floors, stages and expenses."
         actions={
-          <Link href="/projects/new" className="rounded-xl bg-clay-600 px-4 py-2 text-sm font-semibold text-white">
-            New project
+          <Link href="/projects/new" className="rounded-xl bg-clay-600 px-4 py-2 text-sm font-semibold text-white hover:bg-clay-700 transition">
+            + New project
           </Link>
         }
       />
@@ -38,7 +40,7 @@ export default async function ProjectsPage() {
           <Card key={project.id}>
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 className="font-display text-xl">{project.name}</h2>
+                <h2 className="font-display text-xl font-bold">{project.name}</h2>
                 <p className="text-sm text-ink-500">{project.location}</p>
               </div>
               <Badge>{project.status.replaceAll("_", " ")}</Badge>
@@ -46,25 +48,25 @@ export default async function ProjectsPage() {
             <dl className="mt-4 grid grid-cols-2 gap-2 text-sm">
               <div>
                 <dt className="text-ink-500">Budget</dt>
-                <dd>{formatINR(project.totalBudget)}</dd>
+                <dd className="font-semibold text-ink-900">{formatINR(project.totalBudget)}</dd>
               </div>
               <div>
                 <dt className="text-ink-500">Spent</dt>
-                <dd>{formatINR(totals.total)}</dd>
+                <dd className="font-semibold text-ink-900">{formatINR(totals.total)}</dd>
               </div>
               <div>
                 <dt className="text-ink-500">Material</dt>
-                <dd>{formatINR(totals.MATERIAL)}</dd>
+                <dd className="font-semibold text-ink-900">{formatINR(totals.MATERIAL)}</dd>
               </div>
               <div>
                 <dt className="text-ink-500">Labour</dt>
-                <dd>{formatINR(totals.LABOUR)}</dd>
+                <dd className="font-semibold text-ink-900">{formatINR(totals.LABOUR)}</dd>
               </div>
             </dl>
             <div className="mt-4 flex gap-3 text-sm font-semibold text-clay-700">
-              <Link href={`/projects/${project.id}`}>Overview</Link>
-              <Link href={`/projects/${project.id}/stages`}>Stages</Link>
-              <Link href={`/projects/${project.id}/floors`}>Floors</Link>
+              <Link href={`/projects/${project.id}`} className="hover:underline">Overview</Link>
+              <Link href={`/projects/${project.id}/stages`} className="hover:underline">Stages</Link>
+              <Link href={`/projects/${project.id}/floors`} className="hover:underline">Floors</Link>
             </div>
           </Card>
         ))}
