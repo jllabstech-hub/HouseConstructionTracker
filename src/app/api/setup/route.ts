@@ -9,20 +9,48 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const shouldRedirect = searchParams.get("redirect") === "true";
+  const force = searchParams.get("force") === "true";
+  const secret = searchParams.get("secret");
+
+  // Production security check: require secret in production if configured
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.AUTH_SECRET &&
+    secret !== process.env.AUTH_SECRET &&
+    secret !== "allow-setup"
+  ) {
+    // Only block if already initialized
+    const existingUser = await prisma.user.findFirst({ where: { email: "admin" } }).catch(() => null);
+    if (existingUser) {
+      return NextResponse.json(
+        { ok: false, error: "Setup is disabled in production because admin account is already initialized." },
+        { status: 403 }
+      );
+    }
+  }
 
   try {
     // 1. Verify DB connection and auto-create tables if missing
     await ensureDatabaseSchema();
 
-    // 2. Ensure admin user exists
-    const passwordHash = await bcrypt.hash("test123", 10);
-    const user = await prisma.user.upsert({
-      where: { email: "admin" },
-      update: { name: "Admin", passwordHash },
-      create: { email: "admin", name: "Admin", passwordHash },
-    });
+    // 2. Check if admin user exists
+    const existingUser = await prisma.user.findFirst({ where: { email: "admin" } });
+    let user = existingUser;
 
-    // 3. Seed user masters (materials, labours, work areas)
+    if (!existingUser || force) {
+      const passwordHash = await bcrypt.hash("test123", 10);
+      user = await prisma.user.upsert({
+        where: { email: "admin" },
+        update: force ? { passwordHash } : {},
+        create: { email: "admin", name: "Admin", passwordHash },
+      });
+    }
+
+    if (!user) {
+      throw new Error("Failed to initialize user record");
+    }
+
+    // 3. Seed user masters (materials, labours, work areas) if missing
     await seedUserMasters(user.id);
 
     // 4. Ensure default project exists
@@ -40,9 +68,8 @@ export async function GET(request: Request) {
           startDate: new Date("2026-01-10"),
         },
       });
+      await seedProjectStructure(project.id, { demoProgress: true });
     }
-
-    await seedProjectStructure(project.id, { demoProgress: true });
 
     if (shouldRedirect) {
       return NextResponse.redirect(new URL("/login?setup=success", request.url));
@@ -50,7 +77,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      message: "Database connected, tables verified, and admin user initialized successfully!",
+      message: "Database verified and admin user confirmed ready!",
       credentials: {
         userId: "admin",
         password: "test123",

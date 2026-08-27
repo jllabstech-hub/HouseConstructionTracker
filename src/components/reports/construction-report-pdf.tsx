@@ -28,49 +28,59 @@ const styles = StyleSheet.create({
 });
 
 export function ConstructionReportPdf({ data }: { data: PdfReportData }) {
+  const kpis = data.kpis || [];
+  const typeBreakdown = data.typeBreakdown || [];
+  const tables = data.tables || [];
+
   return (
     <Document>
       <Page size="A4" style={styles.page} wrap>
         <Text style={styles.brand}>House Construction Tracker</Text>
-        <Text style={styles.title}>{data.reportTitle}</Text>
-        <Text style={styles.muted}>Project: {data.projectName}</Text>
-        <Text style={styles.muted}>Period: {data.periodLabel}</Text>
-        <Text style={styles.muted}>Generated: {data.generatedAt}</Text>
+        <Text style={styles.title}>{String(data.reportTitle || "Expenditure Report")}</Text>
+        <Text style={styles.muted}>Project: {String(data.projectName || "House Project")}</Text>
+        <Text style={styles.muted}>Period: {String(data.periodLabel || "All Time")}</Text>
+        <Text style={styles.muted}>Generated: {String(data.generatedAt || new Date().toLocaleDateString("en-IN"))}</Text>
 
-        <View style={styles.kpis}>
-          {data.kpis.map((kpi) => (
-            <View key={kpi.label} style={styles.kpi}>
-              <Text style={styles.kpiLabel}>{kpi.label}</Text>
-              <Text style={styles.kpiValue}>{kpi.value}</Text>
-            </View>
-          ))}
-        </View>
+        {kpis.length > 0 && (
+          <View style={styles.kpis}>
+            {kpis.map((kpi, idx) => (
+              <View key={`${kpi.label}-${idx}`} style={styles.kpi}>
+                <Text style={styles.kpiLabel}>{String(kpi.label ?? "")}</Text>
+                <Text style={styles.kpiValue}>{String(kpi.value ?? "")}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
-        <View>
-          <Text style={styles.section}>Expenditure by type</Text>
-          {data.typeBreakdown.map((row) => (
-            <View key={row.label} style={styles.row}>
-              <Text style={styles.cell}>{row.label}</Text>
-              <Text style={styles.cell}>{row.value}</Text>
-            </View>
-          ))}
-        </View>
+        {typeBreakdown.length > 0 && (
+          <View>
+            <Text style={styles.section}>Expenditure by type</Text>
+            {typeBreakdown.map((row, idx) => (
+              <View key={`${row.label}-${idx}`} style={styles.row}>
+                <Text style={styles.cell}>{String(row.label ?? "")}</Text>
+                <Text style={styles.cell}>{String(row.value ?? "")}</Text>
+              </View>
+            ))}
+          </View>
+        )}
 
-        {data.tables.map((table) => (
-          <View key={table.title}>
-            <Text style={styles.section}>{table.title}</Text>
-            <View style={styles.header}>
-              {table.headers.map((header) => (
-                <Text key={header} style={styles.cell}>
-                  {header}
-                </Text>
-              ))}
-            </View>
-            {table.rows.slice(0, 40).map((row, index) => (
+        {tables.map((table, tIdx) => (
+          <View key={`${table.title}-${tIdx}`}>
+            <Text style={styles.section}>{String(table.title ?? "Details")}</Text>
+            {table.headers && table.headers.length > 0 && (
+              <View style={styles.header}>
+                {table.headers.map((header, hIdx) => (
+                  <Text key={`${header}-${hIdx}`} style={styles.cell}>
+                    {String(header ?? "")}
+                  </Text>
+                ))}
+              </View>
+            )}
+            {(table.rows || []).slice(0, 50).map((row, index) => (
               <View key={`${table.title}-${index}`} style={styles.row}>
                 {row.map((cell, cellIndex) => (
                   <Text key={cellIndex} style={styles.cell}>
-                    {cell}
+                    {String(cell ?? "—")}
                   </Text>
                 ))}
               </View>
@@ -80,13 +90,13 @@ export function ConstructionReportPdf({ data }: { data: PdfReportData }) {
 
         <View style={styles.total}>
           <Text>
-            {data.totalLabel}: {data.totalValue}
+            {String(data.totalLabel || "Total")}: {String(data.totalValue || "₹0")}
           </Text>
         </View>
 
         <View style={styles.footer} fixed>
           <Text>House Construction Tracker · Material purchases are never mixed with labour payments</Text>
-          <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`} />
+          <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages || 1}`} />
         </View>
       </Page>
     </Document>
