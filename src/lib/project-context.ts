@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
@@ -13,14 +14,14 @@ export type ActiveProjectContext = {
 };
 
 /**
- * Robust active project resolution:
+ * Robust active project resolution with React request deduplication cache:
  * 1. Resolves authenticated user.
  * 2. Fetches all owned projects.
  * 3. Matches active project from cookie.
  * 4. Self-heals if cookie is missing/stale/deleted by selecting another valid project.
  * 5. If user has 0 projects, auto-provisions default "Nandakam" house project with 20 construction stages!
  */
-export async function getActiveProject(userId?: string): Promise<ActiveProjectContext | null> {
+export const getActiveProject = cache(async (userId?: string): Promise<ActiveProjectContext | null> => {
   const user = userId
     ? await prisma.user.findUnique({
         where: { id: userId },
@@ -82,12 +83,12 @@ export async function getActiveProject(userId?: string): Promise<ActiveProjectCo
     project: active,
     projects: projects.map((p) => ({ id: p.id, name: p.name })),
   };
-}
+});
 
-export async function getActiveProjectId(userId: string): Promise<string | null> {
+export const getActiveProjectId = cache(async (userId: string): Promise<string | null> => {
   const ctx = await getActiveProject(userId);
   return ctx?.project.id ?? null;
-}
+});
 
 export async function setActiveProjectId(projectId: string) {
   const jar = await cookies();

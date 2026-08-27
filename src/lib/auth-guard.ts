@@ -1,8 +1,9 @@
+import { cache } from "react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
-export async function requireUser() {
+export const requireUser = cache(async () => {
   const session = await auth();
   if (!session?.user) {
     redirect("/login");
@@ -45,9 +46,9 @@ export async function requireUser() {
   }
 
   return dbUser;
-}
+});
 
-export async function requireProject(projectId: string, userId?: string) {
+export const requireProject = cache(async (projectId: string, userId?: string) => {
   const user = userId ? { id: userId } : await requireUser();
   const project = await prisma.project.findFirst({
     where: { id: projectId, userId: user.id },
@@ -56,7 +57,7 @@ export async function requireProject(projectId: string, userId?: string) {
     throw new Error("Project not found or access denied");
   }
   return project;
-}
+});
 
 export async function getOwnedProjectOrNull(projectId: string, userId: string) {
   return prisma.project.findFirst({
