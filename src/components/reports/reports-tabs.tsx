@@ -2,26 +2,32 @@
 
 import { useState, useMemo } from "react";
 import {
+  AlertCircle,
+  Building,
   Calendar,
+  Check,
+  ChevronDown,
+  ChevronUp,
   Download,
+  Eye,
   FileText,
   Filter,
   HardHat,
   Layers,
-  Milestone,
+  MoreHorizontal,
   Package,
+  RotateCcw,
   Search,
-  Store,
-  User,
-  Users,
+  Share2,
+  SlidersHorizontal,
+  Sparkles,
+  TrendingUp,
   Wallet,
   X,
 } from "lucide-react";
 import { formatINR } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
-import { PdfActions } from "@/components/reports/pdf-actions";
-import { format } from "date-fns";
 
 export type WorkWiseRow = {
   id: string;
@@ -53,10 +59,31 @@ export type ReportExpenseItem = {
   workerName: string | null;
   stageId: string | null;
   stageName: string | null;
+  floorId?: string | null;
+  floorName?: string | null;
   receiptCount: number;
 };
 
-export type EntityOption = { id: string; name: string; groupName?: string | null; phone?: string | null; role?: string | null; sortOrder?: number };
+export type EntityOption = {
+  id: string;
+  name: string;
+  groupName?: string | null;
+  phone?: string | null;
+  role?: string | null;
+  sortOrder?: number;
+};
+
+const REPORT_TYPES = [
+  { value: "total", labelEn: "Total expenditure", labelTe: "మొత్తం ఖర్చులు" },
+  { value: "material", labelEn: "Material", labelTe: "సామాగ్రి ఖర్చులు" },
+  { value: "labour", labelEn: "Labour", labelTe: "కూలీల చెల్లింపులు" },
+  { value: "budget", labelEn: "Budget vs Actual", labelTe: "బడ్జెట్ vs వాస్తవ ఖర్చు" },
+  { value: "work-wise", labelEn: "Work-wise cost", labelTe: "పని వారీగా ఖర్చులు" },
+  { value: "stage", labelEn: "Construction Stage", labelTe: "నిర్మాణ దశల ఖర్చు" },
+  { value: "vendor", labelEn: "Vendor purchases", labelTe: "వెండర్ కొనుగోళ్లు" },
+  { value: "worker", labelEn: "Worker payments", labelTe: "వర్కర్ల వేతనాలు" },
+  { value: "floor", labelEn: "Floor-wise", labelTe: "అంతస్తు వారీగా" },
+] as const;
 
 export function ReportsTabs({
   projectId,
@@ -66,6 +93,7 @@ export function ReportsTabs({
   vendors = [],
   workers = [],
   stages = [],
+  floors = [],
   workWise = [],
 }: {
   projectId: string;
@@ -75,46 +103,93 @@ export function ReportsTabs({
   vendors: EntityOption[];
   workers: EntityOption[];
   stages: { id: string; name: string; sortOrder: number }[];
+  floors?: { id: string; name: string }[];
   workWise: WorkWiseRow[];
 }) {
   const { language, getStageName } = useLanguage();
 
-  // Perspective Mode: TOTAL | MATERIAL | PERSON | STAGE
-  const [reportMode, setReportMode] = useState<"TOTAL" | "MATERIAL" | "PERSON" | "STAGE">("TOTAL");
+  // 1. Report Selector: total | material | labour | budget | work-wise | stage | vendor | worker | floor
+  const [selectedReport, setSelectedReport] = useState<string>("total");
 
-  // Specific Entity Filters
-  const [selectedMaterialId, setSelectedMaterialId] = useState<string>("ALL");
-  const [selectedPersonType, setSelectedPersonType] = useState<"ALL" | "VENDOR" | "WORKER">("ALL");
-  const [selectedPersonId, setSelectedPersonId] = useState<string>("ALL");
-  const [selectedStageId, setSelectedStageId] = useState<string>("ALL");
-
-  // Date Range Filter
+  // 2. Date Range Selector: all | thisMonth | lastMonth | last3Months | custom
   const [dateRange, setDateRange] = useState<string>("all");
   const [customFrom, setCustomFrom] = useState<string>("");
   const [customTo, setCustomTo] = useState<string>("");
 
-  // Search inside live preview table
-  const [tableSearch, setTableSearch] = useState<string>("");
+  // 3. Optional Filter Drawer / Accordion
+  const [showOptionalFilters, setShowOptionalFilters] = useState(false);
+  const [selectedExpenseType, setSelectedExpenseType] = useState<string>("ALL");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("ALL");
+  const [selectedStageId, setSelectedStageId] = useState<string>("ALL");
+  const [selectedFloorId, setSelectedFloorId] = useState<string>("ALL");
+  const [selectedVendorId, setSelectedVendorId] = useState<string>("ALL");
+  const [selectedWorkerId, setSelectedWorkerId] = useState<string>("ALL");
 
-  // Calculate Date bounds
-  const now = new Date();
-  let fromDate: string | undefined = undefined;
-  let toDate: string | undefined = undefined;
+  // 4. In-App Preview & Modal State
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [shareSuccess, setShareSuccess] = useState(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
-  if (dateRange === "month") {
-    fromDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
-    toDate = now.toISOString().slice(0, 10);
-  } else if (dateRange === "lastMonth") {
-    const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
-    const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-    fromDate = new Date(year, lastMonth, 1).toISOString().slice(0, 10);
-    toDate = new Date(year, lastMonth + 1, 0).toISOString().slice(0, 10);
-  } else if (dateRange === "custom") {
-    fromDate = customFrom || undefined;
-    toDate = customTo || undefined;
-  }
+  // Compute Active Date Bounds
+  const { fromDate, toDate, periodDescription } = useMemo(() => {
+    const now = new Date();
+    if (dateRange === "thisMonth") {
+      const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
+      const end = now.toISOString().slice(0, 10);
+      return { fromDate: start, toDate: end, periodDescription: "This Month" };
+    }
+    if (dateRange === "lastMonth") {
+      const lastMonth = now.getMonth() === 0 ? 11 : now.getMonth() - 1;
+      const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+      const start = new Date(year, lastMonth, 1).toISOString().slice(0, 10);
+      const end = new Date(year, lastMonth + 1, 0).toISOString().slice(0, 10);
+      return { fromDate: start, toDate: end, periodDescription: "Last Month" };
+    }
+    if (dateRange === "last3Months") {
+      const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString().slice(0, 10);
+      const end = now.toISOString().slice(0, 10);
+      return { fromDate: threeMonthsAgo, toDate: end, periodDescription: "Last 3 Months" };
+    }
+    if (dateRange === "custom") {
+      return {
+        fromDate: customFrom || undefined,
+        toDate: customTo || undefined,
+        periodDescription: customFrom && customTo ? `${customFrom} to ${customTo}` : "Custom Date Range",
+      };
+    }
+    return { fromDate: undefined, toDate: undefined, periodDescription: "All Time" };
+  }, [dateRange, customFrom, customTo]);
 
-  // Filtered Expenses for Live Preview and PDF Actions
+  // Combine Category Options
+  const allCategories = useMemo(() => {
+    return [
+      ...materials.map((m) => ({ ...m, type: "MATERIAL" })),
+      ...labours.map((l) => ({ ...l, type: "LABOUR" })),
+    ];
+  }, [materials, labours]);
+
+  // Count active optional filters
+  const activeOptionalFilterCount = useMemo(() => {
+    let count = 0;
+    if (selectedExpenseType !== "ALL") count++;
+    if (selectedCategoryId !== "ALL") count++;
+    if (selectedStageId !== "ALL") count++;
+    if (selectedFloorId !== "ALL") count++;
+    if (selectedVendorId !== "ALL") count++;
+    if (selectedWorkerId !== "ALL") count++;
+    return count;
+  }, [selectedExpenseType, selectedCategoryId, selectedStageId, selectedFloorId, selectedVendorId, selectedWorkerId]);
+
+  const handleResetFilters = () => {
+    setSelectedExpenseType("ALL");
+    setSelectedCategoryId("ALL");
+    setSelectedStageId("ALL");
+    setSelectedFloorId("ALL");
+    setSelectedVendorId("ALL");
+    setSelectedWorkerId("ALL");
+  };
+
+  // Filter expenses strictly against Database Values & Date Bounds
   const filteredExpenses = useMemo(() => {
     return expenses.filter((exp) => {
       // 1. Date Range
@@ -122,36 +197,30 @@ export function ReportsTabs({
       if (fromDate && expDate < fromDate) return false;
       if (toDate && expDate > toDate) return false;
 
-      // 2. Report Mode & Entity Scope
-      if (reportMode === "MATERIAL") {
-        if (exp.expenseType !== "MATERIAL") return false;
-        if (selectedMaterialId !== "ALL" && exp.materialCategoryId !== selectedMaterialId) return false;
-      } else if (reportMode === "PERSON") {
-        if (selectedPersonId !== "ALL") {
-          const isVendor = vendors.some((v) => v.id === selectedPersonId);
-          if (isVendor && exp.vendorId !== selectedPersonId) return false;
-          const isWorker = workers.some((w) => w.id === selectedPersonId);
-          if (isWorker && exp.workerId !== selectedPersonId) return false;
-        } else if (selectedPersonType === "VENDOR") {
-          if (!exp.vendorId) return false;
-        } else if (selectedPersonType === "WORKER") {
-          if (!exp.workerId) return false;
-        }
-      } else if (reportMode === "STAGE") {
-        if (selectedStageId !== "ALL" && exp.stageId !== selectedStageId) return false;
+      // 2. Primary Report Kind Scope
+      if (selectedReport === "material" && exp.expenseType !== "MATERIAL") return false;
+      if (selectedReport === "labour" && exp.expenseType !== "LABOUR") return false;
+      if (selectedReport === "vendor" && !exp.vendorId) return false;
+      if (selectedReport === "worker" && !exp.workerId) return false;
+      if (selectedReport === "stage" && !exp.stageId) return false;
+
+      // 3. Optional Filters
+      if (selectedExpenseType !== "ALL") {
+        if (selectedExpenseType === "MATERIAL" && exp.expenseType !== "MATERIAL") return false;
+        if (selectedExpenseType === "LABOUR" && exp.expenseType !== "LABOUR") return false;
+        if (selectedExpenseType === "OTHER" && (exp.expenseType === "MATERIAL" || exp.expenseType === "LABOUR")) return false;
       }
 
-      // 3. Table Search Query
-      if (tableSearch) {
-        const q = tableSearch.toLowerCase();
-        const cat = (exp.materialCategoryName ?? exp.labourCategoryName ?? exp.serviceCategoryName ?? exp.expenseType).toLowerCase();
-        const desc = (exp.description ?? "").toLowerCase();
-        const person = (exp.vendorName ?? exp.workerName ?? "").toLowerCase();
-        const stName = (exp.stageName ?? "").toLowerCase();
-        if (!cat.includes(q) && !desc.includes(q) && !person.includes(q) && !stName.includes(q) && !exp.amount.includes(q)) {
+      if (selectedCategoryId !== "ALL") {
+        if (exp.materialCategoryId !== selectedCategoryId && exp.labourCategoryId !== selectedCategoryId) {
           return false;
         }
       }
+
+      if (selectedStageId !== "ALL" && exp.stageId !== selectedStageId) return false;
+      if (selectedFloorId !== "ALL" && exp.floorId !== selectedFloorId) return false;
+      if (selectedVendorId !== "ALL" && exp.vendorId !== selectedVendorId) return false;
+      if (selectedWorkerId !== "ALL" && exp.workerId !== selectedWorkerId) return false;
 
       return true;
     });
@@ -159,527 +228,510 @@ export function ReportsTabs({
     expenses,
     fromDate,
     toDate,
-    reportMode,
-    selectedMaterialId,
-    selectedPersonType,
-    selectedPersonId,
+    selectedReport,
+    selectedExpenseType,
+    selectedCategoryId,
     selectedStageId,
-    vendors,
-    workers,
-    tableSearch,
+    selectedFloorId,
+    selectedVendorId,
+    selectedWorkerId,
   ]);
 
-  // Derived Aggregate Totals for the Live Report
-  const totalAmount = useMemo(() => {
-    return filteredExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  // Aggregate Totals strictly separating Material != Labour
+  const aggregates = useMemo(() => {
+    let total = 0;
+    let material = 0;
+    let labour = 0;
+    let other = 0;
+
+    for (const exp of filteredExpenses) {
+      const amt = Number(exp.amount) || 0;
+      total += amt;
+      if (exp.expenseType === "MATERIAL") material += amt;
+      else if (exp.expenseType === "LABOUR") labour += amt;
+      else other += amt;
+    }
+
+    return { total, material, labour, other, count: filteredExpenses.length };
   }, [filteredExpenses]);
 
-  const materialSubtotal = useMemo(() => {
-    return filteredExpenses.filter((e) => e.expenseType === "MATERIAL").reduce((sum, e) => sum + Number(e.amount), 0);
-  }, [filteredExpenses]);
-
-  const labourSubtotal = useMemo(() => {
-    return filteredExpenses.filter((e) => e.expenseType === "LABOUR").reduce((sum, e) => sum + Number(e.amount), 0);
-  }, [filteredExpenses]);
-
-  // Derive parameters for PDF generation
-  const pdfKind = useMemo(() => {
-    if (reportMode === "MATERIAL") return "material";
-    if (reportMode === "PERSON") {
-      if (selectedPersonId !== "ALL") {
-        const isVendor = vendors.some((v) => v.id === selectedPersonId);
-        return isVendor ? "vendor" : "worker";
-      }
-      return selectedPersonType === "VENDOR" ? "vendor" : selectedPersonType === "WORKER" ? "worker" : "total";
+  // Build PDF API URL
+  const pdfUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set("projectId", projectId);
+    params.set("kind", selectedReport);
+    if (fromDate) params.set("from", fromDate);
+    if (toDate) params.set("to", toDate);
+    if (selectedCategoryId !== "ALL") {
+      params.set("categoryId", selectedCategoryId);
+      const cat = allCategories.find((c) => c.id === selectedCategoryId);
+      if (cat) params.set("categoryName", cat.name);
     }
-    if (reportMode === "STAGE") return "stage";
-    return "total";
-  }, [reportMode, selectedPersonId, selectedPersonType, vendors]);
-
-  const selectedMaterialObj = materials.find((m) => m.id === selectedMaterialId);
-  const selectedVendorObj = vendors.find((v) => v.id === selectedPersonId);
-  const selectedWorkerObj = workers.find((w) => w.id === selectedPersonId);
-  const selectedStageObj = stages.find((s) => s.id === selectedStageId);
-
-  // Active Report Header Title & Description
-  const activeReportInfo = useMemo(() => {
-    if (reportMode === "MATERIAL") {
-      if (selectedMaterialObj) {
-        return {
-          title: language === "te" ? `${selectedMaterialObj.name} కొనుగోళ్ల నివేదిక` : `${selectedMaterialObj.name} Purchase Report`,
-          subtitle: language === "te" ? "ఈ నిర్దిష్ట సామాగ్రికి సంబంధించిన అన్ని కొనుగోలు బిల్లులు మరియు పరిమాణాలు" : `Itemized purchase bills, quantities, and rates for ${selectedMaterialObj.name}`,
-          icon: Package,
-        };
-      }
-      return {
-        title: language === "te" ? "అన్ని సామాగ్రి కొనుగోళ్లు" : "All Material Purchases Report",
-        subtitle: language === "te" ? "సిమెంట్, స్టీల్, ఇసుక, ఇటుకలు, టైల్స్ తదితర సామాగ్రి కొనుగోళ్లు" : "Comprehensive breakdown of all construction materials purchased",
-        icon: Package,
-      };
+    if (selectedVendorId !== "ALL") {
+      params.set("vendorId", selectedVendorId);
+      const v = vendors.find((vend) => vend.id === selectedVendorId);
+      if (v) params.set("vendorName", v.name);
     }
+    if (selectedWorkerId !== "ALL") {
+      params.set("workerId", selectedWorkerId);
+      const w = workers.find((work) => work.id === selectedWorkerId);
+      if (w) params.set("workerName", w.name);
+    }
+    if (selectedStageId !== "ALL") {
+      params.set("stageId", selectedStageId);
+      const s = stages.find((stg) => stg.id === selectedStageId);
+      if (s) params.set("stageName", s.name);
+    }
+    return `/api/reports/pdf?${params.toString()}`;
+  }, [projectId, selectedReport, fromDate, toDate, selectedCategoryId, allCategories, selectedVendorId, vendors, selectedWorkerId, workers, selectedStageId, stages]);
 
-    if (reportMode === "PERSON") {
-      if (selectedVendorObj) {
-        return {
-          title: language === "te" ? `${selectedVendorObj.name} - దుకాణం లెడ్జర్` : `${selectedVendorObj.name} - Vendor Ledger`,
-          subtitle: language === "te" ? "ఈ దుకాణంలో కొనుగోలు చేసిన సామాగ్రి మరియు చెల్లింపుల వివరాలు" : `Complete purchase and payment transaction ledger for ${selectedVendorObj.name}`,
-          icon: Store,
-        };
+  const handleSharePdf = async () => {
+    const fullShareUrl = typeof window !== "undefined" ? `${window.location.origin}${pdfUrl}` : pdfUrl;
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: `Construction Report - ${selectedReport}`,
+          text: `Construction Expenditure Report (${periodDescription})`,
+          url: fullShareUrl,
+        });
+        return;
+      } catch {
+        // Fall back to clipboard
       }
-      if (selectedWorkerObj) {
-        return {
-          title: language === "te" ? `${selectedWorkerObj.name} - కూలీల లెడ్జర్` : `${selectedWorkerObj.name} - Worker Ledger`,
-          subtitle: language === "te" ? "ఈ మేస్త్రీ / కూలీకి చెల్లించిన రోజువారీ కూలీలు మరియు కాంట్రాక్ట్ మొత్తాలు" : `Attendance wages and contract payouts statement for ${selectedWorkerObj.name}`,
-          icon: HardHat,
-        };
-      }
-      return {
-        title: language === "te" ? "దుకాణాలు & కూలీల చెల్లింపుల నివేదిక" : "Vendors & Workers Payout Report",
-        subtitle: language === "te" ? "అన్ని హార్డ్‌వేర్ షాపులు, సప్లయర్లు మరియు మేస్త్రీలకు చేసిన చెల్లింపులు" : "Payments and purchases grouped by vendor and worker",
-        icon: Users,
-      };
     }
 
-    if (reportMode === "STAGE") {
-      if (selectedStageObj) {
-        return {
-          title: language === "te" ? `${getStageName(selectedStageObj.name)} - దశ ఖర్చు నివేదిక` : `${selectedStageObj.name} - Stage Cost Report`,
-          subtitle: language === "te" ? "ఈ నిర్మాణ దశలో ఖర్చు చేసిన సామాగ్రి మరియు కూలీల వివరాలు" : `Itemized materials, wages and services utilized during this construction stage`,
-          icon: Milestone,
-        };
-      }
-      return {
-        title: language === "te" ? "నిర్మాణ దశల వారీ ఖర్చుల నివేదిక" : "Stage-Wise Construction Cost Statement",
-        subtitle: language === "te" ? "20 దశల వరుస క్రమంలో అయిన మొత్తం ఖర్చుల స్టేట్‌మెంట్" : "Sequential 20-stage timeline expenditure and passbook",
-        icon: Milestone,
-      };
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      await navigator.clipboard.writeText(fullShareUrl);
+      setShareSuccess(true);
+      setTimeout(() => setShareSuccess(false), 2500);
     }
-
-    return {
-      title: language === "te" ? "ఇంటి పూర్తి నిర్మాణ ఖర్చుల సమగ్ర నివేదిక" : "Total Project Expenditure Statement",
-      subtitle: language === "te" ? "ఇంటి నిర్మాణానికి అయిన మొత్తం సామాగ్రి, కూలీలు మరియు ఇతర ఖర్చుల సమగ్ర ఆడిట్" : "Complete master expenditure audit, category splits, and transaction statement",
-      icon: FileText,
-    };
-  }, [reportMode, selectedMaterialObj, selectedVendorObj, selectedWorkerObj, selectedStageObj, language, getStageName]);
-
-  const ActiveIcon = activeReportInfo.icon;
+  };
 
   return (
-    <div className="space-y-6">
-      {/* 1. Top Page Header */}
-      <div className="border-b border-paper-200/80 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 tracking-tight">
-            {language === "te" ? "నివేదికలు & పి.డి.ఎఫ్ (Reports)" : "Reports & PDF Statements"}
-          </h1>
-          <p className="text-xs sm:text-sm text-ink-500 mt-0.5">
-            {language === "te"
-              ? "మొత్తం ఖర్చులు, నిర్దిష్ట సామాగ్రి లేదా వ్యక్తి వారీగా నివేదికలు చూడండి మరియు డౌన్‌లోడ్ చేసుకోండి"
-              : "Generate, inspect, and download statements by Total Project, Individual Material, or Person/Vendor"}
-          </p>
-        </div>
+    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+      {/* 1. Header Section */}
+      <div className="border-b border-paper-200/80 pb-4">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 leading-tight">
+          {language === "te" ? "నివేదికలు (రిపోర్ట్స్)" : "Reports"}
+        </h1>
+        <p className="text-xs sm:text-sm text-ink-500 mt-1">
+          {language === "te"
+            ? "నిర్మాణ నివేదికలను ఎంచుకోండి, ప్రివ్యూ చేయండి మరియు PDF రూపంలో డౌన్‌లోడ్ చేయండి."
+            : "Generate and share construction reports."}
+        </p>
+      </div>
 
-        {/* Action Buttons */}
-        <div className="shrink-0">
-          <PdfActions
-            projectId={projectId}
-            kind={pdfKind}
-            from={fromDate}
-            to={toDate}
-            categoryId={selectedMaterialId !== "ALL" ? selectedMaterialId : undefined}
-            categoryName={selectedMaterialObj?.name}
-            vendorId={selectedVendorObj?.id}
-            vendorName={selectedVendorObj?.name}
-            workerId={selectedWorkerObj?.id}
-            workerName={selectedWorkerObj?.name}
-            stageId={selectedStageObj?.id}
-            stageName={selectedStageObj?.name}
-          />
+      {/* 2. Quick Reports 1-Tap Bar */}
+      <div className="space-y-2">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400 block">
+          {language === "te" ? "త్వరిత నివేదికలు" : "Quick reports"}
+        </span>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {[
+            { id: "total", label: "Total expenditure", icon: FileText },
+            { id: "material", label: "Material", icon: Package },
+            { id: "labour", label: "Labour", icon: HardHat },
+            { id: "budget", label: "Budget vs Actual", icon: Wallet },
+            { id: "work-wise", label: "Work-wise cost", icon: Layers },
+          ].map((item) => {
+            const isSelected = selectedReport === item.id;
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setSelectedReport(item.id)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition active:scale-95 whitespace-nowrap shrink-0",
+                  isSelected
+                    ? "bg-clay-600 text-white shadow-xs"
+                    : "bg-white border border-paper-200 text-ink-700 hover:bg-paper-50 shadow-2xs"
+                )}
+              >
+                <Icon className={cn("h-3.5 w-3.5", isSelected ? "text-white" : "text-clay-600")} />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* 2. Interactive Report Filter Bar */}
-      <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-4">
-        {/* Main Perspective Selector */}
-        <div>
-          <label className="text-xs font-bold text-ink-700 block mb-2">
-            {language === "te" ? "1. నివేదిక రకాన్ని ఎంచుకోండి:" : "1. Select Report View:"}
-          </label>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setReportMode("TOTAL");
-                setSelectedMaterialId("ALL");
-                setSelectedPersonId("ALL");
-                setSelectedStageId("ALL");
-              }}
-              className={cn(
-                "flex items-center gap-2 rounded-xl border p-3 text-left transition active:scale-98",
-                reportMode === "TOTAL"
-                  ? "border-clay-600 bg-clay-50/80 text-clay-950 font-bold shadow-2xs ring-1 ring-clay-400"
-                  : "border-paper-200 bg-paper-50/60 text-ink-700 hover:bg-paper-100"
-              )}
-            >
-              <FileText className={cn("h-4 w-4 shrink-0", reportMode === "TOTAL" ? "text-clay-700" : "text-ink-400")} />
-              <span className="text-xs">{language === "te" ? "మొత్తం ఖర్చులు" : "Total Project"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setReportMode("MATERIAL");
-                setSelectedPersonId("ALL");
-                setSelectedStageId("ALL");
-              }}
-              className={cn(
-                "flex items-center gap-2 rounded-xl border p-3 text-left transition active:scale-98",
-                reportMode === "MATERIAL"
-                  ? "border-clay-600 bg-clay-50/80 text-clay-950 font-bold shadow-2xs ring-1 ring-clay-400"
-                  : "border-paper-200 bg-paper-50/60 text-ink-700 hover:bg-paper-100"
-              )}
-            >
-              <Package className={cn("h-4 w-4 shrink-0", reportMode === "MATERIAL" ? "text-clay-700" : "text-ink-400")} />
-              <span className="text-xs">{language === "te" ? "సామాగ్రి వారీగా" : "By Material"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setReportMode("PERSON");
-                setSelectedMaterialId("ALL");
-                setSelectedStageId("ALL");
-              }}
-              className={cn(
-                "flex items-center gap-2 rounded-xl border p-3 text-left transition active:scale-98",
-                reportMode === "PERSON"
-                  ? "border-clay-600 bg-clay-50/80 text-clay-950 font-bold shadow-2xs ring-1 ring-clay-400"
-                  : "border-paper-200 bg-paper-50/60 text-ink-700 hover:bg-paper-100"
-              )}
-            >
-              <User className={cn("h-4 w-4 shrink-0", reportMode === "PERSON" ? "text-clay-700" : "text-ink-400")} />
-              <span className="text-xs">{language === "te" ? "వ్యక్తి / షాప్ వారీగా" : "By Person / Vendor"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setReportMode("STAGE");
-                setSelectedMaterialId("ALL");
-                setSelectedPersonId("ALL");
-              }}
-              className={cn(
-                "flex items-center gap-2 rounded-xl border p-3 text-left transition active:scale-98",
-                reportMode === "STAGE"
-                  ? "border-clay-600 bg-clay-50/80 text-clay-950 font-bold shadow-2xs ring-1 ring-clay-400"
-                  : "border-paper-200 bg-paper-50/60 text-ink-700 hover:bg-paper-100"
-              )}
-            >
-              <Milestone className={cn("h-4 w-4 shrink-0", reportMode === "STAGE" ? "text-clay-700" : "text-ink-400")} />
-              <span className="text-xs">{language === "te" ? "దశల వారీగా" : "By Stage"}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Dynamic Secondary Dropdowns */}
-        <div className="grid gap-3 sm:grid-cols-2 pt-1 border-t border-paper-100">
-          {/* MATERIAL DROPDOWN */}
-          {reportMode === "MATERIAL" && (
-            <div>
-              <label className="text-xs font-bold text-ink-700 block mb-1">
-                {language === "te" ? "నిర్దిష్ట సామాగ్రి ఎంచుకోండి:" : "Select Specific Material:"}
-              </label>
-              <select
-                value={selectedMaterialId}
-                onChange={(e) => setSelectedMaterialId(e.target.value)}
-                className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 text-xs sm:text-sm font-semibold text-ink-900 focus:border-clay-500 focus:outline-none"
-              >
-                <option value="ALL">-- {language === "te" ? "అన్ని సామాగ్రి కొనుగోళ్లు (All Materials)" : "All Materials"} --</option>
-                {materials.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name} {m.groupName ? `(${m.groupName})` : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* PERSON DROPDOWN */}
-          {reportMode === "PERSON" && (
-            <div>
-              <label className="text-xs font-bold text-ink-700 block mb-1">
-                {language === "te" ? "నిర్దిష్ట వ్యక్తి / షాప్ ఎంచుకోండి:" : "Select Specific Vendor or Worker:"}
-              </label>
-              <select
-                value={selectedPersonId}
-                onChange={(e) => setSelectedPersonId(e.target.value)}
-                className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 text-xs sm:text-sm font-semibold text-ink-900 focus:border-clay-500 focus:outline-none"
-              >
-                <option value="ALL">-- {language === "te" ? "అందరూ (All Vendors & Workers)" : "All Vendors & Workers"} --</option>
-                <optgroup label={language === "te" ? "దుకాణాలు & వెండర్లు (Shops)" : "Hardware Shops & Vendors"}>
-                  {vendors.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      🏪 {v.name} {v.phone ? `(${v.phone})` : ""}
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label={language === "te" ? "మేస్త్రీలు & కూలీలు (Workers)" : "Masons & Workers"}>
-                  {workers.map((w) => (
-                    <option key={w.id} value={w.id}>
-                      👷 {w.name} {w.role ? `· ${w.role}` : ""} {w.phone ? `(${w.phone})` : ""}
-                    </option>
-                  ))}
-                </optgroup>
-              </select>
-            </div>
-          )}
-
-          {/* STAGE DROPDOWN */}
-          {reportMode === "STAGE" && (
-            <div>
-              <label className="text-xs font-bold text-ink-700 block mb-1">
-                {language === "te" ? "నిర్దిష్ట దశ ఎంచుకోండి:" : "Select Specific Stage:"}
-              </label>
-              <select
-                value={selectedStageId}
-                onChange={(e) => setSelectedStageId(e.target.value)}
-                className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 text-xs sm:text-sm font-semibold text-ink-900 focus:border-clay-500 focus:outline-none"
-              >
-                <option value="ALL">-- {language === "te" ? "అన్ని 20 దశలు (All Stages)" : "All 20 Stages"} --</option>
-                {stages.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    Stage {s.sortOrder}: {s.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-
-          {/* DATE RANGE DROPDOWN */}
+      {/* 3. Primary Report Configuration Card (Select Report → Select Filters → Actions) */}
+      <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-5">
+        {/* Row 1: Report & Date Pickers */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Report Dropdown */}
           <div>
-            <label className="text-xs font-bold text-ink-700 block mb-1">
-              {language === "te" ? "కాలవ్యవధి (తేదీ పరిధి):" : "Date Period:"}
+            <label className="text-xs font-bold text-ink-700 block mb-1.5">
+              {language === "te" ? "నివేదిక రకం" : "Report"}
+            </label>
+            <select
+              value={selectedReport}
+              onChange={(e) => setSelectedReport(e.target.value)}
+              className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
+            >
+              {REPORT_TYPES.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {language === "te" ? r.labelTe : r.labelEn}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Date Dropdown */}
+          <div>
+            <label className="text-xs font-bold text-ink-700 block mb-1.5">
+              {language === "te" ? "తేదీ పరిధి" : "Date"}
             </label>
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 text-xs sm:text-sm font-semibold text-ink-900 focus:border-clay-500 focus:outline-none"
+              className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
             >
-              <option value="all">{language === "te" ? "మొదటి నుండి ఇప్పటివరకు (All Time)" : "All Time"}</option>
-              <option value="month">{language === "te" ? "ఈ నెల (This Month)" : "This Month"}</option>
-              <option value="lastMonth">{language === "te" ? "గత నెల (Last Month)" : "Last Month"}</option>
-              <option value="custom">{language === "te" ? "నిర్దిష్ట తేదీలు (Custom Range)" : "Custom Date Range"}</option>
+              <option value="all">{language === "te" ? "మొత్తం కాలం (All time)" : "All time"}</option>
+              <option value="thisMonth">{language === "te" ? "ఈ నెల (This month)" : "This month"}</option>
+              <option value="lastMonth">{language === "te" ? "గత నెల (Last month)" : "Last month"}</option>
+              <option value="last3Months">{language === "te" ? "గత 3 నెలలు (Last 3 months)" : "Last 3 months"}</option>
+              <option value="custom">{language === "te" ? "ప్రత్యేక తేదీలు (Custom range)" : "Custom range"}</option>
             </select>
           </div>
         </div>
 
-        {/* Custom Date Range Pickers */}
+        {/* Custom Date Inputs (If custom selected) */}
         {dateRange === "custom" && (
-          <div className="grid grid-cols-2 gap-3 pt-2">
+          <div className="grid grid-cols-2 gap-3 p-3 bg-paper-50 rounded-2xl border border-paper-200">
             <div>
-              <label className="text-xs font-bold text-ink-700 block mb-1">
-                {language === "te" ? "ప్రారంభ తేదీ" : "From Date"}
-              </label>
+              <label className="text-[11px] font-bold text-ink-600 block mb-1">From Date</label>
               <input
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2 text-xs font-medium text-ink-900"
+                className="w-full rounded-xl border border-paper-300 bg-white p-2 text-xs font-medium"
               />
             </div>
             <div>
-              <label className="text-xs font-bold text-ink-700 block mb-1">
-                {language === "te" ? "ముగింపు తేదీ" : "To Date"}
-              </label>
+              <label className="text-[11px] font-bold text-ink-600 block mb-1">To Date</label>
               <input
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2 text-xs font-medium text-ink-900"
+                className="w-full rounded-xl border border-paper-300 bg-white p-2 text-xs font-medium"
               />
             </div>
           </div>
         )}
-      </div>
 
-      {/* 3. Live Statement Hero Metric Card */}
-      <div className="rounded-2xl border border-clay-200 bg-clay-50/40 p-5 sm:p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-start gap-3.5">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-clay-600 text-white shadow-xs">
-            <ActiveIcon className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="font-display text-lg sm:text-xl font-bold text-ink-900">
-              {activeReportInfo.title}
-            </h2>
-            <p className="text-xs text-ink-600 mt-0.5 max-w-xl">
-              {activeReportInfo.subtitle}
-            </p>
-          </div>
+        {/* Optional Filters Accordion */}
+        <div className="border border-paper-200 rounded-2xl overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowOptionalFilters(!showOptionalFilters)}
+            className="w-full flex items-center justify-between p-3.5 sm:p-4 text-left hover:bg-paper-50 transition"
+          >
+            <div className="flex items-center gap-2">
+              <SlidersHorizontal className="h-4 w-4 text-clay-600" />
+              <span className="text-xs sm:text-sm font-bold text-ink-900">
+                {language === "te" ? "ఐచ్ఛిక ఫిల్టర్లు (Optional filters)" : "Optional filters"}
+              </span>
+              {activeOptionalFilterCount > 0 && (
+                <span className="rounded-full bg-clay-600 px-2 py-0.5 text-[10px] font-bold text-white leading-none">
+                  {activeOptionalFilterCount}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              {activeOptionalFilterCount > 0 && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleResetFilters();
+                  }}
+                  className="text-xs font-bold text-clay-700 hover:underline mr-1"
+                >
+                  Reset
+                </button>
+              )}
+              {showOptionalFilters ? <ChevronUp className="h-4 w-4 text-ink-500" /> : <ChevronDown className="h-4 w-4 text-ink-500" />}
+            </div>
+          </button>
+
+          {showOptionalFilters && (
+            <div className="p-4 border-t border-paper-100 bg-paper-50/50 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+              {/* Expense Type */}
+              <div>
+                <label className="font-bold text-ink-700 block mb-1">Expense type</label>
+                <select
+                  value={selectedExpenseType}
+                  onChange={(e) => setSelectedExpenseType(e.target.value)}
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2 font-medium"
+                >
+                  <option value="ALL">All Types</option>
+                  <option value="MATERIAL">Material Only</option>
+                  <option value="LABOUR">Labour Only</option>
+                  <option value="OTHER">Other Services</option>
+                </select>
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="font-bold text-ink-700 block mb-1">Category</label>
+                <select
+                  value={selectedCategoryId}
+                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2 font-medium"
+                >
+                  <option value="ALL">All Categories</option>
+                  {allCategories.map((c) => (
+                    <option key={`${c.type}-${c.id}`} value={c.id}>
+                      {c.name} ({c.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Construction Stage */}
+              <div>
+                <label className="font-bold text-ink-700 block mb-1">Stage</label>
+                <select
+                  value={selectedStageId}
+                  onChange={(e) => setSelectedStageId(e.target.value)}
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2 font-medium"
+                >
+                  <option value="ALL">All Stages</option>
+                  {stages.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {getStageName(s.name)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Floor */}
+              {floors && floors.length > 0 && (
+                <div>
+                  <label className="font-bold text-ink-700 block mb-1">Floor</label>
+                  <select
+                    value={selectedFloorId}
+                    onChange={(e) => setSelectedFloorId(e.target.value)}
+                    className="w-full rounded-xl border border-paper-300 bg-white p-2 font-medium"
+                  >
+                    <option value="ALL">All Floors</option>
+                    {floors.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Vendor */}
+              <div>
+                <label className="font-bold text-ink-700 block mb-1">Vendor</label>
+                <select
+                  value={selectedVendorId}
+                  onChange={(e) => setSelectedVendorId(e.target.value)}
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2 font-medium"
+                >
+                  <option value="ALL">All Vendors</option>
+                  {vendors.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Worker */}
+              <div>
+                <label className="font-bold text-ink-700 block mb-1">Worker</label>
+                <select
+                  value={selectedWorkerId}
+                  onChange={(e) => setSelectedWorkerId(e.target.value)}
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2 font-medium"
+                >
+                  <option value="ALL">All Workers</option>
+                  {workers.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Metric Badges */}
-        <div className="flex items-center gap-4 shrink-0">
-          <div className="text-right">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500 block">
-              {language === "te" ? "మొత్తం ఖర్చు" : "Report Total"}
-            </span>
-            <p className="font-display text-2xl font-bold text-clay-800">
-              {formatINR(totalAmount)}
-            </p>
-            <p className="text-[11px] text-ink-500 font-medium">
-              {filteredExpenses.length} {language === "te" ? "లావాదేవీలు" : "transactions"}
-            </p>
-          </div>
-        </div>
-      </div>
+        {/* Row 3: Action Buttons (Preview, Download PDF, Share PDF) */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-paper-100">
+          {/* Preview Button */}
+          <button
+            type="button"
+            onClick={() => setPreviewModalOpen(true)}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs"
+          >
+            <Eye className="h-4 w-4 text-clay-600" />
+            <span>Preview</span>
+          </button>
 
-      {/* 4. Live Interactive Transactions Table */}
-      <div className="rounded-2xl border border-paper-200 bg-white shadow-xs overflow-hidden space-y-3 p-5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <h3 className="font-display text-base font-bold text-ink-900">
-              {language === "te" ? "ఖర్చుల వివరాలు (Transactions)" : "Itemized Transaction Details"}
-            </h3>
-            <p className="text-xs text-ink-500 mt-0.5">
-              {language === "te"
-                ? `ఎంచుకున్న ఫిల్టర్‌కు సంబంధించిన ${filteredExpenses.length} లావాదేవీలు`
-                : `Showing ${filteredExpenses.length} transactions for the active statement`}
-            </p>
-          </div>
+          {/* Download PDF Button */}
+          <a
+            href={`${pdfUrl}&download=1`}
+            download="construction-report.pdf"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-clay-600 px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-clay-700 active:scale-95 transition shadow-xs"
+          >
+            <Download className="h-4 w-4 stroke-[2.5]" />
+            <span>Download PDF</span>
+          </a>
 
-          {/* Quick search filter */}
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-ink-400" />
-            <input
-              type="text"
-              placeholder={language === "te" ? "ఈ నివేదికలో వెతకండి..." : "Search in report..."}
-              value={tableSearch}
-              onChange={(e) => setTableSearch(e.target.value)}
-              className="w-full rounded-xl border border-paper-300 bg-paper-50/60 py-1.5 pl-8 pr-8 text-xs font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:bg-white focus:outline-none"
-            />
-            {tableSearch && (
-              <button
-                type="button"
-                onClick={() => setTableSearch("")}
-                className="absolute right-2.5 top-2 text-ink-400 hover:text-ink-700"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
+          {/* Share PDF Button */}
+          <button
+            type="button"
+            onClick={handleSharePdf}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs"
+          >
+            {shareSuccess ? (
+              <>
+                <Check className="h-4 w-4 text-emerald-600" />
+                <span className="text-emerald-700">Link Copied!</span>
+              </>
+            ) : (
+              <>
+                <Share2 className="h-4 w-4 text-ink-600" />
+                <span>Share PDF</span>
+              </>
             )}
+          </button>
+        </div>
+      </div>
+
+      {/* 4. Live In-App Summary & Transaction Preview */}
+      <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+        {/* KPI Strip */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-paper-100 pb-4">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-wider text-ink-400">
+              {language === "te" ? "నివేదిక మొత్తం ఖర్చు" : "Report Total Expenditure"}
+            </span>
+            <p className="font-display text-2xl sm:text-3xl font-bold text-ink-900 mt-0.5">
+              {formatINR(aggregates.total)}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 text-xs font-medium text-ink-600 flex-wrap">
+            <span className="rounded-lg bg-paper-100 px-2.5 py-1 text-ink-800 font-bold">
+              {aggregates.count} {language === "te" ? "లావాదేవీలు" : "transactions"}
+            </span>
+            <span>•</span>
+            <span>Material: <strong className="font-bold text-ink-900">{formatINR(aggregates.material)}</strong></span>
+            <span>•</span>
+            <span>Labour: <strong className="font-bold text-ink-900">{formatINR(aggregates.labour)}</strong></span>
           </div>
         </div>
 
-        {/* Table Content */}
+        {/* Live Preview Table */}
         {filteredExpenses.length > 0 ? (
-          <div className="overflow-x-auto rounded-xl border border-paper-200">
+          <div className="overflow-x-auto rounded-2xl border border-paper-200">
             <table className="w-full text-left text-xs text-ink-700">
-              <thead className="border-b border-paper-200 bg-paper-50 font-bold uppercase tracking-wider text-ink-500 text-[10px]">
+              <thead className="border-b border-paper-200 bg-paper-50/80 font-bold uppercase tracking-wider text-ink-500 text-[10px]">
                 <tr>
-                  <th className="py-2.5 px-3">{language === "te" ? "తేదీ" : "Date"}</th>
-                  <th className="py-2.5 px-3">{language === "te" ? "రకం & వర్గం" : "Category"}</th>
-                  <th className="py-2.5 px-3">{language === "te" ? "వివరాలు" : "Description"}</th>
-                  <th className="py-2.5 px-3">{language === "te" ? "దుకాణం / వర్కర్" : "Vendor / Worker"}</th>
-                  <th className="py-2.5 px-3 text-center">{language === "te" ? "పరిమాణం / రేటు" : "Quantity & Rate"}</th>
-                  <th className="py-2.5 px-3">{language === "te" ? "చెల్లింపు" : "Payment"}</th>
-                  <th className="py-2.5 px-3 text-right">{language === "te" ? "మొత్తం (₹)" : "Amount (₹)"}</th>
+                  <th className="py-3 px-3.5">Date</th>
+                  <th className="py-3 px-3.5">Type</th>
+                  <th className="py-3 px-3.5">Category</th>
+                  <th className="py-3 px-3.5">Description</th>
+                  <th className="py-3 px-3.5">Vendor / Worker</th>
+                  <th className="py-3 px-3.5 text-right">Amount</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-100">
-                {filteredExpenses.map((exp) => {
-                  const categoryName =
-                    exp.materialCategoryName ??
-                    exp.labourCategoryName ??
-                    exp.serviceCategoryName ??
-                    exp.expenseType;
-                  const dateStr = format(new Date(exp.date), "dd-MMM-yyyy");
-
-                  return (
-                    <tr key={exp.id} className="hover:bg-paper-50/50 transition">
-                      <td className="py-2.5 px-3 whitespace-nowrap text-ink-600 font-medium">{dateStr}</td>
-                      <td className="py-2.5 px-3">
-                        <span className="font-bold text-ink-900 block">{categoryName}</span>
-                        <span className="text-[10px] text-ink-400 uppercase font-semibold">{exp.expenseType}</span>
-                      </td>
-                      <td className="py-2.5 px-3 text-ink-600 max-w-xs truncate">{exp.description ?? "—"}</td>
-                      <td className="py-2.5 px-3 font-semibold text-ink-800">
-                        {exp.vendorName ? `🏪 ${exp.vendorName}` : exp.workerName ? `👷 ${exp.workerName}` : "—"}
-                      </td>
-                      <td className="py-2.5 px-3 text-center text-ink-600 whitespace-nowrap">
-                        {exp.quantity ? (
-                          <span>
-                            {exp.quantity} {exp.unit ?? ""} {exp.rate ? `@ ₹${exp.rate}` : ""}
-                          </span>
-                        ) : (
-                          "—"
+                {filteredExpenses.slice(0, 50).map((exp) => (
+                  <tr key={exp.id} className="hover:bg-paper-50/50 transition">
+                    <td className="py-3 px-3.5 font-medium whitespace-nowrap text-ink-600">
+                      {exp.date.slice(0, 10)}
+                    </td>
+                    <td className="py-3 px-3.5 whitespace-nowrap">
+                      <span
+                        className={cn(
+                          "rounded-md px-2 py-0.5 text-[10px] font-bold",
+                          exp.expenseType === "MATERIAL"
+                            ? "bg-amber-100 text-amber-900"
+                            : exp.expenseType === "LABOUR"
+                            ? "bg-emerald-100 text-emerald-900"
+                            : "bg-paper-100 text-ink-700"
                         )}
-                      </td>
-                      <td className="py-2.5 px-3">
-                        <span className="rounded-md bg-paper-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-ink-600">
-                          {exp.paymentMethod}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-ink-900 whitespace-nowrap">
-                        {formatINR(Number(exp.amount))}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-              <tfoot className="border-t-2 border-paper-200 bg-paper-50/80 font-bold">
-                <tr>
-                  <td colSpan={6} className="py-3 px-3 text-ink-700 uppercase tracking-wider text-xs">
-                    {language === "te" ? "మొత్తం (Total)" : "Grand Total:"}
-                  </td>
-                  <td className="py-3 px-3 text-right text-sm text-clay-900 font-display">
-                    {formatINR(totalAmount)}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-paper-200 bg-paper-50/50 p-8 text-center">
-            <p className="text-xs font-bold text-ink-600">
-              {language === "te" ? "ఎంచుకున్న ఫిల్టర్‌కు ఎటువంటి లావాదేవీలు కనుగొనబడలేదు" : "No expenses found matching the selected report criteria"}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* 5. Work-Wise Trade Matrix Reference (if available) */}
-      {workWise.length > 0 && reportMode === "TOTAL" && (
-        <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-3">
-          <div>
-            <h3 className="font-display text-sm font-bold text-ink-900">
-              {language === "te" ? "పని విభాగాల వారీ ఖర్చుల పట్టిక" : "Work-Wise Trade Matrix Breakdown"}
-            </h3>
-            <p className="text-xs text-ink-500 mt-0.5">
-              {language === "te" ? "ప్రతి పనికి సామాగ్రి మరియు కూలీ ఖర్చుల మొత్తం" : "Material + Labour combined for key trade areas"}
-            </p>
-          </div>
-
-          <div className="overflow-x-auto rounded-xl border border-paper-200">
-            <table className="w-full text-left text-xs text-ink-700">
-              <thead className="border-b border-paper-200 bg-paper-50 font-bold uppercase tracking-wider text-ink-500 text-[10px]">
-                <tr>
-                  <th className="py-2.5 px-3">{language === "te" ? "పని విభాగం" : "Trade / Work Area"}</th>
-                  <th className="py-2.5 px-3 text-right">{language === "te" ? "సామాగ్రి" : "Material"}</th>
-                  <th className="py-2.5 px-3 text-right">{language === "te" ? "కూలీలు" : "Labour"}</th>
-                  <th className="py-2.5 px-3 text-right">{language === "te" ? "మొత్తం" : "Total"}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-paper-100">
-                {workWise.map((w) => (
-                  <tr key={w.id} className="hover:bg-paper-50/50 transition">
-                    <td className="py-2.5 px-3 font-bold text-ink-900">{w.name}</td>
-                    <td className="py-2.5 px-3 text-right font-medium">{formatINR(Number(w.material))}</td>
-                    <td className="py-2.5 px-3 text-right font-medium">{formatINR(Number(w.labour))}</td>
-                    <td className="py-2.5 px-3 text-right font-bold text-ink-900">{formatINR(Number(w.total))}</td>
+                      >
+                        {exp.expenseType}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3.5 font-semibold text-ink-900 whitespace-nowrap">
+                      {exp.materialCategoryName ?? exp.labourCategoryName ?? exp.serviceCategoryName ?? "General"}
+                    </td>
+                    <td className="py-3 px-3.5 text-ink-600 max-w-[200px] truncate" title={exp.description || ""}>
+                      {exp.description || "—"}
+                    </td>
+                    <td className="py-3 px-3.5 text-ink-600 whitespace-nowrap">
+                      {exp.vendorName ?? exp.workerName ?? "—"}
+                    </td>
+                    <td className="py-3 px-3.5 text-right font-display font-bold text-ink-900 whitespace-nowrap">
+                      {formatINR(Number(exp.amount))}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        ) : (
+          <div className="p-8 text-center space-y-2 border border-dashed border-paper-300 rounded-2xl">
+            <AlertCircle className="mx-auto h-8 w-8 text-ink-300" />
+            <h3 className="font-display font-bold text-sm text-ink-800">No transactions match the selected criteria</h3>
+            <p className="text-xs text-ink-500">Try choosing a broader date range or clearing optional filters.</p>
+          </div>
+        )}
+      </div>
+
+      {/* 5. PDF Preview Modal / Lightbox */}
+      {previewModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fadeIn">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl bg-white border border-paper-200 shadow-2xl flex flex-col justify-between">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-paper-200 bg-paper-50">
+              <div>
+                <h3 className="font-display text-base font-bold text-ink-900">
+                  PDF Report Preview: {selectedReport}
+                </h3>
+                <p className="text-xs text-ink-500 mt-0.5">
+                  {periodDescription} · {formatINR(aggregates.total)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`${pdfUrl}&download=1`}
+                  download="construction-report.pdf"
+                  className="inline-flex items-center gap-1 rounded-xl bg-clay-600 hover:bg-clay-700 px-3.5 py-1.5 text-xs font-bold text-white transition shadow-xs"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Download</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setPreviewModalOpen(false)}
+                  className="rounded-xl p-1.5 text-ink-500 hover:bg-paper-200 transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Iframe View */}
+            <div className="relative flex-1 min-h-[400px] max-h-[70vh] bg-paper-100 p-2">
+              <iframe
+                src={pdfUrl}
+                title="Construction PDF Report"
+                className="w-full h-full min-h-[450px] rounded-xl border border-paper-200 bg-white"
+              />
+            </div>
           </div>
         </div>
       )}
