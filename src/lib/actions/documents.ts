@@ -68,6 +68,19 @@ export async function uploadDocument(projectId: string, formData: FormData) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid document details" };
   }
 
+  const floorId = emptyToNull(parsed.data.floorId);
+  const constructionStageId = emptyToNull(parsed.data.constructionStageId);
+
+  if (floorId) {
+    const validFloor = await prisma.floor.findFirst({ where: { id: floorId, projectId } });
+    if (!validFloor) return { error: "Selected floor not found in this project" };
+  }
+
+  if (constructionStageId) {
+    const validStage = await prisma.constructionStage.findFirst({ where: { id: constructionStageId, projectId } });
+    if (!validStage) return { error: "Selected stage not found in this project" };
+  }
+
   // Sanitize filename to prevent path traversal
   const sanitizedOriginalName = path.basename(file.name).replace(/[^a-zA-Z0-9._-]/g, "_");
   const ext = extensionFor(mimeType, sanitizedOriginalName);
@@ -91,8 +104,8 @@ export async function uploadDocument(projectId: string, formData: FormData) {
       title: parsed.data.title,
       description: emptyToNull(parsed.data.description),
       version: emptyToNull(parsed.data.version),
-      floorId: emptyToNull(parsed.data.floorId),
-      constructionStageId: emptyToNull(parsed.data.constructionStageId),
+      floorId,
+      constructionStageId,
       fileName: sanitizedOriginalName,
       storedName,
       mimeType,
@@ -121,11 +134,24 @@ export async function updateDocument(
   }
 ) {
   const user = await requireUser();
-  const doc = await prisma.projectDocument.findUnique({
-    where: { id: documentId },
+  const doc = await prisma.projectDocument.findFirst({
+    where: { id: documentId, project: { userId: user.id } },
     include: { project: true },
   });
-  if (!doc || doc.project.userId !== user.id) return { error: "Document not found" };
+  if (!doc) return { error: "Document not found or unauthorized" };
+
+  const floorId = emptyToNull(input.floorId);
+  const constructionStageId = emptyToNull(input.constructionStageId);
+
+  if (floorId) {
+    const validFloor = await prisma.floor.findFirst({ where: { id: floorId, projectId: doc.projectId } });
+    if (!validFloor) return { error: "Selected floor not found in this project" };
+  }
+
+  if (constructionStageId) {
+    const validStage = await prisma.constructionStage.findFirst({ where: { id: constructionStageId, projectId: doc.projectId } });
+    if (!validStage) return { error: "Selected stage not found in this project" };
+  }
 
   await prisma.projectDocument.update({
     where: { id: documentId },
@@ -134,8 +160,8 @@ export async function updateDocument(
       category: input.category,
       description: emptyToNull(input.description),
       version: emptyToNull(input.version),
-      floorId: emptyToNull(input.floorId),
-      constructionStageId: emptyToNull(input.constructionStageId),
+      floorId,
+      constructionStageId,
       isPinned: input.isPinned ?? doc.isPinned,
     },
   });
@@ -147,11 +173,11 @@ export async function updateDocument(
 
 export async function togglePinDocument(documentId: string) {
   const user = await requireUser();
-  const doc = await prisma.projectDocument.findUnique({
-    where: { id: documentId },
+  const doc = await prisma.projectDocument.findFirst({
+    where: { id: documentId, project: { userId: user.id } },
     include: { project: true },
   });
-  if (!doc || doc.project.userId !== user.id) return { error: "Document not found" };
+  if (!doc) return { error: "Document not found or unauthorized" };
 
   await prisma.projectDocument.update({
     where: { id: documentId },
@@ -164,11 +190,11 @@ export async function togglePinDocument(documentId: string) {
 
 export async function deleteDocument(documentId: string) {
   const user = await requireUser();
-  const doc = await prisma.projectDocument.findUnique({
-    where: { id: documentId },
+  const doc = await prisma.projectDocument.findFirst({
+    where: { id: documentId, project: { userId: user.id } },
     include: { project: true },
   });
-  if (!doc || doc.project.userId !== user.id) return { error: "Document not found" };
+  if (!doc) return { error: "Document not found or unauthorized" };
 
   // Delete physical file if exists in uploads directory
   try {
@@ -181,7 +207,7 @@ export async function deleteDocument(documentId: string) {
     }
   } catch {}
 
-  await prisma.projectDocument.delete({ where: { id: documentId } });
+  await prisma.projectDocument.deleteMany({ where: { id: documentId, projectId: doc.projectId } });
 
   revalidatePath("/documents");
   revalidatePath(`/projects/${doc.projectId}`);
@@ -295,4 +321,3 @@ export async function seedSampleDocuments(projectId: string) {
   revalidatePath("/dashboard");
   return { ok: true, count: samples.length };
 }
-

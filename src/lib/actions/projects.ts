@@ -48,6 +48,7 @@ export async function createProject(input: unknown) {
     await seedProjectStructure(project.id);
     await setActiveProjectId(project.id);
     revalidatePath("/");
+    revalidatePath("/projects");
     return { ok: true, id: project.id };
   } catch (error: unknown) {
     console.error("createProject error:", error);
@@ -62,8 +63,8 @@ export async function updateProject(projectId: string, input: unknown) {
     const parsed = projectSchema.safeParse(input);
     if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid project" };
 
-    await prisma.project.update({
-      where: { id: projectId },
+    await prisma.project.updateMany({
+      where: { id: projectId, userId: user.id },
       data: {
         name: parsed.data.name,
         location: emptyToNull(parsed.data.location),
@@ -79,6 +80,8 @@ export async function updateProject(projectId: string, input: unknown) {
       },
     });
     revalidatePath("/");
+    revalidatePath("/projects");
+    revalidatePath(`/projects/${projectId}`);
     return { ok: true };
   } catch (error: unknown) {
     console.error("updateProject error:", error);
@@ -96,8 +99,8 @@ export async function updateProjectName(
   const trimmed = name.trim();
   if (!trimmed) return { error: "House name cannot be empty" };
 
-  await prisma.project.update({
-    where: { id: projectId },
+  await prisma.project.updateMany({
+    where: { id: projectId, userId: user.id },
     data: {
       name: trimmed,
       ...(location !== undefined ? { location: emptyToNull(location) } : {}),
@@ -119,6 +122,12 @@ export async function switchProject(projectId: string) {
   await requireProject(projectId, user.id);
   await setActiveProjectId(projectId);
   revalidatePath("/");
+  revalidatePath("/dashboard");
+  revalidatePath("/expenses");
+  revalidatePath("/stages");
+  revalidatePath("/budget");
+  revalidatePath("/reports");
+  revalidatePath("/documents");
   return { ok: true };
 }
 
@@ -137,14 +146,16 @@ export async function createFloor(projectId: string, input: unknown) {
     },
   });
   revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}/floors`);
   return { ok: true };
 }
 
 export async function deleteFloor(projectId: string, floorId: string) {
   const user = await requireUser();
   await requireProject(projectId, user.id);
-  await prisma.floor.delete({ where: { id: floorId } });
+  await prisma.floor.deleteMany({ where: { id: floorId, projectId } });
   revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}/floors`);
   return { ok: true };
 }
 
@@ -153,8 +164,8 @@ export async function updateStage(projectId: string, stageId: string, input: unk
   await requireProject(projectId, user.id);
   const parsed = stageSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid stage" };
-  await prisma.constructionStage.update({
-    where: { id: stageId },
+  await prisma.constructionStage.updateMany({
+    where: { id: stageId, projectId },
     data: {
       name: parsed.data.name,
       status: parsed.data.status,
@@ -166,6 +177,8 @@ export async function updateStage(projectId: string, stageId: string, input: unk
     },
   });
   revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}/stages`);
+  revalidatePath("/stages");
   return { ok: true };
 }
 
@@ -192,13 +205,15 @@ export async function createStage(projectId: string, input: unknown) {
     },
   });
   revalidatePath("/projects");
+  revalidatePath(`/projects/${projectId}/stages`);
+  revalidatePath("/stages");
   return { ok: true };
 }
 
 export async function deleteStage(projectId: string, stageId: string) {
   const user = await requireUser();
   await requireProject(projectId, user.id);
-  await prisma.constructionStage.delete({ where: { id: stageId } });
+  await prisma.constructionStage.deleteMany({ where: { id: stageId, projectId } });
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}/stages`);
   revalidatePath("/stages");
@@ -211,7 +226,7 @@ export async function deleteProject(projectId: string) {
     await requireProject(projectId, user.id);
 
     // Delete the project (cascades to stages, expenses, documents, floors, budgets)
-    await prisma.project.delete({ where: { id: projectId } });
+    await prisma.project.deleteMany({ where: { id: projectId, userId: user.id } });
 
     // Find remaining projects for user
     const remaining = await prisma.project.findMany({
@@ -233,4 +248,3 @@ export async function deleteProject(projectId: string) {
     return { error: error instanceof Error ? error.message : "Failed to delete house project" };
   }
 }
-

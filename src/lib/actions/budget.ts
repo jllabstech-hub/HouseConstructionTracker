@@ -90,7 +90,7 @@ export async function updateProjectBudget(projectId: string, amountRaw: string) 
 export async function deleteCategoryBudget(projectId: string, id: string) {
   const user = await requireUser();
   await requireProject(projectId, user.id);
-  await prisma.budgetCategory.delete({ where: { id } });
+  await prisma.budgetCategory.deleteMany({ where: { id, projectId } });
   revalidatePath("/budget");
   return { ok: true };
 }
