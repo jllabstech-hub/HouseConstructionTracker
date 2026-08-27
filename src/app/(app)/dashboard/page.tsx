@@ -9,14 +9,14 @@ import { FinancialHero } from "@/components/dashboard/financial-hero";
 import { FinancialSplit } from "@/components/dashboard/financial-split";
 import {
   DashboardMonthlySection,
-  DashboardWorkWiseSection,
-  DashboardTopCategoriesSection,
+  DashboardTopCategoriesAndAlertsSection,
+  DashboardConstructionProgressSection,
   DashboardRecentTransactionsSection,
 } from "@/components/dashboard/dashboard-streaming-sections";
 import {
   MonthlyChartSkeleton,
-  WorkWiseSkeleton,
   TopCategoriesSkeleton,
+  ConstructionProgressSkeleton,
   RecentTransactionsSkeleton,
 } from "@/components/dashboard/dashboard-skeletons";
 
@@ -66,8 +66,8 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* 1. Critical Financial KPIs (Immediate First Viewport Render) */}
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+      {/* 1. Project Header & Key Financial Questions: Total Spent | Budget | Remaining + Primary CTA */}
       <FinancialHero
         projectName={summary.projectName}
         location={summary.location}
@@ -79,7 +79,7 @@ export default async function DashboardPage() {
         billsCount={summary.billsCount}
       />
 
-      {/* 2. Where Money is Going (Material vs Labour vs Other) */}
+      {/* 2. Where is the Money Going? (Material vs Labour vs Other) */}
       <FinancialSplit
         materialTotal={summary.materialTotal}
         labourTotal={summary.labourTotal}
@@ -87,22 +87,22 @@ export default async function DashboardPage() {
         grandTotal={summary.totalSpent}
       />
 
-      {/* 3. Streaming Monthly Spending Chart */}
+      {/* 3. Spending Trend (Monthly Timeline Chart) */}
       <Suspense fallback={<MonthlyChartSkeleton />}>
         <DashboardMonthlySection projectId={projectId} />
       </Suspense>
 
-      {/* 4. Streaming Work-wise Cost Breakdown */}
-      <Suspense fallback={<WorkWiseSkeleton />}>
-        <DashboardWorkWiseSection projectId={projectId} userId={user.id} />
-      </Suspense>
-
-      {/* 5. Streaming Top Expense Categories & Budget Alerts */}
+      {/* 4. Top Expense Categories & Budget Alerts (What Needs My Attention?) */}
       <Suspense fallback={<TopCategoriesSkeleton />}>
-        <DashboardTopCategoriesSection projectId={projectId} />
+        <DashboardTopCategoriesAndAlertsSection projectId={projectId} />
       </Suspense>
 
-      {/* 6. Streaming Recent 5 Transactions */}
+      {/* 5. Construction Progress (20 Milestone Timeline) */}
+      <Suspense fallback={<ConstructionProgressSkeleton />}>
+        <DashboardConstructionProgressSection projectId={projectId} />
+      </Suspense>
+
+      {/* 6. Recent Expenses (Latest 5 Transactions) */}
       <Suspense fallback={<RecentTransactionsSkeleton />}>
         <DashboardRecentTransactionsSection projectId={projectId} />
       </Suspense>

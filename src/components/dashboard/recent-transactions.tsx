@@ -25,14 +25,14 @@ export function RecentTransactions({
   if (expenses.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-3">
+    <div className="rounded-2xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-paper-100">
         <div>
           <h2 className="font-display text-base sm:text-lg font-bold text-ink-900 leading-tight">
-            {language === "te" ? "ఇటీవలి లావాదేవీలు" : "Recent Expenses"}
+            {language === "te" ? "ఇటీవలి ఖర్చులు" : "Recent Expenses"}
           </h2>
           <p className="text-xs text-ink-500 mt-0.5">
-            {language === "te" ? "చివరిగా నమోదు చేసిన 5 ఖర్చులు" : "Latest 5 recorded transactions"}
+            {language === "te" ? "చివరిగా నమోదు చేసిన 5 లావాదేవీలు" : "Latest 5 recorded transactions"}
           </p>
         </div>
 
@@ -40,7 +40,7 @@ export function RecentTransactions({
           href="/expenses"
           className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition"
         >
-          <span>{language === "te" ? "అన్ని ఖర్చులు" : "View all"}</span>
+          <span>{language === "te" ? "అన్ని ఖర్చులు" : "View all expenses"}</span>
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -49,10 +49,10 @@ export function RecentTransactions({
         {expenses.slice(0, 5).map((exp) => (
           <div
             key={exp.id}
-            className="flex items-center justify-between py-2.5 hover:bg-paper-50/50 rounded-lg px-1.5 transition"
+            className="flex items-center justify-between py-3 hover:bg-paper-50/60 rounded-xl px-2 transition gap-3"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-paper-100 text-ink-700">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-paper-100 text-ink-700">
                 {exp.type === "MATERIAL" ? (
                   <Package className="h-4 w-4 text-clay-600" />
                 ) : exp.type === "LABOUR" ? (
@@ -63,10 +63,10 @@ export function RecentTransactions({
               </div>
 
               <div className="min-w-0">
-                <p className="text-xs font-bold text-ink-900 truncate">
+                <p className="text-xs sm:text-sm font-bold text-ink-900 truncate">
                   {exp.description || exp.categoryName}
                 </p>
-                <div className="flex items-center gap-2 text-[11px] text-ink-500 truncate">
+                <div className="flex items-center gap-2 text-[11px] text-ink-500 truncate mt-0.5">
                   <span>{exp.date}</span>
                   {exp.vendorName && <span>• {exp.vendorName}</span>}
                   <span>• {exp.categoryName}</span>
@@ -75,12 +75,12 @@ export function RecentTransactions({
             </div>
 
             <div className="text-right shrink-0 pl-3">
-              <p className="text-xs sm:text-sm font-bold text-ink-900 font-mono">
+              <p className="text-xs sm:text-sm font-bold text-ink-900">
                 {formatINR(exp.amount)}
               </p>
               <Link
                 href={`/expenses/${exp.id}`}
-                className="text-[10px] font-semibold text-clay-600 hover:text-clay-800"
+                className="text-[11px] font-semibold text-clay-600 hover:text-clay-800 transition"
               >
                 {language === "te" ? "సవరించు" : "Edit"}
               </Link>

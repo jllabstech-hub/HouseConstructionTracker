@@ -1,5 +1,3 @@
-import { Card } from "@/components/ui/card";
-
 export function FinancialSummarySkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
@@ -41,6 +39,19 @@ export function WorkWiseSkeleton() {
       <div className="grid gap-3 sm:grid-cols-2 mt-4">
         <div className="h-24 rounded-xl bg-paper-50 border border-paper-100" />
         <div className="h-24 rounded-xl bg-paper-50 border border-paper-100" />
+        <div className="h-24 rounded-xl bg-paper-50 border border-paper-100" />
+        <div className="h-24 rounded-xl bg-paper-50 border border-paper-100" />
+      </div>
+    </div>
+  );
+}
+
+export function ConstructionProgressSkeleton() {
+  return (
+    <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-3 animate-pulse">
+      <div className="h-5 w-48 rounded-lg bg-paper-200" />
+      <div className="h-3 w-64 rounded-md bg-paper-100" />
+      <div className="grid gap-3 sm:grid-cols-2 mt-4">
         <div className="h-24 rounded-xl bg-paper-50 border border-paper-100" />
         <div className="h-24 rounded-xl bg-paper-50 border border-paper-100" />
       </div>
@@ -96,7 +107,7 @@ export function FullDashboardSkeleton() {
         <div className="h-24 rounded-2xl bg-paper-100 border border-paper-200" />
       </div>
       <MonthlyChartSkeleton />
-      <WorkWiseSkeleton />
+      <ConstructionProgressSkeleton />
       <TopCategoriesSkeleton />
       <RecentTransactionsSkeleton />
     </div>

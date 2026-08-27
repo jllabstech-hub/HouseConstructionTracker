@@ -212,6 +212,42 @@ export async function getTopCategoriesAndAlertsOptimized(projectId: string) {
   return { topCategories, budgetAlerts };
 }
 
+export type ConstructionProgressSummary = {
+  activeStage: { name: string; sortOrder: number; percentageComplete: number; status: string } | null;
+  completedCount: number;
+  totalStages: number;
+  overallPercent: number;
+  isUnrecorded: boolean;
+};
+
+export async function getConstructionProgressSummary(projectId: string): Promise<ConstructionProgressSummary> {
+  const stages = await prisma.constructionStage.findMany({
+    where: { projectId },
+    orderBy: { sortOrder: "asc" },
+    select: { name: true, sortOrder: true, percentageComplete: true, status: true },
+  });
+
+  const totalStages = stages.length || 20;
+  const completedCount = stages.filter((s) => s.status === "COMPLETED" || s.percentageComplete >= 100).length;
+  const activeStage =
+    stages.find((s) => s.status === "IN_PROGRESS") ??
+    stages.find((s) => s.status === "NOT_STARTED" && s.percentageComplete > 0) ??
+    stages[0] ??
+    null;
+
+  const sumPercent = stages.reduce((sum, s) => sum + s.percentageComplete, 0);
+  const overallPercent = Math.round(sumPercent / totalStages);
+  const isUnrecorded = sumPercent === 0 && stages.every((s) => s.status === "NOT_STARTED");
+
+  return {
+    activeStage,
+    completedCount,
+    totalStages,
+    overallPercent,
+    isUnrecorded,
+  };
+}
+
 export type WorkWiseCostItem = {
   name: string;
   material: number;

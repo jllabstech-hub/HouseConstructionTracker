@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { ArrowRight, Package, HardHat, MoreHorizontal } from "lucide-react";
-import { formatINR } from "@/lib/money";
 import { useLanguage } from "@/context/language-context";
+import { AnimatedNumber } from "@/components/ui/animated-number";
 
 export function FinancialSplit({
   materialTotal,
@@ -24,22 +24,55 @@ export function FinancialSplit({
   const othPercent = Math.max(0, 100 - matPercent - labPercent);
 
   return (
-    <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="rounded-2xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-paper-100 pb-3">
         <div>
           <h2 className="font-display text-base sm:text-lg font-bold text-ink-900 leading-tight">
-            {language === "te" ? "డబ్బు ఎక్కడికి వెళ్తోంది?" : "Where Money is Going"}
+            {language === "te" ? "డబ్బు ఎక్కడికి వెళ్తోంది?" : "Where is the Money Going?"}
           </h2>
           <p className="text-xs text-ink-500 mt-0.5">
             {language === "te"
-              ? "సామాగ్రి ఖర్చులు మరియు కూలీల చెల్లింపులు వేర్వేరుగా లెక్కించబడ్డాయి"
-              : "Material purchases and worker wages are strictly separated"}
+              ? "సామాగ్రి కొనుగోళ్లు మరియు కూలీల చెల్లింపుల స్పష్టమైన విభజన"
+              : "Material purchases vs worker wages breakdown"}
           </p>
         </div>
       </div>
 
-      {/* 3-Column Split */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      {/* Visual Proportional Split Bar */}
+      <div className="space-y-1.5">
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-paper-100 flex">
+          <div
+            className="h-full bg-clay-600 transition-all duration-700"
+            style={{ width: `${matPercent}%` }}
+            title={`Material: ${matPercent}%`}
+          />
+          <div
+            className="h-full bg-emerald-600 transition-all duration-700"
+            style={{ width: `${labPercent}%` }}
+            title={`Labour: ${labPercent}%`}
+          />
+          <div
+            className="h-full bg-ink-400 transition-all duration-700"
+            style={{ width: `${othPercent}%` }}
+            title={`Other: ${othPercent}%`}
+          />
+        </div>
+        <div className="flex items-center justify-between text-[11px] text-ink-500 font-medium px-1">
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-clay-600 inline-block" /> Material ({matPercent}%)
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-emerald-600 inline-block" /> Labour ({labPercent}%)
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="h-2 w-2 rounded-full bg-ink-400 inline-block" /> Other ({othPercent}%)
+          </span>
+        </div>
+      </div>
+
+      {/* 3-Column Detail Cards */}
+      <div className="grid gap-3.5 sm:grid-cols-3 pt-1">
         {/* Material Purchases */}
         <div className="rounded-xl border border-paper-200 bg-paper-50/50 p-4 flex flex-col justify-between hover:border-clay-300 transition">
           <div>
@@ -48,22 +81,22 @@ export function FinancialSplit({
                 <Package className="h-4 w-4 text-clay-600" />
                 <span>{language === "te" ? "సామాగ్రి" : "Material"}</span>
               </div>
-              <span className="rounded-md bg-clay-100 px-1.5 py-0.5 text-xs font-bold text-clay-800">
+              <span className="rounded-md bg-clay-100 px-2 py-0.5 text-xs font-bold text-clay-800">
                 {matPercent}%
               </span>
             </div>
 
-            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 mt-2">
-              {formatINR(materialTotal)}
+            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 mt-2.5">
+              <AnimatedNumber value={materialTotal} />
             </p>
             <p className="text-[11px] text-ink-500 mt-0.5">
-              {language === "te" ? "సిమెంట్, స్టీల్, ఇసుక, ఇటుకలు..." : "Cement, steel, sand, tiles..."}
+              {language === "te" ? "సిమెంట్, స్టీల్, ఇసుక, ఇటుకలు..." : "Cement, steel, sand, tiles, bricks..."}
             </p>
           </div>
 
           <Link
             href="/expenses?type=MATERIAL"
-            className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 pt-2 border-t border-paper-200/80 transition"
+            className="mt-3.5 inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 pt-2.5 border-t border-paper-200/80 transition"
           >
             <span>{language === "te" ? "సామాగ్రి బిల్లులు" : "View Materials"}</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -78,13 +111,13 @@ export function FinancialSplit({
                 <HardHat className="h-4 w-4 text-emerald-700" />
                 <span>{language === "te" ? "కూలీలు" : "Labour"}</span>
               </div>
-              <span className="rounded-md bg-emerald-100 px-1.5 py-0.5 text-xs font-bold text-emerald-800">
+              <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">
                 {labPercent}%
               </span>
             </div>
 
-            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 mt-2">
-              {formatINR(labourTotal)}
+            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 mt-2.5">
+              <AnimatedNumber value={labourTotal} />
             </p>
             <p className="text-[11px] text-ink-500 mt-0.5">
               {language === "te" ? "మేస్త్రీ, కూలీలు, కార్పెంటర్..." : "Masonry, bar bending, carpentry..."}
@@ -93,14 +126,14 @@ export function FinancialSplit({
 
           <Link
             href="/expenses?type=LABOUR"
-            className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-900 pt-2 border-t border-paper-200/80 transition"
+            className="mt-3.5 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-900 pt-2.5 border-t border-paper-200/80 transition"
           >
             <span>{language === "te" ? "కూలీల చెల్లింపులు" : "View Labour"}</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
-        {/* Other / Machinery */}
+        {/* Other / Machinery / Services */}
         <div className="rounded-xl border border-paper-200 bg-paper-50/50 p-4 flex flex-col justify-between hover:border-paper-300 transition">
           <div>
             <div className="flex items-center justify-between">
@@ -108,22 +141,22 @@ export function FinancialSplit({
                 <MoreHorizontal className="h-4 w-4 text-ink-600" />
                 <span>{language === "te" ? "ఇతర ఖర్చులు" : "Other"}</span>
               </div>
-              <span className="rounded-md bg-paper-200 px-1.5 py-0.5 text-xs font-bold text-ink-700">
+              <span className="rounded-md bg-paper-200 px-2 py-0.5 text-xs font-bold text-ink-700">
                 {othPercent}%
               </span>
             </div>
 
-            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 mt-2">
-              {formatINR(otherTotal)}
+            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 mt-2.5">
+              <AnimatedNumber value={otherTotal} />
             </p>
             <p className="text-[11px] text-ink-500 mt-0.5">
-              {language === "te" ? "JCB, రవాణా, అనుమతులు..." : "Machinery, transport, fees..."}
+              {language === "te" ? "JCB, రవాణా, అనుమతులు..." : "Machinery, transport, permits, fees..."}
             </p>
           </div>
 
           <Link
             href="/expenses?type=OTHER"
-            className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-ink-700 hover:text-ink-900 pt-2 border-t border-paper-200/80 transition"
+            className="mt-3.5 inline-flex items-center gap-1 text-xs font-bold text-ink-700 hover:text-ink-900 pt-2.5 border-t border-paper-200/80 transition"
           >
             <span>{language === "te" ? "ఇతర బిల్లులు" : "View Other"}</span>
             <ArrowRight className="h-3.5 w-3.5" />
