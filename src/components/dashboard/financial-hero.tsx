@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Building2 } from "lucide-react";
 import { formatINR } from "@/lib/money";
 import { useLanguage } from "@/context/language-context";
 
@@ -34,9 +34,13 @@ export function FinancialHero({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-paper-200/80 pb-4">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 tracking-tight">
-              {projectName}
-            </h1>
+            <Link
+              href="/projects"
+              className="font-display text-2xl sm:text-3xl font-bold text-ink-900 tracking-tight hover:text-clay-800 transition flex items-center gap-1.5"
+              title="Click to view all house projects"
+            >
+              <span>{projectName}</span>
+            </Link>
             {location && (
               <span className="rounded-md bg-paper-100 px-2 py-0.5 text-xs font-semibold text-ink-600">
                 {location}
@@ -52,11 +56,20 @@ export function FinancialHero({
           </p>
         </div>
 
-        {/* Primary CTA */}
-        <div className="shrink-0">
+        {/* Action Buttons Group (New House + Add Expense) */}
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
+          <Link
+            href="/projects/new"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-paper-300 bg-white hover:bg-paper-50 px-3.5 py-2 text-xs font-bold text-ink-800 shadow-2xs transition active:scale-95"
+            title="Create a new house project"
+          >
+            <Building2 className="h-3.5 w-3.5 text-clay-600" />
+            <span>{language === "te" ? "+ కొత్త ఇల్లు" : "+ New House"}</span>
+          </Link>
+
           <Link
             href="/expenses/new"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition w-full sm:w-auto"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 px-4 py-2 text-xs font-bold text-white shadow-xs transition active:scale-95"
           >
             <Plus className="h-4 w-4 stroke-[2.5]" />
             <span>{t.nav?.addExpense ?? "+ Add Expense"}</span>

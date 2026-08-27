@@ -302,9 +302,20 @@ export function AppShell({
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
                 {language === "te" ? "ప్రస్తుత ఇల్లు" : "Active Project"}:
               </span>
-              <span className="text-xs font-bold text-ink-900 bg-paper-100 px-2.5 py-1 rounded-xl border border-paper-200/80 shadow-2xs">
+              <Link
+                href="/projects"
+                className="text-xs font-bold text-ink-900 bg-paper-100 hover:bg-paper-200 px-2.5 py-1 rounded-xl border border-paper-200/80 shadow-2xs transition"
+                title="Manage all house projects"
+              >
                 🏡 {activeProject?.name ?? (language === "te" ? "నా ఇల్లు" : "My House")}
-              </span>
+              </Link>
+              <Link
+                href="/projects/new"
+                className="text-[11px] font-bold text-clay-700 hover:text-clay-900 bg-clay-50 hover:bg-clay-100 px-2 py-0.5 rounded-lg border border-clay-200 transition"
+                title="Create another house project"
+              >
+                + New House
+              </Link>
             </div>
 
             {/* Top-Right Search & Action Controls */}
