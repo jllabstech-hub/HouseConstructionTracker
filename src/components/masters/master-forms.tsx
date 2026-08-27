@@ -36,6 +36,11 @@ import {
   X,
   Check,
   IndianRupee,
+  Info,
+  Store,
+  Package,
+  Hammer,
+  Truck,
 } from "lucide-react";
 import { UpiPayModal, type PayRecipient } from "@/components/masters/upi-pay-modal";
 
@@ -326,7 +331,7 @@ export function MasterForms({
 
             {filteredVendors.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-paper-300 bg-white p-10 text-center space-y-3">
-                <span className="text-4xl">🏪</span>
+                <Store className="h-10 w-10 text-ink-300 mx-auto" />
                 <h3 className="font-bold text-ink-900 text-sm sm:text-base">
                   {language === "te" ? "షాపులు ఏవీ కనుగొనబడలేదు" : "No shops found"}
                 </h3>
@@ -440,8 +445,9 @@ export function MasterForms({
                         </div>
 
                         {vendor.notes && (
-                          <p className="text-xs text-ink-500 bg-paper-50/60 rounded-xl px-2.5 py-1.5 italic border border-paper-100">
-                            💡 {vendor.notes}
+                          <p className="text-xs text-ink-500 bg-paper-50/60 rounded-xl px-2.5 py-1.5 italic border border-paper-100 flex items-start gap-1">
+                            <Info className="h-3.5 w-3.5 text-ink-400 shrink-0 mt-0.5" />
+                            <span>{vendor.notes}</span>
                           </p>
                         )}
                       </div>
@@ -488,7 +494,7 @@ export function MasterForms({
           <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 sticky top-6">
             <div className="flex items-center justify-between gap-2 border-b border-paper-100 pb-3">
               <div className="flex items-center gap-2">
-                <span className="text-xl">🏪</span>
+                <Store className="h-5 w-5 text-clay-600" />
                 <h3 className="font-display font-bold text-ink-900 text-base">
                   {editingVendor ? (language === "te" ? "షాప్ వివరాలు సవరించండి" : "Edit Shop Details") : t.masters.addNewShop}
                 </h3>
@@ -541,7 +547,7 @@ export function MasterForms({
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.mobileNumber} 📱
+                  {t.masters.mobileNumber}
                 </label>
                 <input
                   type="tel"
@@ -694,7 +700,7 @@ export function MasterForms({
 
             {filteredWorkers.length === 0 ? (
               <div className="rounded-3xl border border-dashed border-paper-300 bg-white p-10 text-center space-y-3">
-                <span className="text-4xl">👷</span>
+                <HardHat className="h-10 w-10 text-ink-300 mx-auto" />
                 <h3 className="font-bold text-ink-900 text-sm sm:text-base">
                   {language === "te" ? "వర్కర్లు ఏవీ కనుగొనబడలేదు" : "No workers found"}
                 </h3>
@@ -809,8 +815,9 @@ export function MasterForms({
                         </div>
 
                         {worker.notes && (
-                          <p className="text-xs text-ink-500 bg-paper-50/60 rounded-xl px-2.5 py-1.5 italic border border-paper-100">
-                            💡 {worker.notes}
+                          <p className="text-xs text-ink-500 bg-paper-50/60 rounded-xl px-2.5 py-1.5 italic border border-paper-100 flex items-start gap-1">
+                            <Info className="h-3.5 w-3.5 text-ink-400 shrink-0 mt-0.5" />
+                            <span>{worker.notes}</span>
                           </p>
                         )}
                       </div>
@@ -857,7 +864,7 @@ export function MasterForms({
           <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 sticky top-6">
             <div className="flex items-center justify-between gap-2 border-b border-paper-100 pb-3">
               <div className="flex items-center gap-2">
-                <span className="text-xl">👷</span>
+                <HardHat className="h-5 w-5 text-clay-600" />
                 <h3 className="font-display font-bold text-ink-900 text-base">
                   {editingWorker ? (language === "te" ? "వర్కర్ వివరాలు సవరించండి" : "Edit Worker Details") : t.masters.addNewWorker}
                 </h3>
@@ -928,7 +935,7 @@ export function MasterForms({
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.mobileNumber} 📱
+                  {t.masters.mobileNumber}
                 </label>
                 <input
                   type="tel"
@@ -1031,7 +1038,7 @@ export function MasterForms({
           {/* Add Material Category */}
           <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🧱</span>
+              <Package className="h-5 w-5 text-clay-600" />
               <h3 className="font-bold text-ink-900 text-sm">Add Material Item</h3>
             </div>
             <form
@@ -1118,7 +1125,7 @@ export function MasterForms({
           {/* Add Labour Category */}
           <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🔨</span>
+              <Hammer className="h-5 w-5 text-clay-600" />
               <h3 className="font-bold text-ink-900 text-sm">Add Labour Trade</h3>
             </div>
             <form
@@ -1178,7 +1185,7 @@ export function MasterForms({
 
           <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🚜</span>
+              <Truck className="h-5 w-5 text-clay-600" />
               <h3 className="font-bold text-ink-900 text-sm">Add Service / Machinery</h3>
             </div>
             <form

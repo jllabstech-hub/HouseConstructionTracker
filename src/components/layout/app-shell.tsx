@@ -320,10 +320,11 @@ export function AppShell({
               </span>
               <Link
                 href="/projects"
-                className="text-xs font-bold text-ink-900 bg-paper-100 hover:bg-paper-200 px-2.5 py-1 rounded-xl border border-paper-200/80 shadow-2xs transition"
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-900 bg-paper-100 hover:bg-paper-200 px-2.5 py-1 rounded-xl border border-paper-200/80 shadow-2xs transition"
                 title="Manage all house projects"
               >
-                🏡 {activeProject?.name ?? (language === "te" ? "నా ఇల్లు" : "My House")}
+                <Building2 className="h-3.5 w-3.5 text-clay-600 shrink-0" />
+                <span>{activeProject?.name ?? (language === "te" ? "నా ఇల్లు" : "My House")}</span>
               </Link>
             </div>
 
@@ -472,7 +473,7 @@ export function AppShell({
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-amber-950">
-                    {language === "te" ? "📦 సామాగ్రి కొనుగోలు (Material)" : "📦 Add Material"}
+                    {language === "te" ? "సామాగ్రి కొనుగోలు (Material)" : "Add Material"}
                   </p>
                   <p className="text-xs text-amber-800/90 mt-0.5">
                     {language === "te" ? "సిమెంట్, స్టీల్, ఇసుక, ఇటుకలు, టైల్స్, మొదలైనవి" : "Cement, Steel, Sand, Bricks, Tiles, Electrical"}
@@ -491,7 +492,7 @@ export function AppShell({
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-emerald-950">
-                    {language === "te" ? "👷 కూలీల చెల్లింపు (Labour)" : "👷 Add Labour"}
+                    {language === "te" ? "కూలీల చెల్లింపు (Labour)" : "Add Labour"}
                   </p>
                   <p className="text-xs text-emerald-800/90 mt-0.5">
                     {language === "te" ? "మేస్త్రీ, కార్పెంటర్, ప్లంబర్, ఎలక్ట్రీషియన్, రోజూవారీ వేతనాలు" : "Mason, Carpenter, Plumber, Electrician wages"}
@@ -510,7 +511,7 @@ export function AppShell({
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-ink-900">
-                    {language === "te" ? "⋯ ఇతర ఖర్చులు (Other Expense)" : "⋯ Other Expense"}
+                    {language === "te" ? "ఇతర ఖర్చులు (Other Expense)" : "Other Expense"}
                   </p>
                   <p className="text-xs text-ink-500 mt-0.5">
                     {language === "te" ? "బోర్‌వెల్, ప్లానింగ్, జేసీబీ, రవాణా ఖర్చులు" : "Borewell, Planning, JCB, Services & Transport"}

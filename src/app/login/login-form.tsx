@@ -97,12 +97,13 @@ export default function LoginForm() {
               <Sparkles className="h-4 w-4 text-amber-300" />
             </div>
             <div>
-              <p className="text-xs font-bold text-ink-900">⚡ 1-Click Demo Login (Admin)</p>
+              <p className="text-xs font-bold text-ink-900">1-Click Demo Login (Admin)</p>
               <p className="text-[11px] text-ink-500 font-medium">Auto-fills admin / test123 and signs in</p>
             </div>
           </div>
-          <span className="text-xs font-bold text-clay-700 group-hover:translate-x-0.5 transition">
-            {pending ? "…" : "Sign In ➔"}
+          <span className="text-xs font-bold text-clay-700 group-hover:translate-x-0.5 transition flex items-center gap-1">
+            <span>{pending ? "…" : "Sign In"}</span>
+            <Sparkles className="h-3.5 w-3.5 text-clay-600" />
           </span>
         </button>
 
@@ -126,9 +127,10 @@ export default function LoginForm() {
 
               <a
                 href="/api/setup?redirect=true"
-                className="block text-center rounded-xl border border-clay-300 bg-clay-50/80 px-3 py-2 text-xs text-clay-800 font-bold hover:bg-clay-100 transition"
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-clay-300 bg-clay-50/80 px-3 py-2 text-xs text-clay-800 font-bold hover:bg-clay-100 transition"
               >
-                🛠️ First time on Vercel? Auto-Initialize Database & Admin →
+                <span>Auto-Initialize Database & Admin</span>
+                <span className="text-clay-600 font-bold">&rarr;</span>
               </a>
             </div>
           )}

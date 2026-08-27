@@ -275,7 +275,7 @@ export function GlobalSearchModal({
                   className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white hover:bg-paper-50 px-3 py-1.5 text-xs font-bold text-ink-800 shadow-2xs transition active:scale-95"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                  <span>{language === "te" ? "రిపోర్ట్స్ హబ్‌లో చూడండి ➔" : "Open in Reports Hub ➔"}</span>
+                  <span>{language === "te" ? "రిపోర్ట్స్ హబ్‌లో చూడండి" : "Open in Reports Hub"}</span>
                 </button>
               </div>
 
@@ -320,9 +320,10 @@ export function GlobalSearchModal({
                 <button
                   type="button"
                   onClick={() => handleNavigate("/expenses")}
-                  className="text-xs font-semibold text-clay-700 hover:underline"
+                  className="text-xs font-semibold text-clay-700 hover:underline flex items-center gap-1"
                 >
-                  {language === "te" ? "అన్నీ చూడండి ➔" : "View all expenses ➔"}
+                  <span>{language === "te" ? "అన్నీ చూడండి" : "View all expenses"}</span>
+                  <ArrowRight className="h-3 w-3 inline" />
                 </button>
               </div>
 

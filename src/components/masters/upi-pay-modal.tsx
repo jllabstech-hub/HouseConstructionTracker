@@ -137,8 +137,8 @@ export function UpiPayModal({
                 {language === "te" ? `${recipient.name} కి UPI చెల్లింపు` : `Pay ${recipient.name}`}
               </h3>
               <p className="text-xs text-ink-500 mt-0.5">
-                {recipient.type === "VENDOR" ? "🏪 Hardware / Vendor Shop" : "👷 Worker / Contractor"}
-                {recipient.phone ? ` · 📱 ${recipient.phone}` : ""}
+                {recipient.type === "VENDOR" ? "Hardware / Vendor Shop" : "Worker / Contractor"}
+                {recipient.phone ? ` · ${recipient.phone}` : ""}
               </p>
             </div>
           </div>
@@ -247,7 +247,7 @@ export function UpiPayModal({
                     !showQr ? "bg-white text-ink-900 shadow-2xs" : "text-ink-600 hover:text-ink-900"
                   )}
                 >
-                  📱 Mobile UPI Apps
+                  Mobile UPI Apps
                 </button>
                 <button
                   type="button"
@@ -257,7 +257,7 @@ export function UpiPayModal({
                     showQr ? "bg-white text-ink-900 shadow-2xs" : "text-ink-600 hover:text-ink-900"
                   )}
                 >
-                  📷 Scan QR Code
+                  Scan QR Code
                 </button>
               </div>
             </div>
@@ -273,8 +273,8 @@ export function UpiPayModal({
                   <Smartphone className="h-4 w-4" />
                   <span>
                     {language === "te"
-                      ? "🚀 మొబైల్‌లో UPI యాప్‌లను తెరవండి (Pay via UPI)"
-                      : "🚀 Launch Installed UPI App"}
+                      ? "మొబైల్‌లో UPI యాప్‌లను తెరవండి (Pay via UPI)"
+                      : "Launch Installed UPI App"}
                   </span>
                 </a>
 
@@ -284,7 +284,6 @@ export function UpiPayModal({
                     href={gpayUrl}
                     className="flex items-center justify-center gap-2 rounded-xl border border-paper-200 bg-white p-2.5 text-xs font-bold text-ink-800 hover:bg-paper-50 transition active:scale-98 shadow-2xs"
                   >
-                    <span className="text-base">🟢</span>
                     <span>Google Pay</span>
                   </a>
 
@@ -292,7 +291,6 @@ export function UpiPayModal({
                     href={phonePeUrl}
                     className="flex items-center justify-center gap-2 rounded-xl border border-paper-200 bg-white p-2.5 text-xs font-bold text-ink-800 hover:bg-paper-50 transition active:scale-98 shadow-2xs"
                   >
-                    <span className="text-base">🟣</span>
                     <span>PhonePe</span>
                   </a>
 
@@ -300,7 +298,6 @@ export function UpiPayModal({
                     href={paytmUrl}
                     className="flex items-center justify-center gap-2 rounded-xl border border-paper-200 bg-white p-2.5 text-xs font-bold text-ink-800 hover:bg-paper-50 transition active:scale-98 shadow-2xs"
                   >
-                    <span className="text-base">🔵</span>
                     <span>Paytm</span>
                   </a>
 
@@ -308,14 +305,13 @@ export function UpiPayModal({
                     href={bhimUrl}
                     className="flex items-center justify-center gap-2 rounded-xl border border-paper-200 bg-white p-2.5 text-xs font-bold text-ink-800 hover:bg-paper-50 transition active:scale-98 shadow-2xs"
                   >
-                    <span className="text-base">🏛️</span>
                     <span>BHIM UPI</span>
                   </a>
                 </div>
 
                 {!isMobile && (
                   <p className="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-xl border border-amber-200">
-                    💡 <strong>Desktop Note:</strong> If UPI apps are not installed on this PC, switch to the <strong>Scan QR Code</strong> tab to scan and pay from your mobile phone.
+                    <strong>Desktop Note:</strong> If UPI apps are not installed on this PC, switch to the <strong>Scan QR Code</strong> tab to scan and pay from your mobile phone.
                   </p>
                 )}
               </div>
@@ -377,7 +373,7 @@ export function UpiPayModal({
             className="inline-flex items-center gap-1.5 text-xs font-bold text-clay-700 hover:text-clay-900 transition hover:underline"
           >
             <PlusCircle className="h-3.5 w-3.5" />
-            <span>{language === "te" ? "ఈ చెల్లింపును ఖర్చులలో నమోదు చేయండి ➔" : "Record as Expense in Project ➔"}</span>
+            <span>{language === "te" ? "ఈ చెల్లింపును ఖర్చులలో నమోదు చేయండి" : "Record as Expense in Project"}</span>
           </Link>
 
           <button

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Eye, Share2 } from "lucide-react";
+import { Download, Eye, Share2, Info } from "lucide-react";
 
 export function PdfActions({
   projectId,
@@ -123,8 +123,9 @@ export function PdfActions({
       </div>
 
       {message && (
-        <p className="text-xs text-clay-800 bg-clay-50 p-2 rounded-lg border border-clay-200">
-          💡 {message}
+        <p className="text-xs text-clay-800 bg-clay-50 p-2 rounded-lg border border-clay-200 flex items-center gap-1.5">
+          <Info className="h-3.5 w-3.5 text-clay-600 shrink-0" />
+          <span>{message}</span>
         </p>
       )}
     </div>

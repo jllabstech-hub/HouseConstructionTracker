@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, AlertTriangle, Check } from "lucide-react";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
@@ -85,7 +85,17 @@ export function CategoryBudgetsTable({ items }: { items: BudgetRow[] }) {
                         : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                     )}
                   >
-                    {item.isOver ? `⚠️ ${t.budget.overBudget}` : `✓ ${t.budget.withinBudget}`}
+                    {item.isOver ? (
+                      <>
+                        <AlertTriangle className="h-3 w-3 text-red-600" />
+                        <span>{t.budget.overBudget}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="h-3 w-3 text-emerald-600" />
+                        <span>{t.budget.withinBudget}</span>
+                      </>
+                    )}
                   </span>
                 </td>
               </tr>

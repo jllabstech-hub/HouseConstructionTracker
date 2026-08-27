@@ -2,21 +2,23 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Home, Milestone, Layers } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export function ProjectNavTabs({ projectId }: { projectId: string }) {
   const pathname = usePathname();
 
   const tabs = [
-    { href: `/projects/${projectId}`, label: "🏠 Overview & Details", exact: true },
-    { href: `/projects/${projectId}/stages`, label: "🏗️ Construction Stages", exact: false },
-    { href: `/projects/${projectId}/floors`, label: "🏢 Floors & Levels", exact: false },
+    { href: `/projects/${projectId}`, label: "Overview & Details", icon: Home, exact: true },
+    { href: `/projects/${projectId}/stages`, label: "Construction Stages", icon: Milestone, exact: false },
+    { href: `/projects/${projectId}/floors`, label: "Floors & Levels", icon: Layers, exact: false },
   ];
 
   return (
     <div className="flex overflow-x-auto no-scrollbar gap-2 p-1 bg-paper-100/80 rounded-2xl border border-paper-200">
       {tabs.map((tab) => {
         const isActive = tab.exact ? pathname === tab.href : pathname.startsWith(tab.href);
+        const Icon = tab.icon;
         return (
           <Link
             key={tab.href}
@@ -28,6 +30,7 @@ export function ProjectNavTabs({ projectId }: { projectId: string }) {
                 : "bg-white text-ink-700 hover:bg-paper-50",
             )}
           >
+            <Icon className="h-4 w-4" />
             <span>{tab.label}</span>
           </Link>
         );

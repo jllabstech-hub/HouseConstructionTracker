@@ -81,8 +81,9 @@ export default async function SettingsPage() {
               className="flex items-center justify-between p-3.5 hover:bg-paper-100/60 transition group text-left"
             >
               <div className="min-w-0">
-                <p className="font-bold text-sm text-ink-900 group-hover:text-clay-800 transition truncate">
-                  🏡 {p.name}
+                <p className="font-bold text-sm text-ink-900 group-hover:text-clay-800 transition truncate flex items-center gap-1.5">
+                  <Building2 className="h-4 w-4 text-clay-600 shrink-0" />
+                  <span>{p.name}</span>
                 </p>
                 {p.location && (
                   <p className="text-xs text-ink-500 flex items-center gap-1 mt-0.5 truncate">

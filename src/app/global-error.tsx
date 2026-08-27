@@ -18,8 +18,12 @@ export default function GlobalError({
       <body style={{ margin: 0, fontFamily: "system-ui, -apple-system, sans-serif", background: "#F7F6F2", color: "#1C1917" }}>
         <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
           <div style={{ maxWidth: "420px", width: "100%", background: "#FFFFFF", border: "1px solid #E8DCC8", borderRadius: "24px", padding: "32px", textAlign: "center", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05)" }}>
-            <div style={{ width: "56px", height: "56px", margin: "0 auto 16px", borderRadius: "16px", background: "#FBF4EE", color: "#B85C22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px" }}>
-              ⚠️
+            <div style={{ width: "56px", height: "56px", margin: "0 auto 16px", borderRadius: "16px", background: "#FBF4EE", color: "#C56A2D", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
             </div>
             <h1 style={{ fontSize: "20px", fontWeight: "bold", margin: "0 0 8px" }}>
               Something went wrong

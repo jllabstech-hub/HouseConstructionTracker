@@ -63,7 +63,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       <svg xmlns="http://www.w3.org/2000/svg" width="600" height="800" viewBox="0 0 600 800" fill="none">
         <rect width="600" height="800" fill="#F7F6F2"/>
         <rect x="30" y="30" width="540" height="740" rx="16" fill="#FFFFFF" stroke="#E8DCC8" stroke-width="2"/>
-        <text x="300" y="320" text-anchor="middle" fill="#B85C22" font-family="sans-serif" font-size="28" font-weight="bold">🧾 Purchase Receipt</text>
+        <text x="300" y="320" text-anchor="middle" fill="#C56A2D" font-family="sans-serif" font-size="28" font-weight="bold">Purchase Receipt</text>
         <text x="300" y="370" text-anchor="middle" fill="#78716C" font-family="sans-serif" font-size="16">${receipt.fileName}</text>
         <text x="300" y="410" text-anchor="middle" fill="#A8A29E" font-family="sans-serif" font-size="14">Invoice: ${receipt.ocrInvoiceNumber || "—"}</text>
         <text x="300" y="450" text-anchor="middle" fill="#A8A29E" font-family="sans-serif" font-size="14">Vendor: ${receipt.ocrVendor || "—"}</text>

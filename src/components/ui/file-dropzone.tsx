@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import Image from "next/image";
-import { UploadCloud, FileText, Image as ImageIcon, X, CheckCircle2 } from "lucide-react";
+import { UploadCloud, FileText, Image as ImageIcon, X, CheckCircle2, AlertCircle } from "lucide-react";
 import { useLanguage } from "@/context/language-context";
 import { cn } from "@/lib/utils";
 
@@ -233,8 +233,9 @@ export function FileDropzone({
       </div>
 
       {error && (
-        <p className="text-xs font-bold text-red-600 mt-1">
-          ⚠️ {error}
+        <p className="text-xs font-bold text-red-600 mt-1 flex items-center gap-1.5">
+          <AlertCircle className="h-3.5 w-3.5 text-red-600 shrink-0" />
+          <span>{error}</span>
         </p>
       )}
     </div>
