@@ -4,40 +4,33 @@ import { prisma } from "@/lib/prisma";
 import { ExpenseTable } from "@/components/expenses/expense-table";
 import { EmptyState } from "@/components/ui/page-header";
 import type { ExpenseRowData } from "@/components/expenses/expense-mobile-card";
-import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
-export default async function ExpensesPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ type?: string; page?: string; search?: string }>;
-}) {
+export default async function ExpensesPage() {
   const user = await requireUser();
   const projectId = await getActiveProjectId(user.id);
-  const params = await searchParams;
-  const type = params.type;
-  const page = Math.max(1, Number(params.page || 1));
-  const pageSize = 50;
 
   if (!projectId) {
     return <EmptyState title="No project found" body="Create or select a house project to view expenses." />;
   }
 
-  const filterWhere: Prisma.ExpenseWhereInput = {
-    projectId,
-    ...(type && type !== "ALL" ? { expenseType: type as never } : {}),
-  };
-
-  const [totalAgg, rawExpenses, stages] = await Promise.all([
+  const [
+    totalAgg,
+    rawExpenses,
+    stages,
+    floors,
+    vendors,
+    workers,
+    matCategories,
+    labCategories,
+  ] = await Promise.all([
     prisma.expense.aggregate({
       where: { projectId },
       _sum: { amount: true },
     }),
     prisma.expense.findMany({
-      where: filterWhere,
-      take: pageSize,
-      skip: (page - 1) * pageSize,
+      where: { projectId },
       select: {
         id: true,
         date: true,
@@ -71,9 +64,35 @@ export default async function ExpensesPage({
       orderBy: { sortOrder: "asc" },
       select: { id: true, name: true },
     }),
+    prisma.floor.findMany({
+      where: { projectId },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.vendor.findMany({
+      where: { userId: user.id },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.worker.findMany({
+      where: { userId: user.id },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.materialCategory.findMany({
+      where: { userId: user.id },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.labourCategory.findMany({
+      where: { userId: user.id },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   const totalSpent = Number(totalAgg._sum.amount ?? 0);
+  const allCategories = [...matCategories, ...labCategories];
 
   const expenses: ExpenseRowData[] = rawExpenses.map((e) => {
     const categoryName =
@@ -117,6 +136,10 @@ export default async function ExpensesPage({
       projectId={projectId}
       expenses={expenses}
       stages={stages}
+      floors={floors}
+      vendors={vendors}
+      workers={workers}
+      categories={allCategories}
       totalSpent={totalSpent}
     />
   );

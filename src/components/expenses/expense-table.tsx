@@ -29,11 +29,19 @@ import { useLanguage } from "@/context/language-context";
 export function ExpenseTable({
   expenses,
   stages = [],
+  floors = [],
+  vendors = [],
+  workers = [],
+  categories = [],
   totalSpent: initialTotalSpent,
   projectId = "",
 }: {
   expenses: ExpenseRowData[];
-  stages?: { id: string; name: string; shortName?: string }[];
+  stages?: { id: string; name: string }[];
+  floors?: { id: string; name: string }[];
+  vendors?: { id: string; name: string }[];
+  workers?: { id: string; name: string }[];
+  categories?: { id: string; name: string }[];
   totalSpent?: number;
   projectId?: string;
 }) {
@@ -41,7 +49,7 @@ export function ExpenseTable({
   const { language, t } = useLanguage();
   const [pending, start] = useTransition();
 
-  // Primary Segmented Filter
+  // Primary Quick Filter: All | Material | Labour | Other
   const [selectedType, setSelectedType] = useState<"ALL" | "MATERIAL" | "LABOUR" | "OTHER">("ALL");
   const [search, setSearch] = useState("");
   const [filterDrawerOpen, setFilterDrawerOpen] = useState(false);
@@ -50,7 +58,11 @@ export function ExpenseTable({
   // Advanced Filters
   const [advancedFilters, setAdvancedFilters] = useState<AdvancedFiltersState>({
     dateRange: "all",
+    categoryId: "all",
     stageId: "all",
+    floorId: "all",
+    vendorId: "all",
+    workerId: "all",
     paymentMethod: "all",
     minAmount: "",
     maxAmount: "",
@@ -58,7 +70,7 @@ export function ExpenseTable({
   });
 
   const [page, setPage] = useState(1);
-  const pageSize = 15;
+  const pageSize = 20;
 
   const handleFilterChange = (key: keyof AdvancedFiltersState, val: string) => {
     setAdvancedFilters((prev) => ({ ...prev, [key]: val }));
@@ -70,7 +82,11 @@ export function ExpenseTable({
     setSelectedType("ALL");
     setAdvancedFilters({
       dateRange: "all",
+      categoryId: "all",
       stageId: "all",
+      floorId: "all",
+      vendorId: "all",
+      workerId: "all",
       paymentMethod: "all",
       minAmount: "",
       maxAmount: "",
@@ -83,7 +99,11 @@ export function ExpenseTable({
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (advancedFilters.dateRange !== "all") count++;
+    if (advancedFilters.categoryId !== "all") count++;
     if (advancedFilters.stageId !== "all") count++;
+    if (advancedFilters.floorId !== "all") count++;
+    if (advancedFilters.vendorId !== "all") count++;
+    if (advancedFilters.workerId !== "all") count++;
     if (advancedFilters.paymentMethod !== "all") count++;
     if (advancedFilters.minAmount) count++;
     if (advancedFilters.maxAmount) count++;
@@ -138,13 +158,38 @@ export function ExpenseTable({
         }
       }
 
-      // 4. Advanced Stage Filter
+      // 4. Advanced Category Filter
+      if (advancedFilters.categoryId !== "all") {
+        if (e.category.id !== advancedFilters.categoryId && e.category.name !== advancedFilters.categoryId) {
+          return false;
+        }
+      }
+
+      // 5. Advanced Stage Filter
       if (advancedFilters.stageId !== "all") {
         const matchedStage = stages.find((s) => s.id === advancedFilters.stageId);
         if (matchedStage && e.stageName !== matchedStage.name) return false;
       }
 
-      // 5. Payment Method
+      // 6. Advanced Floor Filter
+      if (advancedFilters.floorId !== "all") {
+        const matchedFloor = floors.find((f) => f.id === advancedFilters.floorId);
+        if (matchedFloor && e.floorName !== matchedFloor.name) return false;
+      }
+
+      // 7. Advanced Vendor Filter
+      if (advancedFilters.vendorId !== "all") {
+        const matchedVendor = vendors.find((v) => v.id === advancedFilters.vendorId);
+        if (matchedVendor && e.vendorName !== matchedVendor.name) return false;
+      }
+
+      // 8. Advanced Worker Filter
+      if (advancedFilters.workerId !== "all") {
+        const matchedWorker = workers.find((w) => w.id === advancedFilters.workerId);
+        if (matchedWorker && e.vendorName !== matchedWorker.name) return false;
+      }
+
+      // 9. Payment Method
       if (
         advancedFilters.paymentMethod !== "all" &&
         e.paymentMethod !== advancedFilters.paymentMethod
@@ -152,7 +197,7 @@ export function ExpenseTable({
         return false;
       }
 
-      // 6. Min & Max Amount
+      // 10. Min & Max Amount
       const amt = Number(e.amount);
       if (advancedFilters.minAmount && amt < Number(advancedFilters.minAmount)) return false;
       if (advancedFilters.maxAmount && amt > Number(advancedFilters.maxAmount)) return false;
@@ -172,7 +217,7 @@ export function ExpenseTable({
       // default date_desc
       return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
-  }, [expenses, selectedType, search, advancedFilters, stages]);
+  }, [expenses, selectedType, search, advancedFilters, stages, floors, vendors, workers]);
 
   // Compute Subtotals for filtered view
   const currentTotal = useMemo(() => {
@@ -195,37 +240,41 @@ export function ExpenseTable({
   };
 
   return (
-    <div className="space-y-4">
-      {/* 1. Top Bar & Summary */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5 max-w-7xl mx-auto pb-10">
+      {/* 1. Top Section: Header, Total Spent, Transaction Count & Primary CTA */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-paper-200/80 pb-4">
         <div>
-          <h1 className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">
-            {language === "te" ? "మొత్తం ఖర్చులు" : "All Expenses"}
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 leading-tight">
+            {language === "te" ? "ఖర్చులు" : "Expenses"}
           </h1>
-          <p className="text-xs text-ink-500 mt-0.5">
-            {filtered.length}{" "}
-            {language === "te" ? "ఖర్చుల రికార్డులు" : "transactions recorded"} •{" "}
-            <span className="font-bold text-ink-800">
-              {formatINR(currentTotal)}
-            </span>{" "}
-            {selectedType !== "ALL" || search || activeFiltersCount > 0
-              ? (language === "te" ? "ఫిల్టర్ చేసిన మొత్తం" : "filtered subtotal")
-              : (language === "te" ? "మొత్తం ఖర్చు" : "total spend")}
-          </p>
+          <div className="flex items-center gap-2.5 text-xs text-ink-500 mt-1 flex-wrap font-medium">
+            <span>
+              {language === "te" ? "మొత్తం ఖర్చు:" : "Total spent:"}{" "}
+              <strong className="font-display text-sm font-bold text-ink-900">
+                {formatINR(currentTotal)}
+              </strong>
+            </span>
+            <span>•</span>
+            <span>
+              {filtered.length}{" "}
+              {language === "te" ? "లావాదేవీలు" : "transactions"}
+            </span>
+          </div>
         </div>
 
+        {/* Primary Action */}
         <Link
           href="/expenses/new"
-          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 transition self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto"
         >
-          <Plus className="h-4 w-4" />
-          <span>{language === "te" ? "+ ఖర్చు నమోదు" : "+ Record Expense"}</span>
+          <Plus className="h-4 w-4 stroke-[2.5]" />
+          <span>{t.nav?.addExpense ?? "+ Add Expense"}</span>
         </Link>
       </div>
 
-      {/* 2. Filter Toolbar (Segmented Pills + Search + Advanced Filter Drawer Trigger) */}
+      {/* 2. Quick Filters (All | Material | Labour | Other) + Search & Filter Drawer Trigger */}
       <div className="space-y-3">
-        {/* Primary Type Pills */}
+        {/* Quick Filter Segmented Pills */}
         <div className="overflow-x-auto pb-1">
           <SegmentedControl
             value={selectedType}
@@ -237,12 +286,12 @@ export function ExpenseTable({
               { value: "ALL", label: language === "te" ? "అన్నీ (All)" : "All" },
               {
                 value: "MATERIAL",
-                label: language === "te" ? "మెటీరియల్ (Material)" : "Materials",
+                label: language === "te" ? "సామాగ్రి (Material)" : "Material",
                 icon: Package,
               },
               {
                 value: "LABOUR",
-                label: language === "te" ? "కూలీలు (Labour)" : "Labour / Wages",
+                label: language === "te" ? "కూలీలు (Labour)" : "Labour",
                 icon: HardHat,
               },
               {
@@ -255,41 +304,41 @@ export function ExpenseTable({
         </div>
 
         {/* Search Bar + Filters Button */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-400" />
+            <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
             <input
               type="text"
               placeholder={
                 language === "te"
-                  ? "కేటగిరీ, దుకాణం, వర్కర్ లేదా వివరణను వెతకండి..."
-                  : "Search category, vendor, worker, description..."
+                  ? "ఖర్చులను వెతకండి (సిమెంట్, మేస్త్రీ, బిల్లు)..."
+                  : "Search expenses..."
               }
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-paper-300 bg-white py-2 pl-9 pr-8 text-xs font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+              className="w-full rounded-xl border border-paper-300 bg-white py-2.5 pl-10 pr-9 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs transition"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className="absolute right-2.5 top-2.5 text-ink-400 hover:text-ink-600"
+                className="absolute right-3 top-3 text-ink-400 hover:text-ink-600"
               >
-                <X className="h-3.5 w-3.5" />
+                <X className="h-4 w-4" />
               </button>
             )}
           </div>
 
-          {/* Advanced Filter Button */}
+          {/* Advanced Filters Button */}
           <button
             type="button"
             onClick={() => setFilterDrawerOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white px-3 py-2 text-xs font-bold text-ink-700 hover:bg-paper-50 transition shrink-0 shadow-2xs"
+            className="inline-flex items-center gap-2 rounded-xl border border-paper-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-ink-800 hover:bg-paper-50 active:scale-95 transition shrink-0 shadow-2xs"
           >
-            <Filter className="h-3.5 w-3.5 text-ink-500" />
+            <Filter className="h-4 w-4 text-ink-500" />
             <span>{language === "te" ? "ఫిల్టర్లు" : "Filters"}</span>
             {activeFiltersCount > 0 && (
               <span className="rounded-full bg-clay-600 px-1.5 py-0.2 text-[10px] font-bold text-white">
@@ -303,7 +352,7 @@ export function ExpenseTable({
             <button
               type="button"
               onClick={handleResetFilters}
-              className="rounded-xl border border-paper-200 bg-paper-100 p-2 text-ink-600 hover:bg-paper-200 transition shrink-0"
+              className="rounded-xl border border-paper-200 bg-paper-100 p-2.5 text-ink-600 hover:bg-paper-200 transition shrink-0"
               title="Reset all filters"
             >
               <RotateCcw className="h-4 w-4" />
@@ -312,11 +361,11 @@ export function ExpenseTable({
         </div>
       </div>
 
-      {/* 3. Expenses List */}
+      {/* 3. Expenses Listing */}
       {filtered.length > 0 ? (
         <div className="space-y-4">
-          {/* Mobile View: Clean Cards */}
-          <div className="grid gap-2.5 sm:hidden">
+          {/* Mobile View: Expense Cards (Tap -> Detail) */}
+          <div className="grid gap-3 sm:hidden">
             {paginatedExpenses.map((expense) => (
               <ExpenseMobileCard
                 key={expense.id}
@@ -331,44 +380,49 @@ export function ExpenseTable({
             <table className="w-full text-left text-xs text-ink-700">
               <thead className="border-b border-paper-200 bg-paper-50/70 font-bold uppercase tracking-wider text-ink-500 text-[10px]">
                 <tr>
-                  <th className="py-3 px-4">{language === "te" ? "తేదీ" : "Date"}</th>
-                  <th className="py-3 px-4">{language === "te" ? "వివరాలు" : "Description"}</th>
-                  <th className="py-3 px-3">{language === "te" ? "రకం" : "Type"}</th>
-                  <th className="py-3 px-4">{language === "te" ? "వర్గం" : "Category"}</th>
-                  <th className="py-3 px-4">{language === "te" ? "దుకాణం / వర్కర్" : "Vendor / Worker"}</th>
-                  <th className="py-3 px-4 text-right">{language === "te" ? "మొత్తం" : "Amount"}</th>
-                  <th className="py-3 px-3 text-right">{language === "te" ? "చర్యలు" : "Actions"}</th>
+                  <th className="py-3.5 px-4">{language === "te" ? "తేదీ" : "Date"}</th>
+                  <th className="py-3.5 px-4">{language === "te" ? "వివరాలు" : "Description"}</th>
+                  <th className="py-3.5 px-3">{language === "te" ? "రకం" : "Type"}</th>
+                  <th className="py-3.5 px-4">{language === "te" ? "వర్గం" : "Category"}</th>
+                  <th className="py-3.5 px-4">{language === "te" ? "దుకాణం / వర్కర్" : "Vendor / Worker"}</th>
+                  <th className="py-3.5 px-4 text-right">{language === "te" ? "మొత్తం" : "Amount"}</th>
+                  <th className="py-3.5 px-3 text-right">{language === "te" ? "చర్యలు" : "Actions"}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-100">
                 {paginatedExpenses.map((expense) => (
-                  <tr key={expense.id} className="hover:bg-paper-50/50 transition">
-                    <td className="py-3 px-4 font-medium text-ink-600 whitespace-nowrap">
+                  <tr key={expense.id} className="hover:bg-paper-50/60 transition group">
+                    <td className="py-3.5 px-4 font-medium text-ink-600 whitespace-nowrap">
                       {expense.date}
                     </td>
-                    <td className="py-3 px-4 font-bold text-ink-900 max-w-[220px] truncate">
-                      {expense.description || expense.category.name}
+                    <td className="py-3.5 px-4 font-bold text-ink-900 max-w-[240px] truncate">
+                      <Link
+                        href={`/expenses/${expense.id}`}
+                        className="hover:text-clay-700 transition"
+                      >
+                        {expense.description || expense.category.name}
+                      </Link>
                       {expense.quantity && expense.rate && (
-                        <span className="block text-[11px] font-normal text-ink-400">
+                        <span className="block text-[11px] font-normal text-ink-400 mt-0.5">
                           {expense.quantity} {expense.unit} @ ₹{expense.rate}
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-3 whitespace-nowrap">
+                    <td className="py-3.5 px-3 whitespace-nowrap">
                       <Badge tone={expenseTone(expense.type)} className="text-[10px]">
                         {expense.type}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 font-medium text-ink-800">
+                    <td className="py-3.5 px-4 font-medium text-ink-800">
                       {expense.category.name}
                     </td>
-                    <td className="py-3 px-4 text-ink-600 truncate max-w-[160px]">
+                    <td className="py-3.5 px-4 text-ink-600 truncate max-w-[160px]">
                       {expense.vendorName ?? "—"}
                     </td>
-                    <td className="py-3 px-4 text-right font-display text-sm font-bold text-ink-900 whitespace-nowrap">
+                    <td className="py-3.5 px-4 text-right font-display text-sm font-bold text-ink-900 whitespace-nowrap">
                       {formatINR(Number(expense.amount))}
                     </td>
-                    <td className="py-3 px-3 text-right whitespace-nowrap">
+                    <td className="py-3.5 px-3 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-1">
                         <Link
                           href={`/expenses/${expense.id}`}
@@ -405,15 +459,15 @@ export function ExpenseTable({
         </div>
       ) : (
         /* Empty State */
-        <div className="rounded-2xl border border-dashed border-paper-300 bg-white p-10 text-center space-y-3">
-          <Receipt className="mx-auto h-10 w-10 text-ink-300" />
-          <div>
-            <h3 className="font-display text-base font-bold text-ink-900">
+        <div className="rounded-2xl border border-dashed border-paper-300 bg-white p-12 text-center space-y-4">
+          <Receipt className="mx-auto h-12 w-12 text-ink-300" />
+          <div className="space-y-1">
+            <h3 className="font-display text-base sm:text-lg font-bold text-ink-900">
               {language === "te" ? "ఖర్చులు ఏవీ కనుగొనబడలేదు" : "No expenses found"}
             </h3>
-            <p className="text-xs text-ink-500 mt-0.5 max-w-sm mx-auto">
+            <p className="text-xs text-ink-500 max-w-sm mx-auto">
               {search || activeFiltersCount > 0
-                ? (language === "te" ? "మీ ఫిల్టర్లకు సరిపోలే రికార్డులు ఏవీ లేవు. దయచేసి ఫిల్టర్లను రీసెట్ చేయండి." : "No records match your active filters. Try clearing filters.")
+                ? (language === "te" ? "మీ ఫిల్టర్లకు సరిపోలే రికార్డులు ఏవీ లేవు. దయచేసి ఫిల్టర్లను రీసెట్ చేయండి." : "No records match your active filters. Try clearing search or filters.")
                 : (language === "te" ? "మీ ఇంటి నిర్మాణ ఖర్చులను ట్రాక్ చేయడానికి మొదటి బిల్లు లేదా కూలీని నమోదు చేయండి." : "Start tracking your construction spending by recording your first expense.")}
             </p>
           </div>
@@ -422,7 +476,7 @@ export function ExpenseTable({
             <button
               type="button"
               onClick={handleResetFilters}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2 text-xs font-bold text-ink-800 hover:bg-paper-100 transition"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2.5 text-xs font-bold text-ink-800 hover:bg-paper-100 transition shadow-2xs"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span>{language === "te" ? "ఫిల్టర్లు క్లియర్ చేయండి" : "Clear Filters"}</span>
@@ -430,7 +484,7 @@ export function ExpenseTable({
           ) : (
             <Link
               href="/expenses/new"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2 text-xs font-bold text-white hover:bg-clay-700 transition shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-clay-700 transition shadow-xs"
             >
               <Plus className="h-4 w-4" />
               <span>{language === "te" ? "+ మొదటి ఖర్చు నమోదు" : "+ Add First Expense"}</span>
@@ -439,7 +493,7 @@ export function ExpenseTable({
         </div>
       )}
 
-      {/* Advanced Filters Slide-Over Drawer */}
+      {/* Advanced Filters Drawer */}
       <ExpenseFiltersDrawer
         open={filterDrawerOpen}
         onClose={() => setFilterDrawerOpen(false)}
@@ -447,6 +501,10 @@ export function ExpenseTable({
         onChange={handleFilterChange}
         onReset={handleResetFilters}
         stages={stages}
+        floors={floors}
+        vendors={vendors}
+        workers={workers}
+        categories={categories}
       />
 
       {/* Delete Confirmation Dialog */}
