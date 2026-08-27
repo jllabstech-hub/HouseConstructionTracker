@@ -8,32 +8,18 @@ import { prisma } from "@/lib/prisma";
 import { requireProject, requireUser } from "@/lib/auth-guard";
 import { documentSchema } from "@/lib/validations";
 
-const ALLOWED_MIME_TYPES = new Set([
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/svg+xml",
-  "application/pdf",
-  "application/acad",
-  "application/x-dwg",
-  "image/vnd.dwg",
-]);
-
-const MAX_BYTES = 20 * 1024 * 1024; // 20 MB
+import {
+  ALLOWED_EXTENSIONS,
+  ALLOWED_MIME_TYPES,
+  MAX_DOCUMENT_BYTES,
+  extensionFor,
+  sanitizeFileName,
+  validateDocumentFile,
+} from "@/lib/document-validation";
 
 function emptyToNull(value?: string | null) {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
-}
-
-function extensionFor(mime: string, originalName: string) {
-  if (mime === "image/jpeg") return ".jpg";
-  if (mime === "image/png") return ".png";
-  if (mime === "image/webp") return ".webp";
-  if (mime === "image/svg+xml") return ".svg";
-  if (mime === "application/pdf") return ".pdf";
-  const ext = path.extname(originalName);
-  return ext || ".pdf";
 }
 
 export async function uploadDocument(projectId: string, formData: FormData) {
@@ -41,17 +27,13 @@ export async function uploadDocument(projectId: string, formData: FormData) {
   await requireProject(projectId, user.id);
 
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
+  if (!(file instanceof File)) {
     return { error: "Please choose a blueprint, drawing or photo file" };
   }
 
-  if (file.size > MAX_BYTES) {
-    return { error: "File must be under 20 MB" };
-  }
-
-  const mimeType = file.type || "application/octet-stream";
-  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
-    return { error: "Unsupported file type. Please upload a PDF, JPG, PNG, or WEBP file." };
+  const validation = validateDocumentFile(file);
+  if (!validation.valid) {
+    return { error: validation.error };
   }
 
   const raw = {
@@ -71,25 +53,27 @@ export async function uploadDocument(projectId: string, formData: FormData) {
   const floorId = emptyToNull(parsed.data.floorId);
   const constructionStageId = emptyToNull(parsed.data.constructionStageId);
 
+  // Validate floor project isolation
   if (floorId) {
     const validFloor = await prisma.floor.findFirst({ where: { id: floorId, projectId } });
     if (!validFloor) return { error: "Selected floor not found in this project" };
   }
 
+  // Validate stage project isolation
   if (constructionStageId) {
     const validStage = await prisma.constructionStage.findFirst({ where: { id: constructionStageId, projectId } });
     if (!validStage) return { error: "Selected stage not found in this project" };
   }
 
-  // Sanitize filename to prevent path traversal
-  const sanitizedOriginalName = path.basename(file.name).replace(/[^a-zA-Z0-9._-]/g, "_");
-  const ext = extensionFor(mimeType, sanitizedOriginalName);
+  // Safe file naming and storage paths
+  const sanitizedOriginalName = validation.sanitizedName!;
+  const ext = extensionFor(validation.mimeType!, validation.ext!);
   const storedName = `${randomUUID()}${ext}`;
   const relative = path.join("documents", user.id, projectId, storedName);
   const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
   const fullPath = path.join(root, relative);
 
-  // Security check: Ensure path does not escape upload directory
+  // Path Traversal Security check
   if (!fullPath.startsWith(root)) {
     return { error: "Invalid storage path" };
   }
@@ -97,23 +81,31 @@ export async function uploadDocument(projectId: string, formData: FormData) {
   await mkdir(path.dirname(fullPath), { recursive: true });
   await writeFile(fullPath, Buffer.from(await file.arrayBuffer()));
 
-  const doc = await prisma.projectDocument.create({
-    data: {
-      projectId,
-      category: parsed.data.category,
-      title: parsed.data.title,
-      description: emptyToNull(parsed.data.description),
-      version: emptyToNull(parsed.data.version),
-      floorId,
-      constructionStageId,
-      fileName: sanitizedOriginalName,
-      storedName,
-      mimeType,
-      sizeBytes: file.size,
-      storagePath: relative.replaceAll("\\", "/"),
-      isPinned: formData.get("isPinned") === "true",
-    },
-  });
+  let doc;
+  try {
+    doc = await prisma.projectDocument.create({
+      data: {
+        projectId,
+        category: parsed.data.category,
+        title: parsed.data.title,
+        description: emptyToNull(parsed.data.description),
+        version: emptyToNull(parsed.data.version),
+        floorId,
+        constructionStageId,
+        fileName: sanitizedOriginalName,
+        storedName,
+        mimeType: validation.mimeType!,
+        sizeBytes: file.size,
+        storagePath: relative.replaceAll("\\", "/"),
+        isPinned: formData.get("isPinned") === "true",
+      },
+    });
+  } catch (dbError) {
+    // Clean up uploaded file if database registration fails
+    await unlink(fullPath).catch(() => {});
+    console.error("Database registration failed for uploaded document:", dbError);
+    return { error: "Database error occurred while recording document. Upload has been safely rolled back." };
+  }
 
   revalidatePath("/documents");
   revalidatePath(`/projects/${projectId}`);
@@ -205,7 +197,9 @@ export async function deleteDocument(documentId: string) {
         await unlink(fullPath).catch(() => {});
       }
     }
-  } catch {}
+  } catch (err) {
+    console.warn("Failed to delete physical file during document removal:", err);
+  }
 
   await prisma.projectDocument.deleteMany({ where: { id: documentId, projectId: doc.projectId } });
 
