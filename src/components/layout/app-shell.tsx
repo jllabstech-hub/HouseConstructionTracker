@@ -309,13 +309,6 @@ export function AppShell({
               >
                 🏡 {activeProject?.name ?? (language === "te" ? "నా ఇల్లు" : "My House")}
               </Link>
-              <Link
-                href="/projects/new"
-                className="text-[11px] font-bold text-clay-700 hover:text-clay-900 bg-clay-50 hover:bg-clay-100 px-2 py-0.5 rounded-lg border border-clay-200 transition"
-                title="Create another house project"
-              >
-                + New House
-              </Link>
             </div>
 
             {/* Top-Right Search & Action Controls */}
