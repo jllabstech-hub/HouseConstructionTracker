@@ -1,24 +1,12 @@
+import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { seedUserMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 
 export async function ensureDatabaseSchema() {
   try {
-    // Check if core table 'User' exists
-    const result = await prisma.$queryRaw<Array<{ exists: boolean }>>`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'User'
-      );
-    `;
+    console.log("Ensuring database schema, enums and tables exist via idempotent DDL...");
 
-    const userTableExists = result?.[0]?.exists;
-    if (userTableExists) {
-      return { created: false, message: "Tables already exist" };
-    }
-
-    console.log("Database tables missing. Executing SQL DDL initialization...");
-
-    // Create Enums if not exist
+    // 1. Create Enums if not exist
     await prisma.$executeRawUnsafe(`
       DO $$ BEGIN
         CREATE TYPE "Role" AS ENUM ('ADMIN', 'VIEWER');
@@ -65,7 +53,7 @@ export async function ensureDatabaseSchema() {
       EXCEPTION WHEN duplicate_object THEN null; END $$;
     `);
 
-    // Create Tables
+    // 2. Create Tables
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "User" (
         "id" TEXT NOT NULL PRIMARY KEY,
@@ -343,16 +331,17 @@ export async function ensureDatabaseSchema() {
       CREATE TABLE IF NOT EXISTS "Receipt" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "expenseId" TEXT NOT NULL REFERENCES "Expense"("id") ON DELETE CASCADE,
-        "fileUrl" TEXT NOT NULL,
         "fileName" TEXT NOT NULL,
-        "fileType" TEXT NOT NULL,
-        "fileSize" INTEGER NOT NULL,
-        "ocrStatus" "OcrStatus" NOT NULL DEFAULT 'PENDING',
+        "storedName" TEXT NOT NULL,
+        "mimeType" TEXT NOT NULL,
+        "sizeBytes" INTEGER NOT NULL,
+        "storagePath" TEXT NOT NULL,
+        "ocrStatus" "OcrStatus" NOT NULL DEFAULT 'SKIPPED',
         "ocrVendor" TEXT,
+        "ocrDate" TIMESTAMP(3),
         "ocrInvoiceNumber" TEXT,
-        "ocrDate" DATE,
-        "ocrItemName" TEXT,
-        "ocrQuantity" DECIMAL(14,3),
+        "ocrMaterial" TEXT,
+        "ocrQuantity" DECIMAL(14,4),
         "ocrRate" DECIMAL(14,2),
         "ocrGst" DECIMAL(14,2),
         "ocrTotal" DECIMAL(14,2),
@@ -411,8 +400,37 @@ export async function ensureDatabaseSchema() {
       );
     `);
 
+    // 3. Ensure default Admin user exists
+    const passwordHash = await bcrypt.hash("test123", 10);
+    const adminUser = await prisma.user.upsert({
+      where: { email: "admin" },
+      update: { name: "Admin", passwordHash },
+      create: { email: "admin", name: "Admin", passwordHash },
+    });
+
+    // 4. Seed user masters (materials & labours)
+    await seedUserMasters(adminUser.id);
+
+    // 5. Ensure default project exists with 20 stages
+    let project = await prisma.project.findFirst({ where: { userId: adminUser.id } });
+    if (!project) {
+      project = await prisma.project.create({
+        data: {
+          userId: adminUser.id,
+          name: "Nandakam",
+          location: "Pruthvi Layout, Channasandra",
+          builtUpArea: 3200,
+          plotArea: 2400,
+          totalBudget: 4000000,
+          status: "IN_PROGRESS",
+          startDate: new Date("2026-01-10"),
+        },
+      });
+      await seedProjectStructure(project.id, { demoProgress: true });
+    }
+
     console.log("Database schema successfully verified and created via DDL.");
-    return { created: true, message: "Tables created successfully" };
+    return { created: true, message: "Tables created successfully", userId: adminUser.id, projectId: project.id };
   } catch (error) {
     console.error("ensureDatabaseSchema error:", error);
     throw error;
