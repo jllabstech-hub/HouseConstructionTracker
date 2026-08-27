@@ -38,6 +38,9 @@ import {
   Share2,
   SlidersHorizontal,
   RotateCcw,
+  MoreVertical,
+  AlertCircle,
+  Check,
 } from "lucide-react";
 
 export type DocumentItem = {
@@ -61,69 +64,71 @@ export type DocumentItem = {
 const CATEGORIES = [
   {
     value: "FLOOR_PLAN",
-    labelEn: "Floor Plans",
-    labelTe: "ఫ్లోర్ ప్లాన్లు",
+    labelEn: "Floor Plan",
+    labelTe: "ఫ్లోర్ ప్లాన్",
     icon: Compass,
-    color: "bg-blue-50 text-blue-800 border-blue-200/80",
-    badge: "bg-blue-600 text-white",
+    badgeColor: "bg-blue-100 text-blue-800 border-blue-200",
   },
   {
     value: "ELEVATION",
-    labelEn: "3D Elevations",
-    labelTe: "3D ఎలివేషన్లు",
+    labelEn: "3D Elevation",
+    labelTe: "3D ఎలివేషన్",
     icon: Sparkles,
-    color: "bg-emerald-50 text-emerald-800 border-emerald-200/80",
-    badge: "bg-emerald-600 text-white",
+    badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
   },
   {
     value: "STRUCTURAL",
-    labelEn: "Structural Drawings",
-    labelTe: "స్ట్రక్చరల్ డ్రాయింగ్స్",
+    labelEn: "Structural Drawing",
+    labelTe: "స్ట్రక్చరల్ డ్రాయింగ్",
     icon: Layers,
-    color: "bg-amber-50 text-amber-900 border-amber-200/80",
-    badge: "bg-amber-600 text-white",
+    badgeColor: "bg-amber-100 text-amber-900 border-amber-200",
   },
   {
     value: "MEP",
     labelEn: "Electrical & Plumbing",
     labelTe: "ఎలక్ట్రికల్ & ప్లంబింగ్",
     icon: Zap,
-    color: "bg-purple-50 text-purple-800 border-purple-200/80",
-    badge: "bg-purple-600 text-white",
+    badgeColor: "bg-purple-100 text-purple-800 border-purple-200",
   },
   {
     value: "APPROVAL",
-    labelEn: "Sanctions & Permits",
-    labelTe: "ప్రభుత్వ అనుమతులు",
+    labelEn: "Permit & Approval",
+    labelTe: "ప్రభుత్వ అనుమతి",
     icon: ShieldCheck,
-    color: "bg-rose-50 text-rose-800 border-rose-200/80",
-    badge: "bg-rose-600 text-white",
+    badgeColor: "bg-rose-100 text-rose-800 border-rose-200",
   },
   {
     value: "SITE_PHOTO",
-    labelEn: "Site Progress Photos",
-    labelTe: "సైట్ ఫోటోలు",
+    labelEn: "Site Photo",
+    labelTe: "సైట్ ఫోటో",
     icon: Camera,
-    color: "bg-cyan-50 text-cyan-800 border-cyan-200/80",
-    badge: "bg-cyan-600 text-white",
+    badgeColor: "bg-cyan-100 text-cyan-800 border-cyan-200",
   },
   {
     value: "CONTRACT",
-    labelEn: "Contracts & Deeds",
-    labelTe: "అగ్రిమెంట్లు",
+    labelEn: "Contract & Agreement",
+    labelTe: "అగ్రిమెంట్",
     icon: FileCheck,
-    color: "bg-stone-100 text-stone-800 border-stone-300",
-    badge: "bg-stone-700 text-white",
+    badgeColor: "bg-stone-200 text-stone-800 border-stone-300",
   },
   {
     value: "OTHER",
-    labelEn: "Other Files",
-    labelTe: "ఇతర ఫైళ్ళు",
+    labelEn: "Other Document",
+    labelTe: "ఇతర ఫైల్",
     icon: FileText,
-    color: "bg-gray-50 text-gray-800 border-gray-200",
-    badge: "bg-gray-600 text-white",
+    badgeColor: "bg-gray-100 text-gray-800 border-gray-200",
   },
 ] as const;
+
+function formatDisplayDate(dateInput: Date | string) {
+  try {
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return String(dateInput);
+    return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  } catch {
+    return String(dateInput);
+  }
+}
 
 export function DocumentsHub({
   projectId,
@@ -145,51 +150,86 @@ export function DocumentsHub({
   // Primary Controls
   const [search, setSearch] = useState("");
   const [selectedType, setSelectedType] = useState<string>("ALL");
-  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // Advanced Filter Drawer State
+  // Advanced Filters Drawer State
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
-  const [selectedFloor, setSelectedFloor] = useState<string>("ALL");
-  const [selectedStage, setSelectedStage] = useState<string>("ALL");
-  const [onlyPinned, setOnlyPinned] = useState(false);
+  const [drawerCategory, setDrawerCategory] = useState<string>("ALL");
+  const [drawerFloor, setDrawerFloor] = useState<string>("ALL");
+  const [drawerStage, setDrawerStage] = useState<string>("ALL");
+  const [drawerPinned, setDrawerPinned] = useState<"ALL" | "PINNED" | "UNPINNED">("ALL");
+  const [drawerDate, setDrawerDate] = useState<"ALL" | "TODAY" | "MONTH" | "LAST_MONTH">("ALL");
 
-  // Modals
+  // Active filters count
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedType !== "ALL" || drawerCategory !== "ALL") count++;
+    if (drawerFloor !== "ALL") count++;
+    if (drawerStage !== "ALL") count++;
+    if (drawerPinned !== "ALL") count++;
+    if (drawerDate !== "ALL") count++;
+    return count;
+  }, [selectedType, drawerCategory, drawerFloor, drawerStage, drawerPinned, drawerDate]);
+
+  // Modals & Popups
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [lightboxDoc, setLightboxDoc] = useState<DocumentItem | null>(null);
   const [editingDoc, setEditingDoc] = useState<DocumentItem | null>(null);
   const [docToDelete, setDocToDelete] = useState<DocumentItem | null>(null);
-
-  // Active advanced filters count
-  const activeAdvancedFilterCount = useMemo(() => {
-    let count = 0;
-    if (selectedFloor !== "ALL") count++;
-    if (selectedStage !== "ALL") count++;
-    if (onlyPinned) count++;
-    return count;
-  }, [selectedFloor, selectedStage, onlyPinned]);
+  const [activeMenuDocId, setActiveMenuDocId] = useState<string | null>(null);
+  const [copiedDocId, setCopiedDocId] = useState<string | null>(null);
+  const [previewErrors, setPreviewErrors] = useState<Record<string, boolean>>({});
 
   const clearAllFilters = () => {
     setSearch("");
     setSelectedType("ALL");
-    setSelectedFloor("ALL");
-    setSelectedStage("ALL");
-    setOnlyPinned(false);
+    setDrawerCategory("ALL");
+    setDrawerFloor("ALL");
+    setDrawerStage("ALL");
+    setDrawerPinned("ALL");
+    setDrawerDate("ALL");
   };
 
   // Filtered documents
   const filteredDocs = useMemo(() => {
+    const effectiveCategory = drawerCategory !== "ALL" ? drawerCategory : selectedType;
+
     return documents
       .sort((a, b) => {
         if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       })
       .filter((doc) => {
-        if (selectedType !== "ALL" && doc.category !== selectedType) return false;
-        if (selectedFloor !== "ALL" && doc.floorId !== selectedFloor) return false;
-        if (selectedStage !== "ALL" && doc.constructionStageId !== selectedStage) return false;
-        if (onlyPinned && !doc.isPinned) return false;
-        if (!search) return true;
+        // Category / Type
+        if (effectiveCategory !== "ALL" && doc.category !== effectiveCategory) return false;
+
+        // Floor
+        if (drawerFloor !== "ALL" && doc.floorId !== drawerFloor) return false;
+
+        // Stage
+        if (drawerStage !== "ALL" && doc.constructionStageId !== drawerStage) return false;
+
+        // Pinned
+        if (drawerPinned === "PINNED" && !doc.isPinned) return false;
+        if (drawerPinned === "UNPINNED" && doc.isPinned) return false;
+
+        // Date
+        if (drawerDate !== "ALL") {
+          const docDate = new Date(doc.createdAt);
+          const now = new Date();
+          if (drawerDate === "TODAY") {
+            if (docDate.toDateString() !== now.toDateString()) return false;
+          } else if (drawerDate === "MONTH") {
+            if (docDate.getMonth() !== now.getMonth() || docDate.getFullYear() !== now.getFullYear()) return false;
+          } else if (drawerDate === "LAST_MONTH") {
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            if (docDate.getMonth() !== lastMonth.getMonth() || docDate.getFullYear() !== lastMonth.getFullYear()) return false;
+          }
+        }
+
+        // Search Query
+        if (!search.trim()) return true;
         const q = search.toLowerCase();
         return (
           doc.title.toLowerCase().includes(q) ||
@@ -198,7 +238,7 @@ export function DocumentsHub({
           doc.fileName.toLowerCase().includes(q)
         );
       });
-  }, [documents, selectedType, selectedFloor, selectedStage, onlyPinned, search]);
+  }, [documents, selectedType, drawerCategory, drawerFloor, drawerStage, drawerPinned, drawerDate, search]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -220,20 +260,40 @@ export function DocumentsHub({
     return stages.find((s) => s.id === stageId)?.name ?? null;
   };
 
+  const handleShare = async (doc: DocumentItem) => {
+    const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/api/documents/${doc.id}` : "";
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: doc.title,
+          text: doc.description || doc.title,
+          url: shareUrl,
+        });
+        return;
+      } catch {
+        // Fallback to clipboard
+      }
+    }
+
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedDocId(doc.id);
+      setTimeout(() => setCopiedDocId(null), 2000);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* 1. Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-paper-200/80 pb-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-paper-300 bg-paper-100 px-2.5 py-0.5 text-[11px] font-semibold text-stone-700">
-            <Compass className="h-3 w-3 text-clay-700" />
-            <span>{projectName || "House Project"}</span>
-          </div>
-          <h1 className="font-serif text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
-            {t.documents.title}
+        <div>
+          <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 leading-tight">
+            {language === "te" ? "పత్రాలు & ప్లాన్లు" : "Documents"}
           </h1>
-          <p className="text-xs sm:text-sm text-stone-500 max-w-xl leading-relaxed">
-            Store plans, drawings, bills, site photos and construction documents.
+          <p className="text-xs sm:text-sm text-ink-500 mt-1 max-w-xl">
+            {language === "te"
+              ? "మీ ఇంటి బ్లూప్రింట్లు, 3D ఎలివేషన్లు, అగ్రిమెంట్లు మరియు ప్రభుత్వ అనుమతులను సురక్షితంగా నిర్వహించండి."
+              : "Store and access blueprints, 3D elevations, structural drawings, MEP layouts, and permits in one place."}
           </p>
         </div>
 
@@ -248,7 +308,7 @@ export function DocumentsHub({
                   router.refresh();
                 });
               }}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-900 hover:bg-amber-100 active:scale-98 transition shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-xs font-bold text-amber-900 hover:bg-amber-100 active:scale-95 transition shadow-2xs"
             >
               <Sparkles className="h-4 w-4 text-amber-600" />
               <span>{pending ? "Loading..." : "Load Sample Plans"}</span>
@@ -261,10 +321,10 @@ export function DocumentsHub({
               setEditingDoc(null);
               setShowUploadModal(true);
             }}
-            className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition"
+            className="inline-flex items-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition"
           >
             <Plus className="h-4 w-4 stroke-[2.5]" />
-            <span>Upload Document</span>
+            <span>{language === "te" ? "+ పత్రం అప్‌లోడ్ చేయండి" : "+ Upload Document"}</span>
           </button>
         </div>
       </div>
@@ -273,27 +333,39 @@ export function DocumentsHub({
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-white p-2.5 rounded-2xl border border-paper-200 shadow-2xs">
         {/* Search Bar */}
         <div className="relative flex-1 min-w-[220px]">
-          <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-stone-400" />
+          <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
           <input
             type="text"
             placeholder={
               language === "te"
-                ? "ప్లాన్లు, డ్రాయింగ్లు, రివిజన్ ద్వారా వెతకండి..."
-                : "Search documents, drawings, revisions..."
+                ? "పత్రాలను వెతకండి (ప్లాన్, ఎలివేషన్, అనుమతి)..."
+                : "Search documents..."
             }
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-paper-200 bg-paper-50/70 py-2 pl-10 pr-4 text-xs font-medium text-stone-900 placeholder:text-stone-400 focus:border-clay-500 focus:bg-white focus:outline-none transition"
+            className="w-full rounded-xl border border-paper-200 bg-paper-50/70 py-2.5 pl-10 pr-8 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:bg-white focus:outline-none transition"
           />
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-3 text-ink-400 hover:text-ink-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         {/* Controls Group */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
           {/* Document Type Dropdown */}
           <select
             value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className="rounded-xl border border-paper-200 bg-paper-50 px-3 py-2 text-xs font-bold text-stone-800 focus:border-clay-500 focus:outline-none"
+            onChange={(e) => {
+              setSelectedType(e.target.value);
+              setDrawerCategory("ALL");
+            }}
+            className="rounded-xl border border-paper-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-bold text-ink-800 focus:border-clay-500 focus:outline-none shadow-2xs"
           >
             <option value="ALL">All Types ({documents.length})</option>
             {CATEGORIES.map((cat) => (
@@ -308,29 +380,29 @@ export function DocumentsHub({
             type="button"
             onClick={() => setIsFilterDrawerOpen(true)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition active:scale-95",
-              activeAdvancedFilterCount > 0
-                ? "border-clay-400 bg-clay-50 text-clay-800"
-                : "border-paper-200 bg-paper-50 text-stone-700 hover:bg-paper-100"
+              "inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-xs sm:text-sm font-bold transition active:scale-95 shadow-2xs",
+              activeFiltersCount > 0
+                ? "border-clay-400 bg-clay-50 text-clay-900"
+                : "border-paper-300 bg-white text-ink-800 hover:bg-paper-50"
             )}
           >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            <span>Filters</span>
-            {activeAdvancedFilterCount > 0 && (
+            <SlidersHorizontal className="h-4 w-4 text-ink-500" />
+            <span>{language === "te" ? "ఫిల్టర్లు" : "Filters"}</span>
+            {activeFiltersCount > 0 && (
               <span className="rounded-full bg-clay-600 px-1.5 py-0.2 text-[10px] font-bold text-white leading-none">
-                {activeAdvancedFilterCount}
+                {activeFiltersCount}
               </span>
             )}
           </button>
 
-          {/* View Mode Toggle */}
+          {/* View Mode Toggle (Grid / List) */}
           <div className="flex items-center rounded-xl border border-paper-200 bg-paper-50 p-1">
             <button
               type="button"
               onClick={() => setViewMode("grid")}
               className={cn(
-                "rounded-lg p-1.5 transition",
-                viewMode === "grid" ? "bg-white text-stone-900 shadow-2xs font-bold" : "text-stone-500 hover:text-stone-900"
+                "rounded-lg p-2 transition",
+                viewMode === "grid" ? "bg-white text-ink-900 shadow-2xs font-bold" : "text-ink-500 hover:text-ink-900"
               )}
               title="Grid View"
             >
@@ -338,10 +410,10 @@ export function DocumentsHub({
             </button>
             <button
               type="button"
-              onClick={() => setViewMode("table")}
+              onClick={() => setViewMode("list")}
               className={cn(
-                "rounded-lg p-1.5 transition",
-                viewMode === "table" ? "bg-white text-stone-900 shadow-2xs font-bold" : "text-stone-500 hover:text-stone-900"
+                "rounded-lg p-2 transition",
+                viewMode === "list" ? "bg-white text-ink-900 shadow-2xs font-bold" : "text-ink-500 hover:text-ink-900"
               )}
               title="List / Register View"
             >
@@ -352,46 +424,55 @@ export function DocumentsHub({
       </div>
 
       {/* Active Filters Summary Strip */}
-      {(selectedType !== "ALL" || selectedFloor !== "ALL" || selectedStage !== "ALL" || onlyPinned || search) && (
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-stone-600 bg-paper-100/70 p-2 rounded-xl border border-paper-200">
-          <span className="font-semibold text-stone-500 pl-1">Filtered by:</span>
-          {selectedType !== "ALL" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-white border border-paper-200 px-2 py-0.5 text-[11px] font-bold text-stone-800">
-              Type: {getDocCategoryObj(selectedType).labelEn}
-              <button type="button" onClick={() => setSelectedType("ALL")} className="hover:text-red-500">
-                <X className="h-3 w-3" />
+      {(selectedType !== "ALL" || drawerCategory !== "ALL" || drawerFloor !== "ALL" || drawerStage !== "ALL" || drawerPinned !== "ALL" || drawerDate !== "ALL" || search) && (
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-600 bg-paper-100/70 p-2.5 rounded-xl border border-paper-200">
+          <span className="font-semibold text-ink-500 pl-1">
+            {language === "te" ? "ఫిల్టర్లు:" : "Filtered by:"}
+          </span>
+          {(selectedType !== "ALL" || drawerCategory !== "ALL") && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-paper-200 px-2.5 py-1 text-xs font-bold text-ink-800 shadow-2xs">
+              Type: {getDocCategoryObj(drawerCategory !== "ALL" ? drawerCategory : selectedType).labelEn}
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedType("ALL");
+                  setDrawerCategory("ALL");
+                }}
+                className="hover:text-red-600 ml-0.5"
+              >
+                <X className="h-3.5 w-3.5" />
               </button>
             </span>
           )}
-          {selectedFloor !== "ALL" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-white border border-paper-200 px-2 py-0.5 text-[11px] font-bold text-stone-800">
-              Floor: {getFloorName(selectedFloor)}
-              <button type="button" onClick={() => setSelectedFloor("ALL")} className="hover:text-red-500">
-                <X className="h-3 w-3" />
+          {drawerFloor !== "ALL" && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-paper-200 px-2.5 py-1 text-xs font-bold text-ink-800 shadow-2xs">
+              Floor: {getFloorName(drawerFloor)}
+              <button type="button" onClick={() => setDrawerFloor("ALL")} className="hover:text-red-600 ml-0.5">
+                <X className="h-3.5 w-3.5" />
               </button>
             </span>
           )}
-          {selectedStage !== "ALL" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-white border border-paper-200 px-2 py-0.5 text-[11px] font-bold text-stone-800">
-              Stage: {getStageName(selectedStage)}
-              <button type="button" onClick={() => setSelectedStage("ALL")} className="hover:text-red-500">
-                <X className="h-3 w-3" />
+          {drawerStage !== "ALL" && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-paper-200 px-2.5 py-1 text-xs font-bold text-ink-800 shadow-2xs">
+              Stage: {getStageName(drawerStage)}
+              <button type="button" onClick={() => setDrawerStage("ALL")} className="hover:text-red-600 ml-0.5">
+                <X className="h-3.5 w-3.5" />
               </button>
             </span>
           )}
-          {onlyPinned && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-white border border-paper-200 px-2 py-0.5 text-[11px] font-bold text-stone-800">
-              Pinned only
-              <button type="button" onClick={() => setOnlyPinned(false)} className="hover:text-red-500">
-                <X className="h-3 w-3" />
+          {drawerPinned !== "ALL" && (
+            <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-paper-200 px-2.5 py-1 text-xs font-bold text-ink-800 shadow-2xs">
+              {drawerPinned === "PINNED" ? "Pinned only" : "Unpinned only"}
+              <button type="button" onClick={() => setDrawerPinned("ALL")} className="hover:text-red-600 ml-0.5">
+                <X className="h-3.5 w-3.5" />
               </button>
             </span>
           )}
           {search && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-white border border-paper-200 px-2 py-0.5 text-[11px] font-bold text-stone-800">
+            <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-paper-200 px-2.5 py-1 text-xs font-bold text-ink-800 shadow-2xs">
               Search: &quot;{search}&quot;
-              <button type="button" onClick={() => setSearch("")} className="hover:text-red-500">
-                <X className="h-3 w-3" />
+              <button type="button" onClick={() => setSearch("")} className="hover:text-red-600 ml-0.5">
+                <X className="h-3.5 w-3.5" />
               </button>
             </span>
           )}
@@ -399,26 +480,26 @@ export function DocumentsHub({
           <button
             type="button"
             onClick={clearAllFilters}
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-clay-700 hover:text-clay-900 underline ml-auto pr-1"
+            className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 underline ml-auto pr-1"
           >
-            <RotateCcw className="h-3 w-3" />
-            Clear all
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span>{language === "te" ? "అన్నీ క్లియర్ చేయండి" : "Clear all"}</span>
           </button>
         </div>
       )}
 
-      {/* 3. Main Content: Grid or Table View */}
+      {/* 3. Main Content: Grid or List View */}
       {filteredDocs.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-paper-300 bg-white p-12 text-center space-y-4 shadow-2xs">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-stone-100 text-stone-600 border border-stone-200">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-paper-100 text-ink-600 border border-paper-200">
             <Compass className="h-7 w-7 text-clay-700" />
           </div>
 
           <div className="space-y-1 max-w-sm mx-auto">
-            <h3 className="font-serif font-bold text-stone-900 text-lg">
+            <h3 className="font-display font-bold text-ink-900 text-lg">
               {documents.length === 0 ? "No documents yet" : "No matching documents"}
             </h3>
-            <p className="text-xs text-stone-500 leading-relaxed">
+            <p className="text-xs text-ink-500 leading-relaxed">
               {documents.length === 0
                 ? "Upload blueprints, architectural 3D elevations, rebar schedules, or sanction permits."
                 : "No files match the currently applied filters. Try adjusting your search query or filters."}
@@ -431,7 +512,7 @@ export function DocumentsHub({
                 <button
                   type="button"
                   onClick={() => setShowUploadModal(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Upload Document</span>
@@ -445,7 +526,7 @@ export function DocumentsHub({
                       router.refresh();
                     });
                   }}
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2.5 text-xs font-bold text-stone-800 hover:bg-paper-100 active:scale-98 transition"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2.5 text-xs font-bold text-ink-800 hover:bg-paper-100 active:scale-95 transition"
                 >
                   <Sparkles className="h-4 w-4 text-amber-600" />
                   <span>{pending ? "Loading..." : "Load Sample Plans"}</span>
@@ -455,7 +536,7 @@ export function DocumentsHub({
               <button
                 type="button"
                 onClick={clearAllFilters}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2 text-xs font-bold text-stone-800 hover:bg-paper-100 transition"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2 text-xs font-bold text-ink-800 hover:bg-paper-100 transition"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>Reset Filters</span>
@@ -464,8 +545,8 @@ export function DocumentsHub({
           </div>
         </div>
       ) : viewMode === "grid" ? (
-        /* Grid Cards */
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        /* Grid View: Responsive 1-col (mobile) -> 2-col (tablet) -> 3-col (desktop) */
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredDocs.map((doc) => {
             const catObj = getDocCategoryObj(doc.category);
             const isImage = doc.mimeType.startsWith("image/");
@@ -473,172 +554,204 @@ export function DocumentsHub({
             const fileUrl = doc.storagePath.startsWith("/images/") ? doc.storagePath : `/api/documents/${doc.id}`;
             const floorName = getFloorName(doc.floorId);
             const stageName = getStageName(doc.constructionStageId);
+            const hasError = previewErrors[doc.id];
 
             return (
               <div
                 key={doc.id}
                 className={cn(
-                  "group relative overflow-hidden rounded-3xl border bg-white shadow-2xs hover:border-clay-300 hover:shadow-md transition flex flex-col justify-between",
+                  "group relative overflow-hidden rounded-2xl border bg-white shadow-xs hover:border-clay-300 hover:shadow-md transition-all duration-200 flex flex-col justify-between",
                   doc.isPinned ? "border-amber-300 ring-1 ring-amber-300/60" : "border-paper-200"
                 )}
               >
                 <div>
                   {/* Visual Preview / Thumbnail Area */}
-                  <div className="relative h-44 w-full overflow-hidden bg-stone-900 flex items-center justify-center">
-                    {isImage ? (
+                  <div
+                    onClick={() => setLightboxDoc(doc)}
+                    className="relative h-44 w-full overflow-hidden bg-paper-100 flex items-center justify-center cursor-pointer border-b border-paper-100"
+                  >
+                    {isImage && !hasError ? (
                       <>
                         <Image
                           src={fileUrl}
                           alt={doc.title}
                           fill
-                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                          onError={() => setPreviewErrors((prev) => ({ ...prev, [doc.id]: true }))}
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-black/10 to-stone-950/30" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
                       </>
-                    ) : isPdf ? (
-                      <div className="flex flex-col items-center justify-center p-5 text-center space-y-1.5 bg-gradient-to-b from-stone-800 to-stone-900 text-stone-200 w-full h-full">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-500/20 text-red-400 border border-red-500/30">
-                          <FileText className="h-5 w-5" />
+                    ) : isPdf && !hasError ? (
+                      <div className="flex flex-col items-center justify-center p-5 text-center space-y-2 bg-gradient-to-b from-stone-800 to-stone-900 text-stone-200 w-full h-full">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-500/20 text-red-400 border border-red-500/30">
+                          <FileText className="h-6 w-6" />
                         </div>
-                        <span className="rounded-md bg-red-500/20 px-2 py-0.5 text-[10px] font-bold text-red-300 uppercase tracking-wider">
-                          PDF Document
+                        <p className="text-xs font-bold text-stone-100 line-clamp-1 px-2">{doc.fileName}</p>
+                        <span className="rounded-md bg-white/10 px-2 py-0.5 text-[10px] font-mono text-stone-300">
+                          PDF · {formatFileSize(doc.sizeBytes)}
                         </span>
-                        <p className="text-[11px] font-medium text-stone-400 max-w-[200px] truncate">
-                          {doc.fileName}
-                        </p>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center justify-center p-5 text-center space-y-1.5 bg-gradient-to-b from-stone-800 to-stone-900 text-stone-200 w-full h-full">
-                        <FileText className="h-7 w-7 text-stone-400" />
-                        <span className="text-[11px] text-stone-400 font-medium truncate max-w-[180px]">
-                          {doc.fileName}
-                        </span>
+                      /* Preview Unavailable Fallback */
+                      <div className="flex flex-col items-center justify-center p-4 text-center space-y-1.5 text-ink-500">
+                        <AlertCircle className="h-8 w-8 text-ink-400" />
+                        <p className="text-xs font-semibold text-ink-600">Preview unavailable</p>
+                        <a
+                          href={fileUrl}
+                          download={doc.fileName}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-clay-700 underline"
+                        >
+                          <Download className="h-3 w-3" />
+                          <span>Download file</span>
+                        </a>
                       </div>
                     )}
 
-                    {/* Top Badges (Category & Pin Toggle) */}
-                    <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-auto">
-                      <span className={cn("rounded-xl border px-2.5 py-0.5 text-[10px] font-bold shadow-xs backdrop-blur-md", catObj.color)}>
+                    {/* Pin Indicator Badge */}
+                    {doc.isPinned && (
+                      <div className="absolute top-2.5 left-2.5 rounded-lg bg-amber-500/95 px-2 py-1 text-[10px] font-bold text-white shadow-xs flex items-center gap-1 backdrop-blur-xs">
+                        <Pin className="h-3 w-3" />
+                        <span>Pinned</span>
+                      </div>
+                    )}
+
+                    {/* Category Pill Over Image */}
+                    <div className="absolute top-2.5 right-2.5">
+                      <span className={cn("rounded-lg border px-2 py-0.5 text-[10px] font-bold shadow-2xs backdrop-blur-xs", catObj.badgeColor)}>
                         {language === "te" ? catObj.labelTe : catObj.labelEn}
                       </span>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          start(async () => {
-                            await togglePinDocument(doc.id);
-                            router.refresh();
-                          });
-                        }}
-                        className={cn(
-                          "rounded-full p-1.5 transition active:scale-95 shadow-xs backdrop-blur-md",
-                          doc.isPinned
-                            ? "bg-amber-400 text-stone-950 font-bold shadow-sm"
-                            : "bg-white/85 text-stone-700 hover:bg-white"
-                        )}
-                        title={doc.isPinned ? "Unpin document" : "Pin to top"}
-                      >
-                        <Pin className="h-3.5 w-3.5" />
-                      </button>
                     </div>
 
-                    {/* Preview Trigger */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (isImage) setLightboxDoc(doc);
-                        else window.open(fileUrl, "_blank");
-                      }}
-                      className="absolute bottom-3 right-3 rounded-xl bg-white/90 px-2.5 py-1.5 text-xs font-bold text-stone-900 shadow-md backdrop-blur-md hover:bg-white transition active:scale-95 flex items-center gap-1"
-                    >
-                      <Eye className="h-3.5 w-3.5 text-clay-700" />
-                      <span>Preview</span>
-                    </button>
-                  </div>
-
-                  {/* Document Card Details */}
-                  <div className="p-4 space-y-2">
-                    <div>
-                      <h3 className="font-serif font-bold text-stone-900 text-sm sm:text-base leading-snug group-hover:text-clay-800 transition line-clamp-1">
-                        {doc.title}
-                      </h3>
-                      {doc.version && (
-                        <span className="inline-block mt-1 rounded-md bg-stone-100 border border-stone-200 px-2 py-0.5 text-[10px] font-bold text-stone-800">
-                          🏷️ {doc.version}
-                        </span>
-                      )}
-                    </div>
-
-                    {doc.description && (
-                      <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
-                        {doc.description}
-                      </p>
-                    )}
-
-                    {/* Floor / Stage Tag */}
-                    {(floorName || stageName) && (
-                      <div className="flex flex-wrap gap-1.5 text-[10px] font-semibold text-stone-600 pt-0.5">
-                        {floorName && (
-                          <span className="rounded-md bg-paper-100 px-2 py-0.5 border border-paper-200">
-                            🏢 {floorName}
-                          </span>
-                        )}
-                        {stageName && (
-                          <span className="rounded-md bg-paper-100 px-2 py-0.5 border border-paper-200">
-                            🏗️ {stageName}
-                          </span>
-                        )}
+                    {/* Version Badge Bottom Right */}
+                    {doc.version && (
+                      <div className="absolute bottom-2.5 right-2.5 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-mono font-bold text-white backdrop-blur-xs">
+                        {doc.version}
                       </div>
                     )}
+                  </div>
 
-                    <div className="pt-2 flex items-center justify-between text-[11px] text-stone-400 font-medium border-t border-paper-100">
-                      <span>{formatFileSize(doc.sizeBytes)}</span>
-                      <span>{new Date(doc.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                  {/* Card Content & Metadata */}
+                  <div className="p-4 space-y-2">
+                    <h3
+                      onClick={() => setLightboxDoc(doc)}
+                      className="font-display text-sm font-bold text-ink-900 leading-snug line-clamp-2 hover:text-clay-700 transition cursor-pointer"
+                      title={doc.title}
+                    >
+                      {doc.title}
+                    </h3>
+
+                    {/* Date + Optional Stage / Floor */}
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-ink-500">
+                      <span>{formatDisplayDate(doc.createdAt)}</span>
+                      {(floorName || stageName) && <span>•</span>}
+                      {floorName && (
+                        <span className="rounded-md bg-paper-100 px-1.5 py-0.5 font-medium text-ink-700">
+                          {floorName}
+                        </span>
+                      )}
+                      {stageName && (
+                        <span className="rounded-md bg-paper-100 px-1.5 py-0.5 font-medium text-ink-700 truncate max-w-[130px]">
+                          {stageName}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                {/* Card Action Footer */}
-                <div className="p-4 pt-0 border-t border-paper-100 mt-2 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5">
+                {/* 4. Action Buttons Strip (Preview, Download, Share, More) */}
+                <div className="border-t border-paper-100 p-2.5 bg-paper-50/50 flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-1">
+                    {/* Preview Button */}
+                    <button
+                      type="button"
+                      onClick={() => setLightboxDoc(doc)}
+                      className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-ink-700 hover:bg-paper-200/80 transition active:scale-95"
+                      title="Preview document"
+                    >
+                      <Eye className="h-3.5 w-3.5 text-ink-500" />
+                      <span>Preview</span>
+                    </button>
+
+                    {/* Download Button */}
                     <a
                       href={fileUrl}
                       download={doc.fileName}
-                      className="inline-flex items-center gap-1 font-bold text-clay-700 hover:text-clay-900 transition bg-clay-50 hover:bg-clay-100 rounded-xl px-2.5 py-1.5"
+                      className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-bold text-ink-700 hover:bg-paper-200/80 transition active:scale-95"
+                      title="Download document"
                     >
-                      <Download className="h-3.5 w-3.5" />
+                      <Download className="h-3.5 w-3.5 text-ink-500" />
                       <span>Download</span>
-                    </a>
-
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(`Construction Document: ${doc.title} (${doc.version ?? "Latest"})\n${typeof window !== "undefined" ? window.location.origin : ""}${fileUrl}`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 font-bold text-[#25D366] hover:bg-emerald-50 rounded-xl px-2 py-1.5 transition"
-                      title="Share blueprint link on WhatsApp"
-                    >
-                      <Share2 className="h-3.5 w-3.5" />
                     </a>
                   </div>
 
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 relative">
+                    {/* Share Button */}
                     <button
                       type="button"
-                      onClick={() => setEditingDoc(doc)}
-                      className="p-1.5 text-stone-500 hover:bg-paper-100 hover:text-stone-900 rounded-lg transition"
-                      title="Edit details"
+                      onClick={() => handleShare(doc)}
+                      className="rounded-lg p-1.5 text-ink-500 hover:bg-paper-200/80 hover:text-ink-900 transition active:scale-95"
+                      title="Share link"
                     >
-                      <Edit3 className="h-3.5 w-3.5" />
+                      {copiedDocId === doc.id ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-600" />
+                      ) : (
+                        <Share2 className="h-3.5 w-3.5" />
+                      )}
                     </button>
 
+                    {/* More Options Button */}
                     <button
                       type="button"
-                      onClick={() => setDocToDelete(doc)}
-                      className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
-                      title="Delete"
+                      onClick={() => setActiveMenuDocId(activeMenuDocId === doc.id ? null : doc.id)}
+                      className="rounded-lg p-1.5 text-ink-500 hover:bg-paper-200/80 hover:text-ink-900 transition active:scale-95"
+                      title="More actions"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <MoreVertical className="h-3.5 w-3.5" />
                     </button>
+
+                    {/* Popover Menu */}
+                    {activeMenuDocId === doc.id && (
+                      <div className="absolute bottom-full right-0 mb-1 w-36 rounded-xl border border-paper-200 bg-white py-1 shadow-lg z-20 text-xs">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveMenuDocId(null);
+                            setEditingDoc(doc);
+                          }}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-left font-semibold text-ink-700 hover:bg-paper-50"
+                        >
+                          <Edit3 className="h-3.5 w-3.5 text-ink-500" />
+                          <span>Edit Details</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveMenuDocId(null);
+                            start(async () => {
+                              await togglePinDocument(doc.id);
+                              router.refresh();
+                            });
+                          }}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-left font-semibold text-ink-700 hover:bg-paper-50"
+                        >
+                          <Pin className="h-3.5 w-3.5 text-ink-500" />
+                          <span>{doc.isPinned ? "Unpin" : "Pin to Top"}</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveMenuDocId(null);
+                            setDocToDelete(doc);
+                          }}
+                          className="flex items-center gap-2 w-full px-3 py-2 text-left font-semibold text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -646,155 +759,143 @@ export function DocumentsHub({
           })}
         </div>
       ) : (
-        /* Table View */
-        <div className="rounded-3xl border border-paper-200 bg-white shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-paper-50 text-stone-600 font-bold uppercase tracking-wider border-b border-paper-200">
-                <tr>
-                  <th className="px-4 py-3">Document / Title</th>
-                  <th className="px-4 py-3">Category</th>
-                  <th className="px-4 py-3">Revision</th>
-                  <th className="px-4 py-3">Floor / Stage</th>
-                  <th className="px-4 py-3">Size & Date</th>
-                  <th className="px-4 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-paper-100 font-medium">
-                {filteredDocs.map((doc) => {
-                  const catObj = getDocCategoryObj(doc.category);
-                  const isImage = doc.mimeType.startsWith("image/");
-                  const fileUrl = doc.storagePath.startsWith("/images/") ? doc.storagePath : `/api/documents/${doc.id}`;
-                  const floorName = getFloorName(doc.floorId);
+        /* List / Register View */
+        <div className="overflow-hidden rounded-2xl border border-paper-200 bg-white shadow-xs">
+          <table className="w-full text-left text-xs text-ink-700">
+            <thead className="border-b border-paper-200 bg-paper-50/70 font-bold uppercase tracking-wider text-ink-500 text-[10px]">
+              <tr>
+                <th className="py-3.5 px-4">Document Title</th>
+                <th className="py-3.5 px-3">Type</th>
+                <th className="py-3.5 px-4">Floor / Stage</th>
+                <th className="py-3.5 px-4">Size</th>
+                <th className="py-3.5 px-4">Uploaded</th>
+                <th className="py-3.5 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-paper-100">
+              {filteredDocs.map((doc) => {
+                const catObj = getDocCategoryObj(doc.category);
+                const fileUrl = doc.storagePath.startsWith("/images/") ? doc.storagePath : `/api/documents/${doc.id}`;
+                const floorName = getFloorName(doc.floorId);
+                const stageName = getStageName(doc.constructionStageId);
 
-                  return (
-                    <tr key={doc.id} className="hover:bg-paper-50/60 transition">
-                      <td className="px-4 py-3 font-bold text-stone-900">
-                        <div className="flex items-center gap-2.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              start(async () => {
-                                await togglePinDocument(doc.id);
-                                router.refresh();
-                              });
-                            }}
-                            className={cn(
-                              "p-1 rounded-md transition",
-                              doc.isPinned ? "text-amber-500 bg-amber-50" : "text-stone-300 hover:text-stone-600"
-                            )}
-                            title={doc.isPinned ? "Unpin" : "Pin"}
-                          >
-                            <Pin className="h-3.5 w-3.5" />
-                          </button>
-
-                          <div className="min-w-0">
-                            <span className="block truncate max-w-xs">{doc.title}</span>
-                            <span className="text-[10px] text-stone-400 font-normal">{doc.fileName}</span>
-                          </div>
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-3">
-                        <span className={cn("rounded-md border px-2 py-0.5 text-[10px] font-bold", catObj.color)}>
-                          {language === "te" ? catObj.labelTe : catObj.labelEn}
+                return (
+                  <tr key={doc.id} className="hover:bg-paper-50/60 transition group">
+                    <td className="py-3.5 px-4 font-bold text-ink-900 max-w-[280px]">
+                      <div className="flex items-center gap-2">
+                        {doc.isPinned && <Pin className="h-3.5 w-3.5 text-amber-500 shrink-0" />}
+                        <button
+                          type="button"
+                          onClick={() => setLightboxDoc(doc)}
+                          className="truncate hover:text-clay-700 transition text-left"
+                        >
+                          {doc.title}
+                        </button>
+                      </div>
+                      {doc.description && (
+                        <p className="text-[11px] font-normal text-ink-400 truncate mt-0.5">{doc.description}</p>
+                      )}
+                    </td>
+                    <td className="py-3.5 px-3 whitespace-nowrap">
+                      <span className={cn("rounded-lg border px-2 py-0.5 text-[10px] font-bold", catObj.badgeColor)}>
+                        {catObj.labelEn}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-ink-600 whitespace-nowrap">
+                      {floorName || stageName ? (
+                        <span>
+                          {floorName}
+                          {floorName && stageName ? " • " : ""}
+                          {stageName}
                         </span>
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {doc.version ? (
-                          <span className="rounded-md bg-stone-100 px-2 py-0.5 text-[10px] font-bold text-stone-700">
-                            {doc.version}
-                          </span>
-                        ) : (
-                          <span className="text-stone-300">—</span>
-                        )}
-                      </td>
-
-                      <td className="px-4 py-3 text-stone-600">
-                        {floorName ?? <span className="text-stone-300">—</span>}
-                      </td>
-
-                      <td className="px-4 py-3 text-stone-500 text-[11px]">
-                        <div>{formatFileSize(doc.sizeBytes)}</div>
-                        <div className="text-stone-400">
-                          {new Date(doc.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
-                        </div>
-                      </td>
-
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (isImage) setLightboxDoc(doc);
-                              else window.open(fileUrl, "_blank");
-                            }}
-                            className="p-1.5 text-stone-600 hover:bg-paper-100 rounded-lg transition"
-                            title="Preview"
-                          >
-                            <Eye className="h-3.5 w-3.5" />
-                          </button>
-
-                          <a
-                            href={fileUrl}
-                            download={doc.fileName}
-                            className="p-1.5 text-clay-700 hover:bg-clay-50 rounded-lg transition"
-                            title="Download"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                          </a>
-
-                          <button
-                            type="button"
-                            onClick={() => setEditingDoc(doc)}
-                            className="p-1.5 text-stone-500 hover:bg-paper-100 rounded-lg transition"
-                            title="Edit"
-                          >
-                            <Edit3 className="h-3.5 w-3.5" />
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setDocToDelete(doc)}
-                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition"
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="py-3.5 px-4 font-mono text-ink-500 whitespace-nowrap">
+                      {formatFileSize(doc.sizeBytes)}
+                    </td>
+                    <td className="py-3.5 px-4 font-medium text-ink-500 whitespace-nowrap">
+                      {formatDisplayDate(doc.createdAt)}
+                    </td>
+                    <td className="py-3.5 px-3 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setLightboxDoc(doc)}
+                          className="rounded-lg p-1.5 text-ink-400 hover:bg-paper-100 hover:text-clay-700 transition"
+                          title="Preview"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </button>
+                        <a
+                          href={fileUrl}
+                          download={doc.fileName}
+                          className="rounded-lg p-1.5 text-ink-400 hover:bg-paper-100 hover:text-clay-700 transition"
+                          title="Download"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => handleShare(doc)}
+                          className="rounded-lg p-1.5 text-ink-400 hover:bg-paper-100 hover:text-clay-700 transition"
+                          title="Share link"
+                        >
+                          {copiedDocId === doc.id ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Share2 className="h-3.5 w-3.5" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setEditingDoc(doc)}
+                          className="rounded-lg p-1.5 text-ink-400 hover:bg-paper-100 hover:text-clay-700 transition"
+                          title="Edit"
+                        >
+                          <Edit3 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDocToDelete(doc)}
+                          className="rounded-lg p-1.5 text-ink-400 hover:bg-red-50 hover:text-red-700 transition"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
 
-      {/* 4. Advanced Filter Drawer */}
+      {/* 4. Advanced Filters Drawer */}
       <Drawer
         open={isFilterDrawerOpen}
         onClose={() => setIsFilterDrawerOpen(false)}
         title="Filter Documents"
-        subtitle="Refine documents by specific criteria"
+        subtitle="Refine by document category, floor, stage, or date"
         footer={
           <div className="flex items-center justify-between gap-3">
             <Button
               type="button"
               variant="secondary"
-              onClick={clearAllFilters}
-              className="text-xs"
+              size="sm"
+              onClick={() => {
+                clearAllFilters();
+                setIsFilterDrawerOpen(false);
+              }}
             >
-              Clear all
+              Clear All
             </Button>
             <Button
               type="button"
+              variant="primary"
+              size="sm"
               onClick={() => setIsFilterDrawerOpen(false)}
-              className="bg-clay-600 hover:bg-clay-700 text-white text-xs font-bold px-5"
             >
-              Apply ({filteredDocs.length} results)
+              Apply Filters
             </Button>
           </div>
         }
@@ -802,184 +903,212 @@ export function DocumentsHub({
         <div className="space-y-4 text-xs">
           {/* Document Type */}
           <div>
-            <label className="block font-bold text-stone-800 mb-1.5">Document Type</label>
+            <label className="font-bold text-ink-700 block mb-1.5">Document Type</label>
             <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3.5 py-2.5 text-xs font-semibold text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
+              value={drawerCategory}
+              onChange={(e) => setDrawerCategory(e.target.value)}
+              className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
             >
-              <option value="ALL">All Types</option>
-              {CATEGORIES.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.labelEn}
+              <option value="ALL">All Categories</option>
+              {CATEGORIES.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.labelEn}
                 </option>
               ))}
             </select>
           </div>
 
           {/* Floor */}
-          <div>
-            <label className="block font-bold text-stone-800 mb-1.5">Floor Level</label>
-            <select
-              value={selectedFloor}
-              onChange={(e) => setSelectedFloor(e.target.value)}
-              className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3.5 py-2.5 text-xs font-semibold text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
-            >
-              <option value="ALL">All Floors / Unassigned</option>
-              {floors.map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          {floors.length > 0 && (
+            <div>
+              <label className="font-bold text-ink-700 block mb-1.5">Floor</label>
+              <select
+                value={drawerFloor}
+                onChange={(e) => setDrawerFloor(e.target.value)}
+                className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
+              >
+                <option value="ALL">All Floors</option>
+                {floors.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {/* Construction Stage */}
+          {stages.length > 0 && (
+            <div>
+              <label className="font-bold text-ink-700 block mb-1.5">Construction Stage</label>
+              <select
+                value={drawerStage}
+                onChange={(e) => setDrawerStage(e.target.value)}
+                className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
+              >
+                <option value="ALL">All Stages</option>
+                {stages.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Pinned Status */}
           <div>
-            <label className="block font-bold text-stone-800 mb-1.5">Construction Stage</label>
+            <label className="font-bold text-ink-700 block mb-1.5">Pinned Status</label>
             <select
-              value={selectedStage}
-              onChange={(e) => setSelectedStage(e.target.value)}
-              className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3.5 py-2.5 text-xs font-semibold text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
+              value={drawerPinned}
+              onChange={(e) => setDrawerPinned(e.target.value as "ALL" | "PINNED" | "UNPINNED")}
+              className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
             >
-              <option value="ALL">All Stages / General</option>
-              {stages.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
+              <option value="ALL">All Documents</option>
+              <option value="PINNED">Pinned to Top Only</option>
+              <option value="UNPINNED">Unpinned Only</option>
             </select>
           </div>
 
-          {/* Pinned filter toggle */}
-          <div className="pt-2">
-            <label className="flex items-center gap-2.5 p-3 rounded-xl border border-paper-200 bg-paper-50/60 cursor-pointer hover:bg-paper-100/60 transition">
-              <input
-                type="checkbox"
-                checked={onlyPinned}
-                onChange={(e) => setOnlyPinned(e.target.checked)}
-                className="h-4 w-4 rounded text-clay-600 focus:ring-clay-500 border-paper-300"
-              />
-              <span className="font-bold text-stone-800">📌 Show Pinned Only</span>
-            </label>
+          {/* Upload Date */}
+          <div>
+            <label className="font-bold text-ink-700 block mb-1.5">Uploaded Date</label>
+            <select
+              value={drawerDate}
+              onChange={(e) => setDrawerDate(e.target.value as "ALL" | "TODAY" | "MONTH" | "LAST_MONTH")}
+              className="w-full rounded-xl border border-paper-300 bg-paper-50 p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
+            >
+              <option value="ALL">All Dates</option>
+              <option value="TODAY">Uploaded Today</option>
+              <option value="MONTH">Uploaded This Month</option>
+              <option value="LAST_MONTH">Uploaded Last Month</option>
+            </select>
           </div>
         </div>
       </Drawer>
 
-      {/* 5. Upload Blueprint / Document Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="relative max-w-xl w-full rounded-3xl bg-white shadow-2xl p-5 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      {/* 5. Upload / Edit Modal */}
+      {(showUploadModal || editingDoc) && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn">
+          <div className="relative w-full max-w-lg rounded-3xl border border-paper-200 bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between border-b border-paper-100 pb-3">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-clay-100 text-clay-700">
-                  <Compass className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="font-serif font-bold text-stone-900 text-lg">
-                    Upload Document / Plan
-                  </h3>
-                  <p className="text-xs text-stone-500">Attach CAD drawings, 3D elevation renders, or sanctioned permits</p>
-                </div>
+              <div>
+                <h2 className="font-display text-lg font-bold text-ink-900">
+                  {editingDoc ? "Edit Document Details" : "Upload Document / Blueprint"}
+                </h2>
+                <p className="text-xs text-ink-500 mt-0.5">
+                  {editingDoc ? "Update title, category or linked structure" : "Attach high-resolution drawings, plans or permits"}
+                </p>
               </div>
               <button
                 type="button"
-                onClick={() => setShowUploadModal(false)}
-                className="rounded-full p-1.5 text-stone-400 hover:bg-paper-100 hover:text-stone-800 transition"
+                onClick={() => {
+                  setShowUploadModal(false);
+                  setEditingDoc(null);
+                  setUploadError(null);
+                }}
+                className="rounded-xl p-1.5 text-ink-400 hover:bg-paper-100 hover:text-ink-900"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
+            {uploadError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800">
+                {uploadError}
+              </div>
+            )}
+
             <form
-              className="space-y-4"
               onSubmit={(e) => {
                 e.preventDefault();
                 setUploadError(null);
-                const formElement = e.currentTarget;
-                const formData = new FormData(formElement);
+                const formData = new FormData(e.currentTarget);
+
                 start(async () => {
-                  const res = await uploadDocument(projectId, formData);
-                  if (res?.error) {
-                    setUploadError(res.error);
-                    return;
+                  try {
+                    if (editingDoc) {
+                      const res = await updateDocument(editingDoc.id, {
+                        title: formData.get("title")?.toString() ?? editingDoc.title,
+                        category: (formData.get("category")?.toString() ?? editingDoc.category) as DocumentItem["category"],
+                        description: formData.get("description")?.toString() || null,
+                        version: formData.get("version")?.toString() || null,
+                        floorId: formData.get("floorId")?.toString() || null,
+                        constructionStageId: formData.get("constructionStageId")?.toString() || null,
+                      });
+                      if (res && "error" in res && res.error) {
+                        setUploadError(res.error);
+                        return;
+                      }
+                      setEditingDoc(null);
+                    } else {
+                      const res = await uploadDocument(projectId, formData);
+                      if (res && "error" in res && res.error) {
+                        setUploadError(res.error);
+                        return;
+                      }
+                      setShowUploadModal(false);
+                    }
+                    router.refresh();
+                  } catch (err) {
+                    setUploadError(err instanceof Error ? err.message : "Failed to save document");
                   }
-                  setShowUploadModal(false);
-                  router.refresh();
                 });
               }}
+              className="space-y-3.5 text-xs"
             >
-              {uploadError && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800">
-                  {uploadError}
-                </div>
-              )}
-
-              {/* Category Selector */}
+              {/* Title */}
               <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1.5">
-                  Document Type <span className="text-red-500">*</span>
+                <label className="font-bold text-ink-700 block mb-1">
+                  Document Title <span className="text-red-500">*</span>
                 </label>
+                <input
+                  name="title"
+                  type="text"
+                  required
+                  defaultValue={editingDoc?.title ?? ""}
+                  placeholder="e.g. Ground Floor Architectural Plan Rev 2"
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="font-bold text-ink-700 block mb-1">Category</label>
                 <select
                   name="category"
-                  required
-                  defaultValue="FLOOR_PLAN"
-                  className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3.5 py-2.5 text-xs font-bold text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
+                  defaultValue={editingDoc?.category ?? "FLOOR_PLAN"}
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
                 >
-                  {CATEGORIES.map((cat) => (
-                    <option key={cat.value} value={cat.value}>
-                      {cat.labelEn}
+                  {CATEGORIES.map((c) => (
+                    <option key={c.value} value={c.value}>
+                      {c.labelEn}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Title Input */}
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">
-                  Document Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  required
-                  placeholder="e.g. Ground Floor Working Plan"
-                  className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3.5 py-2 text-xs font-medium text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
-                />
-              </div>
-
-              {/* Drag & Drop File Upload Zone */}
-              <FileDropzone
-                name="file"
-                required
-                label="Choose File"
-                accept="image/jpeg,image/png,image/webp,image/svg+xml,application/pdf"
-                helperText="Supports Images (JPG, PNG, WEBP) or PDF Blueprints (Up to 20 MB)"
-              />
-
               {/* Version & Floor */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-stone-800 mb-1">
-                    Revision Tag
-                  </label>
+                  <label className="font-bold text-ink-700 block mb-1">Version / Revision</label>
                   <input
-                    type="text"
                     name="version"
-                    placeholder="e.g. v2.1 Approved"
-                    className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
+                    type="text"
+                    defaultValue={editingDoc?.version ?? ""}
+                    placeholder="e.g. v2.1 Final"
+                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-stone-800 mb-1">
-                    Floor Link (Optional)
-                  </label>
+                  <label className="font-bold text-ink-700 block mb-1">Floor (Optional)</label>
                   <select
                     name="floorId"
-                    className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
+                    defaultValue={editingDoc?.floorId ?? ""}
+                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
                   >
-                    <option value="">-- Any / Entire House --</option>
+                    <option value="">None / Entire House</option>
                     {floors.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.name}
@@ -989,255 +1118,138 @@ export function DocumentsHub({
                 </div>
               </div>
 
-              {/* Notes */}
+              {/* Construction Stage */}
               <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">
-                  Description / Notes
-                </label>
-                <textarea
-                  name="description"
-                  rows={2}
-                  placeholder="Additional architectural notes..."
-                  className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
-                />
-              </div>
-
-              {/* Pin checkbox */}
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="isPinnedCheck"
-                  name="isPinned"
-                  value="true"
-                  className="h-4 w-4 rounded text-clay-600 focus:ring-clay-500 border-paper-300"
-                />
-                <label htmlFor="isPinnedCheck" className="text-xs font-bold text-stone-800 cursor-pointer">
-                  📌 Pin to Top Showcase
-                </label>
-              </div>
-
-              <div className="flex gap-2 pt-3 border-t border-paper-100">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setShowUploadModal(false)}
-                  className="w-1/3 text-xs"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={pending}
-                  className="flex-1 bg-clay-600 hover:bg-clay-700 font-bold text-white text-xs py-2.5 rounded-xl shadow-sm"
-                >
-                  {pending ? "Saving..." : "Save Document"}
-                </Button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 6. Edit Document Modal */}
-      {editingDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm overflow-y-auto">
-          <div className="relative max-w-lg w-full rounded-3xl bg-white shadow-2xl p-5 sm:p-7 space-y-5 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-paper-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Edit3 className="h-5 w-5 text-clay-700" />
-                <h3 className="font-serif font-bold text-stone-900 text-lg">
-                  Edit Document Details
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditingDoc(null)}
-                className="rounded-full p-1.5 text-stone-400 hover:bg-paper-100 hover:text-stone-800 transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form
-              className="space-y-4"
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = new FormData(e.currentTarget);
-                start(async () => {
-                  await updateDocument(editingDoc.id, {
-                    title: String(form.get("title") ?? ""),
-                    category: form.get("category") as DocumentItem["category"],
-                    version: String(form.get("version") ?? ""),
-                    floorId: form.get("floorId") ? String(form.get("floorId")) : null,
-                    description: form.get("description") ? String(form.get("description")) : null,
-                    isPinned: form.get("isPinned") === "true",
-                  });
-                  setEditingDoc(null);
-                  router.refresh();
-                });
-              }}
-            >
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">
-                  Document Title <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  required
-                  defaultValue={editingDoc.title}
-                  className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3.5 py-2 text-xs font-medium text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-stone-800 mb-1">
-                    Category
-                  </label>
-                  <select
-                    name="category"
-                    defaultValue={editingDoc.category}
-                    className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-semibold text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
-                  >
-                    {CATEGORIES.map((cat) => (
-                      <option key={cat.value} value={cat.value}>
-                        {cat.labelEn}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-stone-800 mb-1">
-                    Revision Tag
-                  </label>
-                  <input
-                    type="text"
-                    name="version"
-                    defaultValue={editingDoc.version ?? ""}
-                    className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">
-                  Floor
-                </label>
+                <label className="font-bold text-ink-700 block mb-1">Linked Stage (Optional)</label>
                 <select
-                  name="floorId"
-                  defaultValue={editingDoc.floorId ?? ""}
-                  className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
+                  name="constructionStageId"
+                  defaultValue={editingDoc?.constructionStageId ?? ""}
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
                 >
-                  <option value="">-- Any / Entire House --</option>
-                  {floors.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name}
+                  <option value="">None / General</option>
+                  {stages.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
                     </option>
                   ))}
                 </select>
               </div>
 
+              {/* File Dropzone (Only for new uploads) */}
+              {!editingDoc && (
+                <div>
+                  <label className="font-bold text-ink-700 block mb-1">
+                    Select File (PDF / Images / CAD) <span className="text-red-500">*</span>
+                  </label>
+                  <FileDropzone name="file" required accept="image/*,application/pdf" />
+                </div>
+              )}
+
+              {/* Description */}
               <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1">
-                  Description / Notes
-                </label>
+                <label className="font-bold text-ink-700 block mb-1">Notes / Description</label>
                 <textarea
                   name="description"
                   rows={2}
-                  defaultValue={editingDoc.description ?? ""}
-                  className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
+                  defaultValue={editingDoc?.description ?? ""}
+                  placeholder="Architect notes, engineer mix specifications, approval sanction no..."
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
                 />
               </div>
 
-              <div className="flex items-center gap-2 pt-1">
-                <input
-                  type="checkbox"
-                  id="editPinnedCheck"
-                  name="isPinned"
-                  value="true"
-                  defaultChecked={editingDoc.isPinned}
-                  className="h-4 w-4 rounded text-clay-600 focus:ring-clay-500 border-paper-300"
-                />
-                <label htmlFor="editPinnedCheck" className="text-xs font-bold text-stone-800 cursor-pointer">
-                  📌 Pin to Top Showcase
-                </label>
-              </div>
-
-              <div className="flex gap-2 pt-3 border-t border-paper-100">
-                <Button
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-paper-100">
+                <button
                   type="button"
-                  variant="secondary"
-                  onClick={() => setEditingDoc(null)}
-                  className="w-1/3 text-xs"
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setEditingDoc(null);
+                  }}
+                  className="rounded-xl border border-paper-300 bg-white px-4 py-2 text-xs font-bold text-ink-700 hover:bg-paper-50"
                 >
                   Cancel
-                </Button>
-                <Button
+                </button>
+                <button
                   type="submit"
                   disabled={pending}
-                  className="flex-1 bg-clay-600 hover:bg-clay-700 font-bold text-white text-xs py-2.5 rounded-xl shadow-sm"
+                  className="rounded-xl bg-clay-600 px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition disabled:opacity-50"
                 >
-                  {pending ? "Saving..." : "Update Details"}
-                </Button>
+                  {pending ? "Saving..." : editingDoc ? "Update Document" : "Upload Document"}
+                </button>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      {/* 7. Fullscreen Image Lightbox Modal */}
+      {/* 6. Preview Lightbox Modal */}
       {lightboxDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-3 sm:p-6 backdrop-blur-md">
-          <div className="relative max-w-5xl w-full h-full max-h-[92vh] overflow-hidden rounded-3xl bg-stone-950 border border-stone-800 shadow-2xl flex flex-col justify-between p-4 sm:p-6 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between text-white border-b border-stone-800 pb-3">
-              <div>
-                <span className="text-xs font-bold text-clay-400">
-                  {getDocCategoryObj(lightboxDoc.category).labelEn}
-                </span>
-                <h3 className="font-serif font-bold text-base sm:text-xl text-stone-100">
-                  {lightboxDoc.title}
-                </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl bg-stone-950 border border-stone-800 shadow-2xl flex flex-col justify-between text-white">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-stone-800 bg-stone-900/90">
+              <div className="min-w-0 pr-4">
+                <h3 className="font-display text-base font-bold truncate text-white">{lightboxDoc.title}</h3>
+                <p className="text-xs text-stone-400 truncate mt-0.5">
+                  {lightboxDoc.fileName} · {formatFileSize(lightboxDoc.sizeBytes)}
+                </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setLightboxDoc(null)}
-                className="rounded-full p-2 text-stone-400 hover:bg-stone-800 hover:text-white transition"
-              >
-                <X className="h-6 w-6" />
-              </button>
-            </div>
-
-            <div className="relative flex-1 w-full my-3 overflow-hidden rounded-2xl bg-black flex items-center justify-center">
-              <Image
-                src={lightboxDoc.storagePath.startsWith("/images/") ? lightboxDoc.storagePath : `/api/documents/${lightboxDoc.id}`}
-                alt={lightboxDoc.title}
-                fill
-                className="object-contain"
-              />
-            </div>
-
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-stone-400 border-t border-stone-800 pt-3">
-              <p className="font-medium max-w-lg truncate">
-                {lightboxDoc.description ?? lightboxDoc.fileName}
-              </p>
               <div className="flex items-center gap-2">
                 <a
                   href={lightboxDoc.storagePath.startsWith("/images/") ? lightboxDoc.storagePath : `/api/documents/${lightboxDoc.id}`}
                   download={lightboxDoc.fileName}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-white px-4 py-2 font-bold text-stone-950 hover:bg-stone-200 transition shadow-xs"
+                  className="inline-flex items-center gap-1 rounded-xl bg-stone-800 hover:bg-stone-700 px-3 py-1.5 text-xs font-bold text-white transition"
                 >
-                  <Download className="h-4 w-4" />
+                  <Download className="h-3.5 w-3.5" />
                   <span>Download</span>
                 </a>
+                <button
+                  type="button"
+                  onClick={() => setLightboxDoc(null)}
+                  className="rounded-xl bg-stone-800 hover:bg-stone-700 p-1.5 text-stone-300 hover:text-white transition"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
+            </div>
+
+            {/* Viewer Content */}
+            <div className="relative flex-1 min-h-[360px] max-h-[70vh] overflow-auto bg-stone-950 flex items-center justify-center p-4">
+              {lightboxDoc.mimeType.startsWith("image/") ? (
+                <div className="relative w-full h-[60vh]">
+                  <Image
+                    src={lightboxDoc.storagePath.startsWith("/images/") ? lightboxDoc.storagePath : `/api/documents/${lightboxDoc.id}`}
+                    alt={lightboxDoc.title}
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+              ) : lightboxDoc.mimeType === "application/pdf" ? (
+                <iframe
+                  src={lightboxDoc.storagePath.startsWith("/images/") ? lightboxDoc.storagePath : `/api/documents/${lightboxDoc.id}`}
+                  title={lightboxDoc.title}
+                  className="w-full h-[60vh] rounded-xl border border-stone-800 bg-white"
+                />
+              ) : (
+                <div className="text-center space-y-3 p-8">
+                  <AlertCircle className="mx-auto h-12 w-12 text-stone-400" />
+                  <p className="text-sm font-bold text-stone-200">Preview unavailable for this format</p>
+                  <p className="text-xs text-stone-400">Please download the file to view it on your device.</p>
+                  <a
+                    href={lightboxDoc.storagePath.startsWith("/images/") ? lightboxDoc.storagePath : `/api/documents/${lightboxDoc.id}`}
+                    download={lightboxDoc.fileName}
+                    className="inline-flex items-center gap-2 rounded-xl bg-clay-600 px-4 py-2 text-xs font-bold text-white hover:bg-clay-700"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span>Download File</span>
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* 8. Confirm Delete Dialog */}
+      {/* 7. Delete Confirmation Dialog */}
       <ConfirmDialog
         open={!!docToDelete}
         onClose={() => setDocToDelete(null)}
@@ -1249,10 +1261,10 @@ export function DocumentsHub({
             router.refresh();
           });
         }}
-        title="Delete Construction Document"
-        description={`Are you sure you want to delete "${docToDelete?.title}"? This cannot be undone.`}
-        confirmText="Delete Document"
-        loading={pending}
+        title="Delete Document?"
+        description={`Are you sure you want to permanently delete "${docToDelete?.title}"?`}
+        confirmText={pending ? "Deleting..." : "Delete Document"}
+        variant="danger"
       />
     </div>
   );
