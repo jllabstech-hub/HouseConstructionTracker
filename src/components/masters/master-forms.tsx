@@ -1068,7 +1068,7 @@ export function MasterForms({
               </div>
 
               <Button type="submit" disabled={pending} className="w-full bg-clay-600 hover:bg-clay-700 font-bold text-white text-xs py-2.5">
-                {pending ? "Adding..." : "+ Add Material"}
+                {pending ? "Adding..." : "Add Material"}
               </Button>
             </form>
           </div>
@@ -1155,7 +1155,7 @@ export function MasterForms({
               </div>
 
               <Button type="submit" disabled={pending} className="w-full bg-clay-600 hover:bg-clay-700 font-bold text-white text-xs py-2.5">
-                {pending ? "Adding..." : "+ Add Labour Trade"}
+                {pending ? "Adding..." : "Add Labour Trade"}
               </Button>
             </form>
           </div>
@@ -1205,7 +1205,7 @@ export function MasterForms({
               </div>
 
               <Button type="submit" disabled={pending} className="w-full bg-clay-600 hover:bg-clay-700 font-bold text-white text-xs py-2.5">
-                {pending ? "Adding..." : "+ Add Service"}
+                {pending ? "Adding..." : "Add Service"}
               </Button>
             </form>
           </div>

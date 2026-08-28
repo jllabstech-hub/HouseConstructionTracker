@@ -69,7 +69,7 @@ export function FinancialHero({
             title="Create a new house project"
           >
             <Building2 className="h-4 w-4 text-clay-600 shrink-0" />
-            <span className="whitespace-nowrap">+ New House</span>
+            <span className="whitespace-nowrap">New House</span>
           </Link>
 
           <Link
@@ -77,7 +77,7 @@ export function FinancialHero({
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 hover:bg-clay-700 px-4 py-2.5 text-sm font-bold text-white shadow-xs transition active:scale-95 whitespace-nowrap min-h-[42px]"
           >
             <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
-            <span className="whitespace-nowrap">+ Add Expense</span>
+            <span className="whitespace-nowrap">Add Expense</span>
           </Link>
         </div>
       </div>

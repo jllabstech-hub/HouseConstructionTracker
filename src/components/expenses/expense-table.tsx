@@ -267,7 +267,7 @@ export function ExpenseTable({
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto whitespace-nowrap shrink-0"
         >
           <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
-          <span className="whitespace-nowrap">{t.nav?.addExpense ?? "+ Add Expense"}</span>
+          <span className="whitespace-nowrap">{t.nav?.addExpense ?? "Add Expense"}</span>
         </Link>
       </div>
 
@@ -486,7 +486,7 @@ export function ExpenseTable({
               className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-clay-700 transition shadow-xs"
             >
               <Plus className="h-4 w-4" />
-              <span>{language === "te" ? "+ మొదటి ఖర్చు నమోదు" : "+ Add First Expense"}</span>
+              <span>{language === "te" ? "మొదటి ఖర్చు నమోదు" : "Add First Expense"}</span>
             </Link>
           )}
         </div>

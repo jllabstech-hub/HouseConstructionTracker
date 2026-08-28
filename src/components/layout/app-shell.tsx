@@ -309,7 +309,7 @@ export function AppShell({
                 className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 shrink-0"
               >
                 <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
-                <span>{t.nav?.addExpense ?? "+ Add Expense"}</span>
+                <span>{t.nav?.addExpense ?? "Add Expense"}</span>
               </Link>
             </div>
           </header>
@@ -357,7 +357,7 @@ export function AppShell({
           type="button"
           onClick={() => setAddSheetOpen(true)}
           className="flex h-12 w-12 items-center justify-center rounded-full bg-clay-600 text-white shadow-lg hover:bg-clay-700 active:scale-95 transition -mt-5 border-2 border-white ring-2 ring-clay-600/20 shrink-0"
-          title={t.nav?.addExpense ?? "+ Add Expense"}
+          title={t.nav?.addExpense ?? "Add Expense"}
           aria-label={t.nav?.addExpense ?? "Add Expense"}
         >
           <Plus className="h-6 w-6 stroke-[2.5]" />

@@ -245,7 +245,7 @@ export const EN_TRANSLATIONS = {
     colAmount: "AMOUNT (?)",
     colVendorWorker: "VENDOR / WORKER",
     colActions: "ACTIONS",
-    noExpenses: "No expenses recorded yet. Tap '+ Record Bill or Wages' to add one!",
+    noExpenses: "No expenses recorded yet. Tap 'Record Bill or Wages' to add one!",
     noExpensesSub: "Try clearing your search terms or date filters above, or record a new bill.",
     addNewExpense: "Add New Expense",
     prev: "Prev",

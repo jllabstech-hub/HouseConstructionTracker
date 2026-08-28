@@ -53,7 +53,7 @@ export default async function ProjectsPage() {
         subtitle="Each house is a project with its own budget, floors, stages and expenses."
         actions={
           <Link href="/projects/new" className="rounded-xl bg-clay-600 px-4 py-2 text-sm font-semibold text-white hover:bg-clay-700 transition">
-            + New project
+            New Project
           </Link>
         }
       />
@@ -68,7 +68,7 @@ export default async function ProjectsPage() {
               href="/projects/new"
               className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2 text-xs font-bold text-white hover:bg-clay-700 shadow-xs transition"
             >
-              + Create First Project
+              Create First Project
             </Link>
           </div>
         </div>

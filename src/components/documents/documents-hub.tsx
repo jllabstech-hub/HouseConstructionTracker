@@ -341,7 +341,7 @@ export function DocumentsHub({
             className="inline-flex items-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition whitespace-nowrap shrink-0"
           >
             <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
-            <span className="whitespace-nowrap">{language === "te" ? "+ పత్రం అప్‌లోడ్" : "+ Upload Document"}</span>
+            <span className="whitespace-nowrap">Upload Document</span>
           </button>
         </div>
       </div>
