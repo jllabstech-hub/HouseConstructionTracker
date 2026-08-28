@@ -16,7 +16,7 @@ import {
   getWorkWiseCost,
   type ExpenseRecord,
 } from "@/lib/finance/aggregations";
-import { formatINR, formatINRCompact } from "@/lib/money";
+import { formatINR, formatINRCompact, formatPdfINR } from "@/lib/money";
 import { buildReportData } from "@/lib/finance/report-data";
 
 const expenses: ExpenseRecord[] = [
@@ -172,7 +172,7 @@ describe("smart summary and PDF data", () => {
 
     expect(data.reportTitle).toContain("Work-wise");
     expect(data.tables[0].rows[0][0]).toBe("Cement / Masonry");
-    expect(data.totalValue).toBe(formatINR(668000));
+    expect(data.totalValue).toBe(formatPdfINR(668000));
     expect(data.filename).toMatch(/house-work-wise-expenses/);
     expect(data.filename).toMatch(/\.pdf$/);
   });

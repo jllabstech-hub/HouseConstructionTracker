@@ -95,6 +95,34 @@ export function formatINRSigned(value: MoneyInput): string {
   return amount.isNegative() ? `-${formatted}` : `+${formatted}`;
 }
 
+export function formatPdfINR(value: MoneyInput, options?: { integer?: boolean }): string {
+  const amount = roundMoney(value);
+  const num = options?.integer || amount.isInteger()
+    ? Math.round(Number(amount.toFixed(0)))
+    : Number(amount.toFixed(2));
+  const formatted = num.toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: options?.integer || amount.isInteger() ? 0 : 2,
+  });
+  return `Rs. ${formatted}`;
+}
+
+export function formatPdfINRCompact(value: MoneyInput): string {
+  const amount = toDecimal(value);
+  const abs = amount.abs();
+  const sign = amount.isNegative() ? "-" : "";
+
+  if (abs.greaterThanOrEqualTo(1_00_00_000)) {
+    const crore = abs.div(1_00_00_000).toDecimalPlaces(2);
+    return `${sign}Rs. ${formatPlain(crore)}Cr`;
+  }
+  if (abs.greaterThanOrEqualTo(1_00_000)) {
+    const lakh = abs.div(1_00_000).toDecimalPlaces(2);
+    return `${sign}Rs. ${formatPlain(lakh)}L`;
+  }
+  return `${sign}${formatPdfINR(abs)}`;
+}
+
 export function formatINRCompact(value: MoneyInput): string {
   const amount = toDecimal(value);
   const abs = amount.abs();

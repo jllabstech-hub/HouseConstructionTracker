@@ -91,7 +91,7 @@ export function ConstructionReportPdf({ data }: { data: PdfReportData }) {
 
         <View style={styles.total}>
           <Text>
-            {String(data.totalLabel || "Total")}: {String(data.totalValue || "₹0")}
+            {String(data.totalLabel || "Total")}: {String(data.totalValue || "Rs. 0")}
           </Text>
         </View>
 

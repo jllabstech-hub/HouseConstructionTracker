@@ -11,7 +11,7 @@ import {
   type PdfReportData,
   type WorkAreaDefinition,
 } from "@/lib/finance/aggregations";
-import { formatINR, formatINRCompact, toDecimal, variance as getBudgetVariance } from "@/lib/money";
+import { formatPdfINR, formatPdfINRCompact, toDecimal, variance as getBudgetVariance } from "@/lib/money";
 
 export type ReportKind =
   | "total"
@@ -86,17 +86,17 @@ export function buildReportData(input: {
   }
 
   const kpis = [
-    { label: "Total Budget", value: formatINR(input.totalBudget) },
-    { label: "Report Total Spent", value: formatINR(totals.total) },
-    { label: "Remaining", value: formatINR(remaining.remaining) },
+    { label: "Total Budget", value: formatPdfINR(input.totalBudget) },
+    { label: "Report Total Spent", value: formatPdfINR(totals.total) },
+    { label: "Remaining", value: formatPdfINR(remaining.remaining) },
     { label: "Budget Used", value: `${remaining.usedPercent.toString()}%` },
   ];
 
   if (input.kind === "material" && !input.categoryName) {
-    kpis.splice(1, 2, { label: "Material Spent", value: formatINR(totals.MATERIAL) });
+    kpis.splice(1, 2, { label: "Material Spent", value: formatPdfINR(totals.MATERIAL) });
   }
   if (input.kind === "labour" && !input.workerName) {
-    kpis.splice(1, 2, { label: "Labour Spent", value: formatINR(totals.LABOUR) });
+    kpis.splice(1, 2, { label: "Labour Spent", value: formatPdfINR(totals.LABOUR) });
   }
 
   const tables = buildTables(input.kind, scoped, input);
@@ -115,16 +115,16 @@ export function buildReportData(input: {
     filename,
     kpis,
     typeBreakdown: [
-      { label: "Material", value: formatINR(totals.MATERIAL) },
-      { label: "Labour", value: formatINR(totals.LABOUR) },
-      { label: "Services", value: formatINR(totals.SERVICE) },
-      { label: "Equipment", value: formatINR(totals.EQUIPMENT) },
-      { label: "Professional", value: formatINR(totals.PROFESSIONAL) },
-      { label: "Other", value: formatINR(totals.OTHER) },
+      { label: "Material", value: formatPdfINR(totals.MATERIAL) },
+      { label: "Labour", value: formatPdfINR(totals.LABOUR) },
+      { label: "Services", value: formatPdfINR(totals.SERVICE) },
+      { label: "Equipment", value: formatPdfINR(totals.EQUIPMENT) },
+      { label: "Professional", value: formatPdfINR(totals.PROFESSIONAL) },
+      { label: "Other", value: formatPdfINR(totals.OTHER) },
     ],
     tables,
     totalLabel: "Grand Total",
-    totalValue: formatINR(totals.total),
+    totalValue: formatPdfINR(totals.total),
   };
 }
 
@@ -180,9 +180,9 @@ function buildTables(
       headers: ["Work", "Material", "Labour", "Total"],
       rows: rows.map((row) => [
         row.name,
-        formatINRCompact(row.material),
-        formatINRCompact(row.labour),
-        formatINRCompact(row.total),
+        formatPdfINRCompact(row.material),
+        formatPdfINRCompact(row.labour),
+        formatPdfINRCompact(row.total),
       ]),
     });
   }
@@ -193,10 +193,10 @@ function buildTables(
       headers: ["Month", "Material", "Labour", "Other", "Total"],
       rows: getMonthlySeries(expenses).map((row) => [
         row.label,
-        formatINR(row.totals.MATERIAL),
-        formatINR(row.totals.LABOUR),
-        formatINR(row.totals.SERVICE.plus(row.totals.EQUIPMENT).plus(row.totals.PROFESSIONAL).plus(row.totals.OTHER)),
-        formatINR(row.totals.total),
+        formatPdfINR(row.totals.MATERIAL),
+        formatPdfINR(row.totals.LABOUR),
+        formatPdfINR(row.totals.SERVICE.plus(row.totals.EQUIPMENT).plus(row.totals.PROFESSIONAL).plus(row.totals.OTHER)),
+        formatPdfINR(row.totals.total),
       ]),
     });
   }
@@ -208,7 +208,7 @@ function buildTables(
       rows: getNamedCategoryTotals(expenses).map((row) => [
         row.name,
         row.expenseType ?? "",
-        formatINR(row.amount),
+        formatPdfINR(row.amount),
       ]),
     });
   }
@@ -221,9 +221,9 @@ function buildTables(
         const result = getBudgetVariance(row.budget, row.actual);
         return [
           row.name,
-          formatINR(row.budget),
-          formatINR(row.actual),
-          formatINR(result.variance),
+          formatPdfINR(row.budget),
+          formatPdfINR(row.actual),
+          formatPdfINR(result.variance),
           result.isOver ? "OVER BUDGET" : "WITHIN BUDGET",
         ];
       }),
@@ -238,7 +238,7 @@ function buildTables(
         row.name,
         row.status,
         `${row.percentageComplete}%`,
-        formatINR(row.amount),
+        formatPdfINR(row.amount),
       ]),
     });
   }
@@ -261,7 +261,7 @@ function buildTables(
       headers: ["Vendor", "Transactions", "Amount"],
       rows: [...vendors.values()]
         .sort((a, b) => b.amount.comparedTo(a.amount))
-        .map((row) => [row.name, String(row.count), formatINR(row.amount)]),
+        .map((row) => [row.name, String(row.count), formatPdfINR(row.amount)]),
     });
   }
 
@@ -281,7 +281,7 @@ function buildTables(
       headers: ["Worker", "Amount"],
       rows: [...workers.values()]
         .sort((a, b) => b.amount.comparedTo(a.amount))
-        .map((row) => [row.name, formatINR(row.amount)]),
+        .map((row) => [row.name, formatPdfINR(row.amount)]),
     });
   }
 
@@ -289,7 +289,7 @@ function buildTables(
     tables.push({
       title: "Payment methods",
       headers: ["Method", "Amount"],
-      rows: getPaymentMethodTotals(expenses).map((row) => [row.name.replaceAll("_", " "), formatINR(row.amount)]),
+      rows: getPaymentMethodTotals(expenses).map((row) => [row.name.replaceAll("_", " "), formatPdfINR(row.amount)]),
     });
   }
 
@@ -302,7 +302,7 @@ function buildTables(
     tables.push({
       title: "Floor-wise expenditure",
       headers: ["Floor", "Amount"],
-      rows: [...floors.entries()].map(([name, amount]) => [name, formatINR(amount)]),
+      rows: [...floors.entries()].map(([name, amount]) => [name, formatPdfINR(amount)]),
     });
   }
 
@@ -310,7 +310,7 @@ function buildTables(
     tables.push({
       title: "Top expenses",
       headers: ["Category", "Type", "Amount"],
-      rows: getTopCategories(expenses, 10).map((row) => [row.name, row.expenseType ?? "", formatINR(row.amount)]),
+      rows: getTopCategories(expenses, 10).map((row) => [row.name, row.expenseType ?? "", formatPdfINR(row.amount)]),
     });
   }
 
@@ -332,12 +332,12 @@ function buildTables(
         row.expenseType;
       const date = format(row.date instanceof Date ? row.date : new Date(row.date), "dd-MMM-yyyy");
       if (kind === "labour") {
-        return [date, category, row.description ?? "", row.workerName ?? "", formatINR(row.amount)];
+        return [date, category, row.description ?? "", row.workerName ?? "", formatPdfINR(row.amount)];
       }
       if (kind === "material") {
-        return [date, category, row.description ?? "", row.vendorName ?? "", formatINR(row.amount)];
+        return [date, category, row.description ?? "", row.vendorName ?? "", formatPdfINR(row.amount)];
       }
-      return [date, row.expenseType, category, row.description ?? "", formatINR(row.amount)];
+      return [date, row.expenseType, category, row.description ?? "", formatPdfINR(row.amount)];
     }),
   });
 
