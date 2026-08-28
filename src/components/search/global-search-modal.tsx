@@ -96,8 +96,36 @@ export function GlobalSearchModal({
   const { language } = useLanguage();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
   const [data, setData] = useState<SearchResultData | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDownloadSmartReport = async (downloadUrl: string, defaultName: string) => {
+    setDownloadingPdf(true);
+    try {
+      const response = await fetch(downloadUrl, { credentials: "include" });
+      if (!response.ok) throw new Error("Failed to generate PDF");
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get("content-disposition");
+      let filename = defaultName;
+      if (contentDisposition) {
+        const match = /filename="([^"]+)"/.exec(contentDisposition);
+        if (match?.[1]) filename = match[1];
+      }
+      const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      console.error("Smart report download error:", err);
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
 
   const fetchResults = useCallback(async (q: string) => {
     if (!projectId) return;
@@ -264,13 +292,19 @@ export function GlobalSearchModal({
 
               {/* Action Buttons: PDF Download, View, WhatsApp, Full Report */}
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-clay-200/60">
-                <a
-                  href={smartReport.pdfDownloadUrl}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95"
+                <button
+                  type="button"
+                  onClick={() => handleDownloadSmartReport(smartReport.pdfDownloadUrl, `${smartReport.title.toLowerCase().replace(/\s+/g, "-")}.pdf`)}
+                  disabled={downloadingPdf}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 disabled:opacity-60 cursor-pointer"
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>{language === "te" ? "PDF డౌన్‌లోడ్" : "Download PDF Report"}</span>
-                </a>
+                  {downloadingPdf ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  <span>{downloadingPdf ? (language === "te" ? "డౌన్‌లోడ్ అవుతోంది..." : "Downloading...") : (language === "te" ? "PDF డౌన్‌లోడ్" : "Download PDF Report")}</span>
+                </button>
 
                 <a
                   href={smartReport.pdfPreviewUrl}

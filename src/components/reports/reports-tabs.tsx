@@ -7,10 +7,13 @@ import {
   ChevronDown,
   ChevronUp,
   Download,
+  ExternalLink,
   Eye,
   FileText,
   HardHat,
+  Info,
   Layers,
+  Loader2,
   Package,
   Share2,
   SlidersHorizontal,
@@ -119,6 +122,9 @@ export function ReportsTabs({
   // 4. In-App Preview & Modal State
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
 
   // Compute Active Date Bounds
   const { fromDate, toDate, periodDescription } = useMemo(() => {
@@ -275,25 +281,114 @@ export function ReportsTabs({
     return `/api/reports/pdf?${params.toString()}`;
   }, [projectId, selectedReport, fromDate, toDate, selectedCategoryId, allCategories, selectedVendorId, vendors, selectedWorkerId, workers, selectedStageId, stages]);
 
-  const handleSharePdf = async () => {
-    const fullShareUrl = typeof window !== "undefined" ? `${window.location.origin}${pdfUrl}` : pdfUrl;
-    if (typeof navigator !== "undefined" && navigator.share) {
-      try {
-        await navigator.share({
-          title: `Construction Report - ${selectedReport}`,
-          text: `Construction Expenditure Report (${periodDescription})`,
-          url: fullShareUrl,
-        });
-        return;
-      } catch {
-        // Fall back to clipboard
+  const handleDownload = async () => {
+    setStatusMessage(null);
+    setDownloading(true);
+    try {
+      const downloadUrl = `${pdfUrl}&download=1`;
+      const response = await fetch(downloadUrl, { credentials: "include" });
+      if (!response.ok) {
+        const json = await response.json().catch(() => null);
+        throw new Error(json?.error || "Could not generate the PDF. Please try again.");
       }
-    }
+      const blob = await response.blob();
+      const contentDisposition = response.headers.get("content-disposition");
+      let filename = `construction-${selectedReport}-report.pdf`;
+      if (contentDisposition) {
+        const match = /filename="([^"]+)"/.exec(contentDisposition);
+        if (match?.[1]) filename = match[1];
+      }
+      const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
 
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      await navigator.clipboard.writeText(fullShareUrl);
+      setStatusMessage({
+        text: language === "te" ? "PDF విజయవంతంగా డౌన్‌లోడ్ అయింది!" : "PDF downloaded successfully!",
+        type: "success",
+      });
+      setTimeout(() => setStatusMessage(null), 3500);
+    } catch (err) {
+      console.error("PDF Download error:", err);
+      setStatusMessage({
+        text: err instanceof Error ? err.message : (language === "te" ? "PDF డౌన్‌లోడ్ చేయడంలో లోపం సంభవించింది." : "Failed to download PDF. Please try again."),
+        type: "error",
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleSharePdf = async () => {
+    setStatusMessage(null);
+    setSharing(true);
+    try {
+      const downloadUrl = `${pdfUrl}&download=1`;
+      const response = await fetch(downloadUrl, { credentials: "include" });
+      if (!response.ok) {
+        const json = await response.json().catch(() => null);
+        throw new Error(json?.error || "Could not generate the PDF.");
+      }
+      const blob = await response.blob();
+      let filename = `construction-${selectedReport}-report.pdf`;
+      const contentDisposition = response.headers.get("content-disposition");
+      if (contentDisposition) {
+        const match = /filename="([^"]+)"/.exec(contentDisposition);
+        if (match?.[1]) filename = match[1];
+      }
+      const file = new File([blob], filename, { type: "application/pdf" });
+
+      if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `Construction Report - ${selectedReport}`,
+            text: `House Construction Expenditure Report (${periodDescription})`,
+          });
+          setStatusMessage({
+            text: language === "te" ? "రిపోర్ట్ షేర్ చేయబడింది!" : "Report shared successfully!",
+            type: "success",
+          });
+          setTimeout(() => setStatusMessage(null), 3000);
+          return;
+        } catch (err) {
+          if ((err as Error).name === "AbortError") {
+            return;
+          }
+        }
+      }
+
+      // Fallback: trigger download + clipboard message
+      const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+
       setShareSuccess(true);
-      setTimeout(() => setShareSuccess(false), 2500);
+      setStatusMessage({
+        text: language === "te" ? "PDF డౌన్‌లోడ్ అయింది! మీరు వాట్సాప్ లేదా ఇమెయిల్‌లో అటాచ్ చేసి పంపవచ్చు." : "PDF downloaded! You can now attach and send it on WhatsApp or email.",
+        type: "success",
+      });
+      setTimeout(() => {
+        setShareSuccess(false);
+        setStatusMessage(null);
+      }, 4500);
+    } catch (err) {
+      console.error("PDF Share error:", err);
+      setStatusMessage({
+        text: err instanceof Error ? err.message : (language === "te" ? "PDF షేర్ చేయడంలో లోపం సంభవించింది." : "Failed to share PDF. Please use Download button."),
+        type: "error",
+      });
+    } finally {
+      setSharing(false);
     }
   };
 
@@ -560,41 +655,76 @@ export function ReportsTabs({
           <button
             type="button"
             onClick={() => setPreviewModalOpen(true)}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs whitespace-nowrap"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs whitespace-nowrap cursor-pointer"
           >
             <Eye className="h-4 w-4 text-clay-600 shrink-0" />
-            <span className="whitespace-nowrap">Preview</span>
+            <span className="whitespace-nowrap">{language === "te" ? "ప్రివ్యూ చూడండి" : "Preview Statement"}</span>
           </button>
 
           {/* Download PDF Button */}
-          <a
-            href={`${pdfUrl}&download=1`}
-            download="construction-report.pdf"
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-clay-600 px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-clay-700 active:scale-95 transition shadow-xs whitespace-nowrap"
+          <button
+            type="button"
+            onClick={handleDownload}
+            disabled={downloading}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-clay-600 px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-clay-700 active:scale-95 transition shadow-xs whitespace-nowrap disabled:opacity-60 cursor-pointer"
           >
-            <Download className="h-4 w-4 stroke-[2.5] shrink-0" />
-            <span className="whitespace-nowrap">Download PDF</span>
-          </a>
+            {downloading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                <span className="whitespace-nowrap">{language === "te" ? "డౌన్‌లోడ్ అవుతోంది..." : "Downloading PDF..."}</span>
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4 stroke-[2.5] shrink-0" />
+                <span className="whitespace-nowrap">{language === "te" ? "PDF డౌన్‌లోడ్" : "Download PDF"}</span>
+              </>
+            )}
+          </button>
 
           {/* Share PDF Button */}
           <button
             type="button"
             onClick={handleSharePdf}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs whitespace-nowrap"
+            disabled={sharing}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs whitespace-nowrap disabled:opacity-60 cursor-pointer"
           >
-            {shareSuccess ? (
+            {sharing ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-clay-600 shrink-0" />
+                <span className="whitespace-nowrap">{language === "te" ? "సిద్ధమవుతోంది..." : "Preparing..."}</span>
+              </>
+            ) : shareSuccess ? (
               <>
                 <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span className="text-emerald-700 whitespace-nowrap">Link Copied!</span>
+                <span className="text-emerald-700 whitespace-nowrap">{language === "te" ? "కాపీ అయింది!" : "Link Copied!"}</span>
               </>
             ) : (
               <>
                 <Share2 className="h-4 w-4 text-ink-600 shrink-0" />
-                <span className="whitespace-nowrap">Share PDF</span>
+                <span className="whitespace-nowrap">{language === "te" ? "వాట్సాప్ / షేర్" : "Share / WhatsApp"}</span>
               </>
             )}
           </button>
         </div>
+
+        {/* Status Toast Banner */}
+        {statusMessage && (
+          <div
+            className={cn(
+              "p-3 rounded-2xl border flex items-center gap-2 text-xs font-semibold animate-in fade-in zoom-in-95 duration-150",
+              statusMessage.type === "success" && "bg-emerald-50 border-emerald-200 text-emerald-800",
+              statusMessage.type === "error" && "bg-red-50 border-red-200 text-red-800",
+              statusMessage.type === "info" && "bg-paper-100 border-paper-300 text-ink-800"
+            )}
+          >
+            {statusMessage.type === "success" ? (
+              <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+            ) : (
+              <Info className="h-4 w-4 text-ink-500 shrink-0" />
+            )}
+            <span>{statusMessage.text}</span>
+          </div>
+        )}
       </div>
 
       {/* 4. Live In-App Summary & Transaction Preview */}
@@ -636,35 +766,31 @@ export function ReportsTabs({
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-100">
-                {filteredExpenses.slice(0, 50).map((exp) => (
-                  <tr key={exp.id} className="hover:bg-paper-50/50 transition">
-                    <td className="py-3 px-3.5 font-medium whitespace-nowrap text-ink-600">
-                      {exp.date.slice(0, 10)}
-                    </td>
-                    <td className="py-3 px-3.5 whitespace-nowrap">
+                {filteredExpenses.slice(0, 30).map((exp) => (
+                  <tr key={exp.id} className="hover:bg-paper-50/60">
+                    <td className="py-2.5 px-3.5 whitespace-nowrap text-ink-500 font-medium">{exp.date.slice(0, 10)}</td>
+                    <td className="py-2.5 px-3.5 whitespace-nowrap">
                       <span
                         className={cn(
-                          "rounded-md px-2 py-0.5 text-[10px] font-bold",
-                          exp.expenseType === "MATERIAL"
-                            ? "bg-amber-100 text-amber-900"
-                            : exp.expenseType === "LABOUR"
-                            ? "bg-emerald-100 text-emerald-900"
-                            : "bg-paper-100 text-ink-700"
+                          "rounded-md px-2 py-0.5 text-[10px] font-bold uppercase",
+                          exp.expenseType === "MATERIAL" && "bg-clay-100 text-clay-800",
+                          exp.expenseType === "LABOUR" && "bg-emerald-100 text-emerald-800",
+                          exp.expenseType === "OTHER" && "bg-paper-200 text-ink-700"
                         )}
                       >
                         {exp.expenseType}
                       </span>
                     </td>
-                    <td className="py-3 px-3.5 font-semibold text-ink-900 whitespace-nowrap">
-                      {exp.materialCategoryName ?? exp.labourCategoryName ?? exp.serviceCategoryName ?? "General"}
+                    <td className="py-2.5 px-3.5 font-semibold text-ink-900">
+                      {exp.materialCategoryName ?? exp.labourCategoryName ?? exp.expenseType}
                     </td>
-                    <td className="py-3 px-3.5 text-ink-600 max-w-[200px] truncate" title={exp.description || ""}>
+                    <td className="py-2.5 px-3.5 max-w-[200px] truncate text-ink-600">
                       {exp.description || "—"}
                     </td>
-                    <td className="py-3 px-3.5 text-ink-600 whitespace-nowrap">
-                      {exp.vendorName ?? exp.workerName ?? "—"}
+                    <td className="py-2.5 px-3.5 text-ink-700 whitespace-nowrap">
+                      {exp.paymentMethod}
                     </td>
-                    <td className="py-3 px-3.5 text-right font-display font-bold text-ink-900 whitespace-nowrap">
+                    <td className="py-2.5 px-3.5 text-right font-bold text-ink-900 whitespace-nowrap">
                       {formatINR(Number(exp.amount))}
                     </td>
                   </tr>
@@ -693,7 +819,7 @@ export function ReportsTabs({
           >
             {/* Header */}
             <div className="flex items-center justify-between p-3 sm:p-4 border-b border-paper-200 bg-paper-50 sticky top-0 z-10">
-              <div className="min-w-0">
+              <div className="min-w-0 pr-2">
                 <h3 className="font-display text-sm sm:text-base font-bold text-ink-900 truncate">
                   PDF Report Preview: {selectedReport}
                 </h3>
@@ -701,15 +827,30 @@ export function ReportsTabs({
                   {periodDescription} · {formatINR(aggregates.total)}
                 </p>
               </div>
-              <div className="flex items-center gap-1.5 shrink-0">
+              <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                 <a
-                  href={`${pdfUrl}&download=1`}
-                  download="construction-report.pdf"
-                  className="inline-flex items-center gap-1 rounded-xl bg-clay-600 hover:bg-clay-700 px-3 py-2 text-xs font-bold text-white transition shadow-xs min-h-[40px]"
+                  href={pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 rounded-xl border border-paper-300 bg-white hover:bg-paper-100 px-3 py-2 text-xs font-bold text-ink-800 transition shadow-2xs min-h-[40px]"
+                  title="Open PDF in new tab"
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Download</span>
+                  <ExternalLink className="h-3.5 w-3.5 text-ink-500" />
+                  <span className="hidden sm:inline">{language === "te" ? "కొత్త ట్యాబ్" : "New Tab"}</span>
                 </a>
+                <button
+                  type="button"
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  className="inline-flex items-center gap-1 rounded-xl bg-clay-600 hover:bg-clay-700 px-3.5 py-2 text-xs font-bold text-white transition shadow-xs min-h-[40px] disabled:opacity-60 cursor-pointer"
+                >
+                  {downloading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  <span>{downloading ? "Downloading..." : "Download"}</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => setPreviewModalOpen(false)}

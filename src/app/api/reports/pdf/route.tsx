@@ -1,4 +1,4 @@
-import { pdf } from "@react-pdf/renderer";
+import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { ConstructionReportPdf } from "@/components/reports/construction-report-pdf";
@@ -101,15 +101,18 @@ export async function GET(request: Request) {
       })),
     });
 
-    const blob = await pdf(<ConstructionReportPdf data={data} />).toBlob();
-    const buffer = Buffer.from(await blob.arrayBuffer());
+    const buffer = await renderToBuffer(<ConstructionReportPdf data={data} />);
     const disposition = url.searchParams.get("download") === "1" ? "attachment" : "inline";
+    const rawFilename = data.filename || "construction-report.pdf";
+    const cleanFilename = rawFilename.replace(/[^\w.-]/g, "_");
 
-    return new NextResponse(buffer, {
+    return new Response(new Uint8Array(buffer), {
+      status: 200,
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `${disposition}; filename="${encodeURIComponent(data.filename || "construction-report.pdf")}"`,
-        "Cache-Control": "no-store",
+        "Content-Disposition": `${disposition}; filename="${cleanFilename}"`,
+        "Content-Length": String(buffer.length),
+        "Cache-Control": "no-store, no-cache, must-revalidate",
       },
     });
   } catch (error) {
