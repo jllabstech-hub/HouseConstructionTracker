@@ -108,20 +108,10 @@ export function AppShell({
             type="button"
             onClick={() => setSearchOpen(true)}
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-paper-300 bg-paper-50 text-ink-700 hover:bg-paper-100 transition active:scale-95 shadow-2xs"
-            title="Search / ఏదైనా వెతకండి (Ctrl+K)"
+            title="Search (Ctrl+K)"
             aria-label="Search"
           >
             <Search className="h-4 w-4 text-clay-600" />
-          </button>
-
-          {/* More Menu Toggle */}
-          <button
-            type="button"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-paper-200 bg-paper-50 text-ink-700 hover:bg-paper-100 transition shadow-2xs"
-            onClick={() => setMobileDrawerOpen(true)}
-            aria-label="Open menu"
-          >
-            <Menu className="h-4.5 w-4.5" />
           </button>
         </div>
       </header>
