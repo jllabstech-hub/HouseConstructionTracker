@@ -118,7 +118,13 @@ export function UpiPayModal({
   const quickAmounts = ["500", "1000", "2000", "5000", "10000", "25000"];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" role="dialog" aria-modal="true" aria-labelledby="upi-modal-title">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="upi-modal-title"
+      onClick={onClose}
+    >
       <div
         className="relative w-full max-w-lg rounded-3xl bg-white p-5 sm:p-6 shadow-2xl border border-paper-200 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}

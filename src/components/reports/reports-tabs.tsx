@@ -683,8 +683,14 @@ export function ReportsTabs({
 
       {/* 5. PDF Preview Modal / Lightbox */}
       {previewModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-xs animate-fadeIn">
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl sm:rounded-3xl bg-white border border-paper-200 shadow-2xl flex flex-col">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-xs animate-fadeIn"
+          onClick={() => setPreviewModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl sm:rounded-3xl bg-white border border-paper-200 shadow-2xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="flex items-center justify-between p-3 sm:p-4 border-b border-paper-200 bg-paper-50 sticky top-0 z-10">
               <div className="min-w-0">

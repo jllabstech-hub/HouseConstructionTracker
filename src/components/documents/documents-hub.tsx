@@ -1006,8 +1006,21 @@ export function DocumentsHub({
 
       {/* 5. Upload / Edit Modal */}
       {(showUploadModal || editingDoc) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn" role="dialog" aria-modal="true" aria-labelledby="upload-modal-title">
-          <div className="relative w-full max-w-lg rounded-3xl border border-paper-200 bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="upload-modal-title"
+          onClick={() => {
+            setShowUploadModal(false);
+            setEditingDoc(null);
+            setUploadError(null);
+          }}
+        >
+          <div
+            className="relative w-full max-w-lg rounded-3xl border border-paper-200 bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between border-b border-paper-100 pb-3">
               <div>
                 <h2 id="upload-modal-title" className="font-display text-lg font-bold text-ink-900">
@@ -1201,8 +1214,17 @@ export function DocumentsHub({
 
       {/* 6. Preview Lightbox Modal */}
       {lightboxDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn" role="dialog" aria-modal="true" aria-labelledby="lightbox-doc-title">
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl bg-stone-950 border border-stone-800 shadow-2xl flex flex-col justify-between text-white">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="lightbox-doc-title"
+          onClick={() => setLightboxDoc(null)}
+        >
+          <div
+            className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl bg-stone-950 border border-stone-800 shadow-2xl flex flex-col justify-between text-white"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-stone-800 bg-stone-900/90">
               <div className="min-w-0 pr-4">

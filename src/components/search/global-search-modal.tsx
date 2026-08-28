@@ -165,13 +165,19 @@ export function GlobalSearchModal({
     (data?.navigation && data.navigation.length > 0);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 md:pt-14 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150" role="dialog" aria-modal="true" aria-label="Global Project Search">
+    <div
+      className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 md:pt-14 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Global Project Search"
+      onClick={onClose}
+    >
       <div
         className="relative w-full max-w-2xl rounded-3xl bg-white shadow-2xl border border-paper-200 overflow-hidden flex flex-col max-h-[88vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* 1. Search Input Bar */}
-        <div className="flex items-center gap-3 border-b border-paper-200 bg-white px-4 py-3.5 sm:px-5">
+        <div className="flex items-center gap-2.5 border-b border-paper-200 bg-white px-3.5 py-3 sm:px-5">
           <Search className="h-5 w-5 text-clay-600 shrink-0" aria-hidden="true" />
           <input
             ref={inputRef}
@@ -181,10 +187,10 @@ export function GlobalSearchModal({
             aria-label="Search expenses, workers, materials, and reports"
             placeholder={
               language === "te"
-                ? "ఏదైనా అడగండి... ఉదా: painter bill report, cement, ramesh mason, stage 3..."
-                : "Ask anything... e.g. painter bill report, cement bills, ramesh mason, stage 3..."
+                ? "ఏదైనా అడగండి... ఉదా: painter, cement, ramesh, stage 3..."
+                : "Ask anything... e.g. painter bills, cement, ramesh, stage 3..."
             }
-            className="flex-1 bg-transparent text-sm sm:text-base font-semibold text-ink-900 placeholder:text-ink-400 focus:outline-none"
+            className="flex-1 bg-transparent text-sm sm:text-base font-semibold text-ink-900 placeholder:text-ink-400 focus:outline-none min-w-0"
           />
 
           {loading && <Loader2 className="h-4 w-4 text-clay-600 animate-spin shrink-0" aria-hidden="true" />}
@@ -194,13 +200,27 @@ export function GlobalSearchModal({
               type="button"
               onClick={() => setQuery("")}
               aria-label="Clear search input"
-              className="rounded-full p-2 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition min-h-[44px] min-w-[44px] flex items-center justify-center"
+              className="rounded-full p-1.5 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition"
             >
               <X className="h-4 w-4" />
             </button>
           )}
 
-          <kbd className="hidden sm:inline-flex items-center rounded-md border border-paper-300 bg-paper-100 px-2 py-0.5 text-[10px] font-bold text-ink-500">
+          {/* Close button on mobile */}
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close search"
+            className="rounded-xl p-1.5 text-ink-500 hover:bg-paper-100 hover:text-ink-900 transition flex sm:hidden items-center justify-center border border-paper-200 bg-paper-50 text-xs font-bold"
+          >
+            <X className="h-4 w-4" />
+          </button>
+
+          <kbd
+            className="hidden sm:inline-flex items-center rounded-md border border-paper-300 bg-paper-100 px-2 py-0.5 text-[10px] font-bold text-ink-500 cursor-pointer hover:bg-paper-200 transition"
+            onClick={onClose}
+            title="Press ESC or click to close"
+          >
             ESC
           </kbd>
         </div>
