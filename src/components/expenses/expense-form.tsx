@@ -498,7 +498,7 @@ export function ExpenseForm({
               value={date}
               onChange={(e) => setDate(e.target.value)}
               required
-              className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
+              className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
             />
           </div>
 
@@ -515,7 +515,7 @@ export function ExpenseForm({
                   aria-label="Material category"
                   value={materialCategory}
                   onChange={(e) => handleMaterialCategoryChange(e.target.value)}
-                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                 >
                   {materials.map((m) => (
                     <option key={m.id} value={m.id}>
@@ -536,7 +536,7 @@ export function ExpenseForm({
                   placeholder={language === "te" ? "ఉదా: అల్ట్రాటెక్ 53 గ్రేడ్ సిమెంట్" : "e.g. UltraTech 53 Grade Cement, 16mm Fe550D Steel"}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                 />
               </div>
 
@@ -555,7 +555,7 @@ export function ExpenseForm({
                     placeholder="50"
                     value={quantity}
                     onChange={(e) => setQuantity(e.target.value)}
-                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                   />
                 </div>
 
@@ -568,7 +568,7 @@ export function ExpenseForm({
                     id="material-unit"
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
-                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
+                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                   >
                     {UNITS.map((u) => (
                       <option key={u.value} value={u.value}>
@@ -591,7 +591,7 @@ export function ExpenseForm({
                     placeholder="420"
                     value={rate}
                     onChange={(e) => setRate(e.target.value)}
-                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                   />
                 </div>
               </div>
@@ -610,7 +610,7 @@ export function ExpenseForm({
                     placeholder="₹ 21,000"
                     value={materialManualAmount}
                     onChange={(e) => setMaterialManualAmount(e.target.value)}
-                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                   />
                 </div>
               )}
@@ -630,7 +630,7 @@ export function ExpenseForm({
                   aria-label="Labour category"
                   value={labourCategory}
                   onChange={(e) => handleLabourCategoryChange(e.target.value)}
-                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                 >
                   {labours.map((l) => (
                     <option key={l.id} value={l.id}>
@@ -651,7 +651,7 @@ export function ExpenseForm({
                   placeholder={language === "te" ? "ఉదా: పునాది కాంక్రీట్ పని లేదా స్లాబ్ షట్టరింగ్" : "e.g. Plinth beam shuttering & concrete work"}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                 />
               </div>
 
@@ -664,7 +664,7 @@ export function ExpenseForm({
                   id="labour-worker-select"
                   value={workerId}
                   onChange={(e) => setWorkerId(e.target.value)}
-                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                 >
                   <option value="">{language === "te" ? "ఎంచుకోండి (ఐచ్ఛికం)" : "Select Worker (Optional)"}</option>
                   {workers.map((w) => (
@@ -723,7 +723,7 @@ export function ExpenseForm({
                       placeholder="4"
                       value={numberOfWorkers}
                       onChange={(e) => setNumberOfWorkers(e.target.value)}
-                      className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                      className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                     />
                   </div>
 
@@ -740,7 +740,7 @@ export function ExpenseForm({
                       placeholder="1"
                       value={numberOfDays}
                       onChange={(e) => setNumberOfDays(e.target.value)}
-                      className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                      className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                     />
                   </div>
 
@@ -756,7 +756,7 @@ export function ExpenseForm({
                       placeholder="900"
                       value={dailyRate}
                       onChange={(e) => setDailyRate(e.target.value)}
-                      className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                      className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                     />
                   </div>
                 </div>
@@ -774,7 +774,7 @@ export function ExpenseForm({
                     placeholder="₹ 35,000"
                     value={contractAmount}
                     onChange={(e) => setContractAmount(e.target.value)}
-                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                   />
                 </div>
               )}
@@ -791,7 +791,7 @@ export function ExpenseForm({
                 <select
                   value={otherCategory}
                   onChange={(e) => setOtherCategory(e.target.value)}
-                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                 >
                   {services.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -820,7 +820,7 @@ export function ExpenseForm({
                   placeholder="e.g. JCB excavation 4 hours, water tanker, plan permit"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                 />
               </div>
 
@@ -835,7 +835,7 @@ export function ExpenseForm({
                   placeholder="₹ 5,000"
                   value={otherAmount}
                   onChange={(e) => setOtherAmount(e.target.value)}
-                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
+                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
                 />
               </div>
             </>

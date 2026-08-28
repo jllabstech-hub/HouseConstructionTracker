@@ -777,7 +777,7 @@ export function DocumentsHub({
         </div>
       ) : (
         /* List / Register View */
-        <div className="overflow-hidden rounded-2xl border border-paper-200 bg-white shadow-xs">
+        <div className="overflow-x-auto rounded-2xl border border-paper-200 bg-white shadow-xs">
           <table className="w-full text-left text-xs text-ink-700">
             <thead className="border-b border-paper-200 bg-paper-50/70 font-bold uppercase tracking-wider text-ink-500 text-[10px]">
               <tr>

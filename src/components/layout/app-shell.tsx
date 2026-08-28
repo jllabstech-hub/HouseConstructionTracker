@@ -103,12 +103,12 @@ export function AppShell({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {/* Global Search Button */}
           <button
             type="button"
             onClick={() => setSearchOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-paper-300 bg-paper-50 text-ink-700 hover:bg-paper-100 transition active:scale-95 shadow-2xs"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-paper-300 bg-paper-50 text-ink-700 hover:bg-paper-100 transition active:scale-95 shadow-2xs"
             title="Search / ఏదైనా వెతకండి (Ctrl+K)"
             aria-label="Search"
           >
@@ -119,7 +119,7 @@ export function AppShell({
           <button
             type="button"
             onClick={toggleLanguage}
-            className="flex h-9 items-center gap-1 rounded-xl border border-paper-300 bg-paper-50 px-2.5 text-xs font-bold text-ink-700 hover:bg-paper-100 transition active:scale-95 shadow-2xs"
+            className="flex h-10 items-center gap-1 rounded-xl border border-paper-300 bg-paper-50 px-2.5 text-xs font-bold text-ink-700 hover:bg-paper-100 transition active:scale-95 shadow-2xs"
             title="Change language / భాష మార్చండి"
           >
             <Globe className="h-3.5 w-3.5 text-clay-600" />
@@ -129,7 +129,7 @@ export function AppShell({
           {/* More Menu Toggle */}
           <button
             type="button"
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-paper-200 bg-paper-50 text-ink-700 hover:bg-paper-100 transition shadow-2xs"
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-paper-200 bg-paper-50 text-ink-700 hover:bg-paper-100 transition shadow-2xs"
             onClick={() => setMobileDrawerOpen(true)}
             aria-label="Open menu"
           >
@@ -369,7 +369,7 @@ export function AppShell({
 
       {/* Mobile Fixed 5-Item Bottom Bar: Home | Expenses | + | Reports | More */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-paper-300 bg-white/98 px-2 py-1.5 backdrop-blur lg:hidden shadow-lg"
+        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-paper-300 bg-white/98 px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden shadow-lg"
         aria-label="Mobile Bottom Navigation"
       >
         {/* 1. Home */}

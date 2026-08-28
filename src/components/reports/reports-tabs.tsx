@@ -683,23 +683,23 @@ export function ReportsTabs({
 
       {/* 5. PDF Preview Modal / Lightbox */}
       {previewModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs animate-fadeIn">
-          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-hidden rounded-3xl bg-white border border-paper-200 shadow-2xl flex flex-col justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/75 backdrop-blur-xs animate-fadeIn">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl sm:rounded-3xl bg-white border border-paper-200 shadow-2xl flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-paper-200 bg-paper-50">
-              <div>
-                <h3 className="font-display text-base font-bold text-ink-900">
+            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-paper-200 bg-paper-50 sticky top-0 z-10">
+              <div className="min-w-0">
+                <h3 className="font-display text-sm sm:text-base font-bold text-ink-900 truncate">
                   PDF Report Preview: {selectedReport}
                 </h3>
-                <p className="text-xs text-ink-500 mt-0.5">
+                <p className="text-xs text-ink-500 mt-0.5 truncate">
                   {periodDescription} · {formatINR(aggregates.total)}
                 </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 shrink-0">
                 <a
                   href={`${pdfUrl}&download=1`}
                   download="construction-report.pdf"
-                  className="inline-flex items-center gap-1 rounded-xl bg-clay-600 hover:bg-clay-700 px-3.5 py-1.5 text-xs font-bold text-white transition shadow-xs"
+                  className="inline-flex items-center gap-1 rounded-xl bg-clay-600 hover:bg-clay-700 px-3 py-2 text-xs font-bold text-white transition shadow-xs min-h-[40px]"
                 >
                   <Download className="h-3.5 w-3.5" />
                   <span>Download</span>
@@ -707,7 +707,7 @@ export function ReportsTabs({
                 <button
                   type="button"
                   onClick={() => setPreviewModalOpen(false)}
-                  className="rounded-xl p-1.5 text-ink-500 hover:bg-paper-200 transition"
+                  className="rounded-xl p-2 text-ink-500 hover:bg-paper-200 transition min-h-[40px] min-w-[40px] flex items-center justify-center"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -715,11 +715,11 @@ export function ReportsTabs({
             </div>
 
             {/* Iframe View */}
-            <div className="relative flex-1 min-h-[400px] max-h-[70vh] bg-paper-100 p-2">
+            <div className="relative flex-1 bg-paper-100 p-1.5 sm:p-2">
               <iframe
                 src={pdfUrl}
                 title="Construction PDF Report"
-                className="w-full h-full min-h-[450px] rounded-xl border border-paper-200 bg-white"
+                className="w-full h-[60vh] sm:h-[70vh] min-h-[300px] sm:min-h-[450px] rounded-xl border border-paper-200 bg-white"
               />
             </div>
           </div>

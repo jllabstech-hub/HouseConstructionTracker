@@ -108,7 +108,7 @@ export function ExpenseMobileCard({
           </div>
         )}
 
-        {/* Row 3: Date & Footer Details */}
+        {/* Row 3: Date & Footer Details + Actions */}
         <div className="flex items-center justify-between border-t border-paper-100 pt-2 text-[11px] text-ink-400">
           <span className="font-medium text-ink-500">
             {formatDisplayDate(expense.date)}
@@ -116,42 +116,39 @@ export function ExpenseMobileCard({
 
           <div className="flex items-center gap-2">
             {expense.stageName && (
-              <span className="rounded-md bg-paper-100 px-1.5 py-0.5 text-[10px] font-semibold text-ink-600 truncate max-w-[120px]">
+              <span className="rounded-md bg-paper-100 px-1.5 py-0.5 text-[10px] font-semibold text-ink-600 truncate max-w-[100px]">
                 {expense.stageName}
               </span>
             )}
             <span className="text-[10px] uppercase font-bold text-ink-400">
               {expense.paymentMethod}
             </span>
+            {/* Visible action buttons for touch devices */}
+            <Link
+              href={`/expenses/${expense.id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="rounded-lg p-1.5 text-ink-400 hover:bg-paper-100 hover:text-clay-700 transition min-w-[28px] min-h-[28px] flex items-center justify-center"
+              title="Edit"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Link>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onDelete(expense);
+                }}
+                className="rounded-lg p-1.5 text-ink-400 hover:bg-red-50 hover:text-red-700 transition min-w-[28px] min-h-[28px] flex items-center justify-center"
+                title="Delete"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
         </div>
       </Link>
-
-      {/* Quick Action Floating Controls (Prevent navigation on click) */}
-      <div className="absolute top-3 right-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition focus-within:opacity-100">
-        <Link
-          href={`/expenses/${expense.id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="rounded-lg bg-white/90 p-1.5 text-ink-400 shadow-2xs hover:bg-paper-100 hover:text-clay-700"
-          title="Edit"
-        >
-          <Pencil className="h-3.5 w-3.5" />
-        </Link>
-        {onDelete && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onDelete(expense);
-            }}
-            className="rounded-lg bg-white/90 p-1.5 text-ink-400 shadow-2xs hover:bg-red-50 hover:text-red-700"
-            title="Delete"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        )}
-      </div>
     </div>
   );
 }
