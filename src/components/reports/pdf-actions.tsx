@@ -49,13 +49,38 @@ export function PdfActions({
   const previewUrl = `/api/reports/pdf?${query.toString()}`;
   const downloadUrl = `${previewUrl}&download=1`;
 
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownload() {
+    setMessage(null);
+    setDownloading(true);
+    try {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) {
+        const json = await response.json().catch(() => null);
+        setMessage(json?.error || "Could not generate the PDF. Please try again.");
+        setDownloading(false);
+        return;
+      }
+      const blob = await response.blob();
+      const filename = filenameFromHeader(response.headers.get("content-disposition")) ?? `house-${kind}-report.pdf`;
+      triggerDownload(blob, filename);
+      setMessage("PDF downloaded successfully!");
+    } catch {
+      setMessage("Failed to download PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
+
   async function share() {
     setMessage(null);
     setLoading(true);
     try {
       const response = await fetch(downloadUrl);
       if (!response.ok) {
-        setMessage("Could not generate the PDF.");
+        const json = await response.json().catch(() => null);
+        setMessage(json?.error || "Could not generate the PDF.");
         setLoading(false);
         return;
       }
@@ -103,19 +128,21 @@ export function PdfActions({
           Preview
         </a>
 
-        <a
-          href={downloadUrl}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white px-3.5 py-2 text-xs font-bold text-ink-700 hover:bg-paper-50 transition active:scale-95 shadow-2xs"
+        <button
+          type="button"
+          onClick={() => void handleDownload()}
+          disabled={downloading}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white px-3.5 py-2 text-xs font-bold text-ink-700 hover:bg-paper-50 transition active:scale-95 shadow-2xs cursor-pointer"
         >
           <Download className="h-4 w-4 text-ink-400" />
-          Download PDF
-        </a>
+          {downloading ? "Generating..." : "Download PDF"}
+        </button>
 
         <button
           type="button"
           onClick={() => void share()}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-clay-700 transition active:scale-95 shadow-xs"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-clay-700 transition active:scale-95 shadow-xs cursor-pointer"
         >
           <Share2 className="h-4 w-4" />
           {loading ? "Preparing..." : "Share / WhatsApp"}
