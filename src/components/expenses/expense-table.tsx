@@ -264,10 +264,10 @@ export function ExpenseTable({
         {/* Primary Action */}
         <Link
           href="/expenses/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto whitespace-nowrap shrink-0"
         >
-          <Plus className="h-4 w-4 stroke-[2.5]" />
-          <span>{t.nav?.addExpense ?? "+ Add Expense"}</span>
+          <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
+          <span className="whitespace-nowrap">{t.nav?.addExpense ?? "+ Add Expense"}</span>
         </Link>
       </div>
 

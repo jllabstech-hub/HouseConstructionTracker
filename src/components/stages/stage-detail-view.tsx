@@ -145,10 +145,10 @@ export function StageDetailView({
         <div className="shrink-0">
           <Link
             href={`/expenses/new?stageId=${stageId ?? stageConfig.step}`}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition w-full sm:w-auto"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition w-full sm:w-auto whitespace-nowrap shrink-0"
           >
-            <Plus className="h-4 w-4 stroke-[2.5]" />
-            <span>{language === "te" ? "ఈ దశకు ఖర్చు నమోదు" : "Record Expense for this Stage"}</span>
+            <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
+            <span className="whitespace-nowrap">{language === "te" ? "ఈ దశకు ఖర్చు నమోదు" : "Record Expense"}</span>
           </Link>
         </div>
       </div>

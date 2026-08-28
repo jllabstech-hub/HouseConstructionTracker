@@ -138,12 +138,12 @@ export const TRANSLATIONS = {
 
     // Navigation
     nav: {
-      overview: "Overview",
-      stages: "Construction Stages",
-      expenses: "All Expenses",
+      overview: "Home",
+      stages: "Construction",
+      expenses: "Expenses",
       addExpense: "Add Expense",
-      reports: "Reports & PDF",
-      budget: "Budget & Plans",
+      reports: "Reports",
+      budget: "Budget",
       documents: "Documents",
       management: "MANAGEMENT",
       mainMenu: "MAIN MENU",
@@ -531,12 +531,12 @@ export const TRANSLATIONS = {
 
     // Navigation
     nav: {
-      overview: "హోమ్ / డాష్‌బోర్డ్",
-      stages: "నిర్మాణ దశలు",
-      expenses: "అన్ని ఖర్చులు",
+      overview: "హోమ్",
+      stages: "నిర్మాణం",
+      expenses: "ఖర్చులు",
       addExpense: "ఖర్చు నమోదు",
-      reports: "రిపోర్టులు & PDF",
-      budget: "బడ్జెట్ & ప్లాన్స్",
+      reports: "రిపోర్టులు",
+      budget: "బడ్జెట్",
       documents: "డాక్యుమెంట్లు",
       management: "నిర్వహణ",
       mainMenu: "ప్రధాన మెనూ",

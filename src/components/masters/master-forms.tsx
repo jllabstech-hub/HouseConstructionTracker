@@ -380,16 +380,16 @@ export function MasterForms({
                               <span>{vendor.phone || <span className="text-ink-400 font-normal italic">{t.masters.noPhone}</span>}</span>
                             </div>
 
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                               {vendor.phone && (
                                 <>
                                   <a
                                     href={`tel:${telPhone}`}
-                                    className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                    className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs whitespace-nowrap shrink-0"
                                     title="Call directly"
                                   >
-                                    <PhoneCall className="h-3 w-3" />
-                                    <span>{t.masters.call}</span>
+                                    <PhoneCall className="h-3 w-3 shrink-0" />
+                                    <span className="whitespace-nowrap">{t.masters.call}</span>
                                   </a>
 
                                   {waLink && (
@@ -397,11 +397,11 @@ export function MasterForms({
                                       href={waLink}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 rounded-xl bg-[#25D366] hover:bg-[#20ba59] px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                      className="inline-flex items-center gap-1 rounded-xl bg-[#25D366] hover:bg-[#20ba59] px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs whitespace-nowrap shrink-0"
                                       title="Open WhatsApp chat"
                                     >
-                                      <MessageCircle className="h-3 w-3" />
-                                      <span>WA</span>
+                                      <MessageCircle className="h-3 w-3 shrink-0" />
+                                      <span className="whitespace-nowrap">WA</span>
                                     </a>
                                   )}
                                 </>
@@ -419,11 +419,11 @@ export function MasterForms({
                                   });
                                   setShowPayModal(true);
                                 }}
-                                className="inline-flex items-center gap-1 rounded-xl bg-purple-600 hover:bg-purple-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                className="inline-flex items-center gap-1 rounded-xl bg-purple-600 hover:bg-purple-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs whitespace-nowrap shrink-0"
                                 title="Pay via UPI"
                               >
-                                <IndianRupee className="h-3 w-3 stroke-[2.5]" />
-                                <span>{language === "te" ? "పే (Pay)" : "Pay"}</span>
+                                <IndianRupee className="h-3 w-3 stroke-[2.5] shrink-0" />
+                                <span className="whitespace-nowrap">{language === "te" ? "పే" : "Pay"}</span>
                               </button>
                             </div>
                           </div>
@@ -750,16 +750,16 @@ export function MasterForms({
                               <span>{worker.phone || <span className="text-ink-400 font-normal italic">{t.masters.noPhone}</span>}</span>
                             </div>
 
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
                               {worker.phone && (
                                 <>
                                   <a
                                     href={`tel:${telPhone}`}
-                                    className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                    className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs whitespace-nowrap shrink-0"
                                     title="Call worker directly"
                                   >
-                                    <PhoneCall className="h-3 w-3" />
-                                    <span>{t.masters.call}</span>
+                                    <PhoneCall className="h-3 w-3 shrink-0" />
+                                    <span className="whitespace-nowrap">{t.masters.call}</span>
                                   </a>
 
                                   {waLink && (
@@ -767,11 +767,11 @@ export function MasterForms({
                                       href={waLink}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="inline-flex items-center gap-1 rounded-xl bg-[#25D366] hover:bg-[#20ba59] px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                      className="inline-flex items-center gap-1 rounded-xl bg-[#25D366] hover:bg-[#20ba59] px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs whitespace-nowrap shrink-0"
                                       title="Open WhatsApp chat"
                                     >
-                                      <MessageCircle className="h-3 w-3" />
-                                      <span>WA</span>
+                                      <MessageCircle className="h-3 w-3 shrink-0" />
+                                      <span className="whitespace-nowrap">WA</span>
                                     </a>
                                   )}
                                 </>
@@ -789,11 +789,11 @@ export function MasterForms({
                                   });
                                   setShowPayModal(true);
                                 }}
-                                className="inline-flex items-center gap-1 rounded-xl bg-purple-600 hover:bg-purple-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs"
+                                className="inline-flex items-center gap-1 rounded-xl bg-purple-600 hover:bg-purple-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs whitespace-nowrap shrink-0"
                                 title="Pay via UPI"
                               >
-                                <IndianRupee className="h-3 w-3 stroke-[2.5]" />
-                                <span>{language === "te" ? "పే (Pay)" : "Pay"}</span>
+                                <IndianRupee className="h-3 w-3 stroke-[2.5] shrink-0" />
+                                <span className="whitespace-nowrap">{language === "te" ? "పే" : "Pay"}</span>
                               </button>
                             </div>
                           </div>

@@ -377,12 +377,12 @@ export function AppShell({
           href="/dashboard"
           prefetch={true}
           className={cn(
-            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
+            "flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition min-w-[50px] whitespace-nowrap",
             isHomeActive ? "text-clay-600" : "text-ink-500 hover:text-ink-800"
           )}
         >
-          <Home className="h-5 w-5" />
-          <span>{t.nav?.overview ?? "Home"}</span>
+          <Home className="h-5 w-5 shrink-0" />
+          <span className="whitespace-nowrap">{t.nav?.overview ?? "Home"}</span>
         </Link>
 
         {/* 2. Expenses */}
@@ -390,19 +390,19 @@ export function AppShell({
           href="/expenses"
           prefetch={true}
           className={cn(
-            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
+            "flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition min-w-[50px] whitespace-nowrap",
             isExpensesActive ? "text-clay-600" : "text-ink-500 hover:text-ink-800"
           )}
         >
-          <Receipt className="h-5 w-5" />
-          <span>{t.nav?.expenses ?? "Expenses"}</span>
+          <Receipt className="h-5 w-5 shrink-0" />
+          <span className="whitespace-nowrap">{t.nav?.expenses ?? "Expenses"}</span>
         </Link>
 
         {/* 3. Center Prominent Plus Action (Opens Quick Add Sheet) */}
         <button
           type="button"
           onClick={() => setAddSheetOpen(true)}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-clay-600 text-white shadow-lg hover:bg-clay-700 active:scale-95 transition -mt-5 border-2 border-white ring-2 ring-clay-600/20"
+          className="flex h-12 w-12 items-center justify-center rounded-full bg-clay-600 text-white shadow-lg hover:bg-clay-700 active:scale-95 transition -mt-5 border-2 border-white ring-2 ring-clay-600/20 shrink-0"
           title={t.nav?.addExpense ?? "+ Add Expense"}
           aria-label={t.nav?.addExpense ?? "Add Expense"}
         >
@@ -414,12 +414,12 @@ export function AppShell({
           href="/reports"
           prefetch={true}
           className={cn(
-            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
+            "flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition min-w-[50px] whitespace-nowrap",
             isReportsActive ? "text-clay-600" : "text-ink-500 hover:text-ink-800"
           )}
         >
-          <FileText className="h-5 w-5" />
-          <span>{t.nav?.reports ?? "Reports"}</span>
+          <FileText className="h-5 w-5 shrink-0" />
+          <span className="whitespace-nowrap">{t.nav?.reports ?? "Reports"}</span>
         </Link>
 
         {/* 5. More */}
@@ -427,13 +427,13 @@ export function AppShell({
           type="button"
           onClick={() => setMobileDrawerOpen(true)}
           className={cn(
-            "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
+            "flex flex-col items-center gap-0.5 py-1 px-2 rounded-xl text-[10px] font-bold transition min-w-[50px] whitespace-nowrap",
             mobileDrawerOpen ? "text-clay-600" : "text-ink-500 hover:text-ink-800"
           )}
           aria-label="More Options"
         >
-          <Menu className="h-5 w-5" />
-          <span>{language === "te" ? "మరిన్ని" : "More"}</span>
+          <Menu className="h-5 w-5 shrink-0" />
+          <span className="whitespace-nowrap">{language === "te" ? "మరిన్ని" : "More"}</span>
         </button>
       </nav>
 

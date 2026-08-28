@@ -560,37 +560,37 @@ export function ReportsTabs({
           <button
             type="button"
             onClick={() => setPreviewModalOpen(true)}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs whitespace-nowrap"
           >
-            <Eye className="h-4 w-4 text-clay-600" />
-            <span>Preview</span>
+            <Eye className="h-4 w-4 text-clay-600 shrink-0" />
+            <span className="whitespace-nowrap">Preview</span>
           </button>
 
           {/* Download PDF Button */}
           <a
             href={`${pdfUrl}&download=1`}
             download="construction-report.pdf"
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-clay-600 px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-clay-700 active:scale-95 transition shadow-xs"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl bg-clay-600 px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-clay-700 active:scale-95 transition shadow-xs whitespace-nowrap"
           >
-            <Download className="h-4 w-4 stroke-[2.5]" />
-            <span>Download PDF</span>
+            <Download className="h-4 w-4 stroke-[2.5] shrink-0" />
+            <span className="whitespace-nowrap">Download PDF</span>
           </a>
 
           {/* Share PDF Button */}
           <button
             type="button"
             onClick={handleSharePdf}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-5 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs whitespace-nowrap"
           >
             {shareSuccess ? (
               <>
-                <Check className="h-4 w-4 text-emerald-600" />
-                <span className="text-emerald-700">Link Copied!</span>
+                <Check className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span className="text-emerald-700 whitespace-nowrap">Link Copied!</span>
               </>
             ) : (
               <>
-                <Share2 className="h-4 w-4 text-ink-600" />
-                <span>Share PDF</span>
+                <Share2 className="h-4 w-4 text-ink-600 shrink-0" />
+                <span className="whitespace-nowrap">Share PDF</span>
               </>
             )}
           </button>

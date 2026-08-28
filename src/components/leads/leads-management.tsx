@@ -108,18 +108,20 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
 
       {/* 2. Pipeline Filter Tabs */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <SegmentedControl
-          value={selectedStatus}
-          onChange={setSelectedStatus}
-          options={[
-            { value: "ALL", label: t.leads.tabAll, count: counts.ALL },
-            { value: "NEW", label: t.leads.tabNew, count: counts.NEW },
-            { value: "CONTACTED", label: t.leads.tabContacted, count: counts.CONTACTED },
-            { value: "SITE_VISIT", label: t.leads.tabSiteVisit, count: counts.SITE_VISIT },
-            { value: "ESTIMATE_SENT", label: t.leads.tabEstimateSent, count: counts.ESTIMATE_SENT },
-            { value: "WON", label: t.leads.tabWon, count: counts.WON },
-          ]}
-        />
+        <div className="overflow-x-auto pb-1 max-w-full">
+          <SegmentedControl
+            value={selectedStatus}
+            onChange={setSelectedStatus}
+            options={[
+              { value: "ALL", label: t.leads.tabAll, count: counts.ALL },
+              { value: "NEW", label: t.leads.tabNew, count: counts.NEW },
+              { value: "CONTACTED", label: t.leads.tabContacted, count: counts.CONTACTED },
+              { value: "SITE_VISIT", label: t.leads.tabSiteVisit, count: counts.SITE_VISIT },
+              { value: "ESTIMATE_SENT", label: t.leads.tabEstimateSent, count: counts.ESTIMATE_SENT },
+              { value: "WON", label: t.leads.tabWon, count: counts.WON },
+            ]}
+          />
+        </div>
 
         {/* Search */}
         <div className="relative w-full sm:w-64">

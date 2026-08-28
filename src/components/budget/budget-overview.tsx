@@ -105,10 +105,10 @@ export function BudgetOverview({
           <button
             type="button"
             onClick={() => setEditorOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-paper-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-ink-800 hover:bg-paper-50 active:scale-95 transition shadow-2xs self-start sm:self-auto"
+            className="inline-flex items-center gap-2 rounded-xl border border-paper-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-ink-800 hover:bg-paper-50 active:scale-95 transition shadow-2xs self-start sm:self-auto whitespace-nowrap shrink-0"
           >
-            <Sliders className="h-4 w-4 text-ink-600" />
-            <span>{language === "te" ? "బడ్జెట్ నిర్వహణ" : "Manage Budget"}</span>
+            <Sliders className="h-4 w-4 text-ink-600 shrink-0" />
+            <span className="whitespace-nowrap">{language === "te" ? "బడ్జెట్ నిర్వహణ" : "Manage Budget"}</span>
           </button>
         )}
       </div>

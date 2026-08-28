@@ -325,10 +325,10 @@ export function DocumentsHub({
                   router.refresh();
                 });
               }}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-xs font-bold text-amber-900 hover:bg-amber-100 active:scale-95 transition shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-2.5 text-xs font-bold text-amber-900 hover:bg-amber-100 active:scale-95 transition shadow-2xs whitespace-nowrap shrink-0"
             >
-              <Sparkles className="h-4 w-4 text-amber-600" />
-              <span>{pending ? "Loading..." : "Load Sample Plans"}</span>
+              <Sparkles className="h-4 w-4 text-amber-600 shrink-0" />
+              <span className="whitespace-nowrap">{pending ? "Loading..." : "Load Sample Plans"}</span>
             </button>
           )}
 
@@ -338,10 +338,10 @@ export function DocumentsHub({
               setEditingDoc(null);
               setShowUploadModal(true);
             }}
-            className="inline-flex items-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition"
+            className="inline-flex items-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition whitespace-nowrap shrink-0"
           >
-            <Plus className="h-4 w-4 stroke-[2.5]" />
-            <span>{language === "te" ? "+ పత్రం అప్‌లోడ్ చేయండి" : "+ Upload Document"}</span>
+            <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
+            <span className="whitespace-nowrap">{language === "te" ? "+ పత్రం అప్‌లోడ్" : "+ Upload Document"}</span>
           </button>
         </div>
       </div>
