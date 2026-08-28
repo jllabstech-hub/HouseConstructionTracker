@@ -4,22 +4,36 @@ import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { loadProjectExpenses } from "@/lib/finance/queries";
 import { getStageTotal } from "@/lib/finance/aggregations";
+import { getCached, setCached } from "@/lib/cache-utils";
 import { formatINR } from "@/lib/money";
 import { PageHeader } from "@/components/ui/page-header";
 import { StagesTable } from "@/components/projects/stages-table";
 import { StageManager } from "@/components/projects/structure-managers";
 import { ProjectNavTabs } from "@/components/projects/project-nav-tabs";
 import { ArrowLeft } from "lucide-react";
+import type { ConstructionStage, Project } from "@prisma/client";
+import type { ExpenseRecord } from "@/lib/finance/aggregations";
 
 export default async function StagesPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
-  const project = await prisma.project.findFirst({ where: { id, userId: user.id } });
+
+  const cacheKey = `project-stages-page:${id}:${user.id}`;
+  const cached = getCached<{
+    project: Project;
+    stages: ConstructionStage[];
+    expenses: ExpenseRecord[];
+  }>(cacheKey);
+
+  const project = cached?.project ?? (await prisma.project.findFirst({ where: { id, userId: user.id } }));
   if (!project) notFound();
-  const [stages, expenses] = await Promise.all([
-    prisma.constructionStage.findMany({ where: { projectId: id }, orderBy: { sortOrder: "asc" } }),
-    loadProjectExpenses(id),
-  ]);
+
+  const stages = cached?.stages ?? (await prisma.constructionStage.findMany({ where: { projectId: id }, orderBy: { sortOrder: "asc" } }));
+  const expenses = cached?.expenses ?? (await loadProjectExpenses(id));
+
+  if (!cached) {
+    setCached(cacheKey, { project, stages, expenses });
+  }
 
   const stageRows = stages.map((stage) => ({
     id: stage.id,

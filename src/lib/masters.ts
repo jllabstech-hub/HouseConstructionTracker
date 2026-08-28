@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/prisma";
+import { getCached, setCached } from "@/lib/cache-utils";
 
 export async function loadMasters(userId: string, projectId: string) {
+  const cacheKey = `masters:${userId}:${projectId}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cached = getCached<any>(cacheKey);
+  if (cached) return cached;
+
   const [materials, labours, services, equipment, professionals, vendors, workers, stages, floors] =
     await Promise.all([
       prisma.materialCategory.findMany({ where: { userId }, orderBy: [{ groupName: "asc" }, { sortOrder: "asc" }] }),
@@ -14,5 +20,7 @@ export async function loadMasters(userId: string, projectId: string) {
       prisma.floor.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
     ]);
 
-  return { materials, labours, services, equipment, professionals, vendors, workers, stages, floors };
+  const result = { materials, labours, services, equipment, professionals, vendors, workers, stages, floors };
+  setCached(cacheKey, result);
+  return result;
 }

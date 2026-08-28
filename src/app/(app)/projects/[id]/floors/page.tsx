@@ -4,21 +4,35 @@ import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { loadProjectExpenses } from "@/lib/finance/queries";
 import { getFloorTotal, getTypeTotals } from "@/lib/finance/aggregations";
+import { getCached, setCached } from "@/lib/cache-utils";
 import { formatINR } from "@/lib/money";
 import { PageHeader } from "@/components/ui/page-header";
 import { FloorManager } from "@/components/projects/structure-managers";
 import { ProjectNavTabs } from "@/components/projects/project-nav-tabs";
 import { ArrowLeft, Layers } from "lucide-react";
+import type { Floor, Project } from "@prisma/client";
+import type { ExpenseRecord } from "@/lib/finance/aggregations";
 
 export default async function FloorsPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
-  const project = await prisma.project.findFirst({ where: { id, userId: user.id } });
+
+  const cacheKey = `floors-page:${id}:${user.id}`;
+  const cached = getCached<{
+    project: Project;
+    floors: Floor[];
+    expenses: ExpenseRecord[];
+  }>(cacheKey);
+
+  const project = cached?.project ?? (await prisma.project.findFirst({ where: { id, userId: user.id } }));
   if (!project) notFound();
-  const [floors, expenses] = await Promise.all([
-    prisma.floor.findMany({ where: { projectId: id }, orderBy: { sortOrder: "asc" } }),
-    loadProjectExpenses(id),
-  ]);
+
+  const floors = cached?.floors ?? (await prisma.floor.findMany({ where: { projectId: id }, orderBy: { sortOrder: "asc" } }));
+  const expenses = cached?.expenses ?? (await loadProjectExpenses(id));
+
+  if (!cached) {
+    setCached(cacheKey, { project, floors, expenses });
+  }
 
   const totals = getTypeTotals(expenses);
   const totalSpent = totals.total.toNumber();

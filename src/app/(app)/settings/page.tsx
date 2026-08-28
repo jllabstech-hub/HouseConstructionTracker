@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
+import { getCached, setCached } from "@/lib/cache-utils";
 import {
   Building2,
   Receipt,
@@ -15,20 +16,33 @@ import {
   Sparkles,
 } from "lucide-react";
 import { formatINR } from "@/lib/money";
+import type { Project } from "@prisma/client";
 
 export default async function SettingsPage() {
   const user = await requireUser();
   const activeProjectId = await getActiveProjectId(user.id);
-  const projects = await prisma.project.findMany({
+
+  const cacheKey = `settings-page:${user.id}`;
+  const cached = getCached<{
+    projects: Project[];
+    expenseCount: number;
+    documentCount: number;
+  }>(cacheKey);
+
+  const projects = cached?.projects ?? (await prisma.project.findMany({
     where: { userId: user.id },
     orderBy: { createdAt: "desc" },
-  });
-  const expenseCount = await prisma.expense.count({
+  }));
+  const expenseCount = cached?.expenseCount ?? (await prisma.expense.count({
     where: { project: { userId: user.id } },
-  });
-  const documentCount = await prisma.projectDocument.count({
+  }));
+  const documentCount = cached?.documentCount ?? (await prisma.projectDocument.count({
     where: { project: { userId: user.id } },
-  });
+  }));
+
+  if (!cached) {
+    setCached(cacheKey, { projects, expenseCount, documentCount });
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">

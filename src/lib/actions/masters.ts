@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
+import { invalidateUserCache } from "@/lib/cache-utils";
 import { categorySchema, vendorSchema, workerSchema } from "@/lib/validations";
 
 function emptyToNull(value?: string | null) {
@@ -21,6 +22,7 @@ export async function createMaterialCategory(input: unknown) {
       groupName: emptyToNull(parsed.data.groupName) ?? "Custom",
     },
   });
+  invalidateUserCache(user.id);
   revalidatePath("/phonedirectory");
   revalidatePath("/masters");
   return { ok: true };
@@ -37,6 +39,7 @@ export async function createLabourCategory(input: unknown) {
       groupName: emptyToNull(parsed.data.groupName) ?? "Custom",
     },
   });
+  invalidateUserCache(user.id);
   revalidatePath("/phonedirectory");
   revalidatePath("/masters");
   return { ok: true };
@@ -49,6 +52,7 @@ export async function createServiceCategory(input: unknown) {
   await prisma.serviceCategory.create({
     data: { userId: user.id, name: parsed.data.name },
   });
+  invalidateUserCache(user.id);
   revalidatePath("/phonedirectory");
   revalidatePath("/masters");
   return { ok: true };
@@ -68,6 +72,7 @@ export async function createVendor(input: unknown) {
       notes: emptyToNull(parsed.data.notes),
     },
   });
+  invalidateUserCache(user.id);
   revalidatePath("/phonedirectory");
   revalidatePath("/masters");
   return { ok: true, id: vendor.id };
@@ -87,6 +92,7 @@ export async function createWorker(input: unknown) {
       notes: emptyToNull(parsed.data.notes),
     },
   });
+  invalidateUserCache(user.id);
   revalidatePath("/phonedirectory");
   revalidatePath("/masters");
   return { ok: true, id: worker.id };
@@ -106,6 +112,7 @@ export async function updateVendor(id: string, input: unknown) {
       notes: emptyToNull(parsed.data.notes),
     },
   });
+  invalidateUserCache(user.id);
   revalidatePath("/phonedirectory");
   revalidatePath("/masters");
   return { ok: true };
@@ -125,6 +132,7 @@ export async function updateWorker(id: string, input: unknown) {
       notes: emptyToNull(parsed.data.notes),
     },
   });
+  invalidateUserCache(user.id);
   revalidatePath("/phonedirectory");
   revalidatePath("/masters");
   return { ok: true };
@@ -133,6 +141,7 @@ export async function updateWorker(id: string, input: unknown) {
 export async function deleteVendor(id: string) {
   const user = await requireUser();
   await prisma.vendor.deleteMany({ where: { id, userId: user.id } });
+  invalidateUserCache(user.id);
   revalidatePath("/phonedirectory");
   revalidatePath("/masters");
   return { ok: true };
@@ -141,6 +150,7 @@ export async function deleteVendor(id: string) {
 export async function deleteWorker(id: string) {
   const user = await requireUser();
   await prisma.worker.deleteMany({ where: { id, userId: user.id } });
+  invalidateUserCache(user.id);
   revalidatePath("/phonedirectory");
   revalidatePath("/masters");
   return { ok: true };

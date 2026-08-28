@@ -6,6 +6,7 @@ import path from "path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireProject, requireUser } from "@/lib/auth-guard";
+import { invalidateProjectCache } from "@/lib/cache-utils";
 import { documentSchema } from "@/lib/validations";
 
 import {
@@ -103,6 +104,7 @@ export async function uploadDocument(projectId: string, formData: FormData) {
     return { error: "Database error occurred while recording document. Upload has been safely rolled back." };
   }
 
+  invalidateProjectCache(projectId);
   revalidatePath("/documents");
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/dashboard");
@@ -154,6 +156,7 @@ export async function updateDocument(
     },
   });
 
+  invalidateProjectCache(doc.projectId);
   revalidatePath("/documents");
   revalidatePath(`/projects/${doc.projectId}`);
   return { ok: true };
@@ -172,6 +175,7 @@ export async function togglePinDocument(documentId: string) {
     data: { isPinned: !doc.isPinned },
   });
 
+  invalidateProjectCache(doc.projectId);
   revalidatePath("/documents");
   return { ok: true };
 }
@@ -199,6 +203,7 @@ export async function deleteDocument(documentId: string) {
 
   await prisma.projectDocument.deleteMany({ where: { id: documentId, projectId: doc.projectId } });
 
+  invalidateProjectCache(doc.projectId);
   revalidatePath("/documents");
   revalidatePath(`/projects/${doc.projectId}`);
   return { ok: true };
@@ -306,6 +311,7 @@ export async function seedSampleDocuments(projectId: string) {
     data: samples,
   });
 
+  invalidateProjectCache(projectId);
   revalidatePath("/documents");
   revalidatePath(`/projects/${projectId}`);
   revalidatePath("/dashboard");

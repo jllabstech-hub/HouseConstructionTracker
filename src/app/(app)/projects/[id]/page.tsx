@@ -4,24 +4,38 @@ import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { loadProjectExpenses } from "@/lib/finance/queries";
 import { getFloorTotal, getStageTotal, getTypeTotals } from "@/lib/finance/aggregations";
+import { getCached, setCached } from "@/lib/cache-utils";
 import { formatINR } from "@/lib/money";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardTitle } from "@/components/ui/card";
 import { ProjectForm } from "@/components/projects/project-form";
 import { ProjectNavTabs } from "@/components/projects/project-nav-tabs";
 import { ArrowLeft, Receipt, Package, HardHat, Layers, Milestone, Building2 } from "lucide-react";
+import type { ConstructionStage, Floor, Project } from "@prisma/client";
+import type { ExpenseRecord } from "@/lib/finance/aggregations";
 
 export default async function ProjectOverviewPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
   const { id } = await params;
-  const project = await prisma.project.findFirst({ where: { id, userId: user.id } });
+
+  const cacheKey = `project-overview:${id}:${user.id}`;
+  const cached = getCached<{
+    project: Project;
+    expenses: ExpenseRecord[];
+    floors: Floor[];
+    stages: ConstructionStage[];
+  }>(cacheKey);
+
+  const project = cached?.project ?? (await prisma.project.findFirst({ where: { id, userId: user.id } }));
   if (!project) notFound();
 
-  const [expenses, floors, stages] = await Promise.all([
-    loadProjectExpenses(project.id),
-    prisma.floor.findMany({ where: { projectId: project.id }, orderBy: { sortOrder: "asc" } }),
-    prisma.constructionStage.findMany({ where: { projectId: project.id }, orderBy: { sortOrder: "asc" } }),
-  ]);
+  const expenses = cached?.expenses ?? (await loadProjectExpenses(project.id));
+  const floors = cached?.floors ?? (await prisma.floor.findMany({ where: { projectId: project.id }, orderBy: { sortOrder: "asc" } }));
+  const stages = cached?.stages ?? (await prisma.constructionStage.findMany({ where: { projectId: project.id }, orderBy: { sortOrder: "asc" } }));
+
+  if (!cached) {
+    setCached(cacheKey, { project, expenses, floors, stages });
+  }
   const totals = getTypeTotals(expenses);
   const totalBudgetNum = Number(project.totalBudget);
   const totalSpentNum = totals.total.toNumber();

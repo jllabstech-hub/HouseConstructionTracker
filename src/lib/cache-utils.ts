@@ -41,3 +41,11 @@ export function invalidateProjectCache(projectId?: string): void {
     }
   }
 }
+
+export function invalidateUserCache(userId: string): void {
+  for (const key of cacheStore.keys()) {
+    if (key.includes(userId)) {
+      cacheStore.delete(key);
+    }
+  }
+}

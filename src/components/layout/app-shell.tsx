@@ -198,6 +198,7 @@ export function AppShell({
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={true}
                   className={cn(
                     "flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-semibold transition group",
                     item.active
@@ -230,6 +231,7 @@ export function AppShell({
                 <Link
                   key={item.href}
                   href={item.href}
+                  prefetch={true}
                   className={cn(
                     "flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-xs font-semibold transition group",
                     item.active
@@ -319,6 +321,7 @@ export function AppShell({
               </span>
               <Link
                 href="/projects"
+                prefetch={true}
                 className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-900 bg-paper-100 hover:bg-paper-200 px-2.5 py-1 rounded-xl border border-paper-200/80 shadow-2xs transition"
                 title="Manage all house projects"
               >
@@ -348,6 +351,7 @@ export function AppShell({
               {/* Quick Record Expense CTA */}
               <Link
                 href="/expenses/new"
+                prefetch={true}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 shrink-0"
               >
                 <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
@@ -371,6 +375,7 @@ export function AppShell({
         {/* 1. Home */}
         <Link
           href="/dashboard"
+          prefetch={true}
           className={cn(
             "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
             isHomeActive ? "text-clay-600" : "text-ink-500 hover:text-ink-800"
@@ -383,6 +388,7 @@ export function AppShell({
         {/* 2. Expenses */}
         <Link
           href="/expenses"
+          prefetch={true}
           className={cn(
             "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
             isExpensesActive ? "text-clay-600" : "text-ink-500 hover:text-ink-800"
@@ -406,6 +412,7 @@ export function AppShell({
         {/* 4. Reports */}
         <Link
           href="/reports"
+          prefetch={true}
           className={cn(
             "flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl text-[10px] font-bold transition min-w-[54px]",
             isReportsActive ? "text-clay-600" : "text-ink-500 hover:text-ink-800"

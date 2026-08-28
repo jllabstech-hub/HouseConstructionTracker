@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
+import { getCached, setCached } from "@/lib/cache-utils";
 import { EmptyState } from "@/components/ui/page-header";
 import {
   CHRONOLOGICAL_CONSTRUCTION_STAGES,
@@ -45,21 +46,63 @@ export default async function StageDetailPage({
   const prevStage = stepNum > 1 ? CHRONOLOGICAL_CONSTRUCTION_STAGES[stepNum - 2] : null;
   const nextStage = stepNum < 20 ? CHRONOLOGICAL_CONSTRUCTION_STAGES[stepNum] : null;
 
+  const cacheKey = `stage-detail:${projectId}:${stepNum}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cached = getCached<any>(cacheKey);
+
+  if (cached) {
+    return (
+      <StageDetailView
+        projectId={cached.projectId}
+        projectName={cached.projectName}
+        step={stepNum}
+        stageConfig={stageConfig}
+        prevStage={prevStage}
+        nextStage={nextStage}
+        stageName={cached.stageName}
+        stageId={cached.stageId}
+        status={cached.status}
+        percentageComplete={cached.percentageComplete}
+        expenses={cached.expenses}
+        documents={cached.documents}
+        totalSpent={cached.totalSpent}
+        materialSpent={cached.materialSpent}
+        labourSpent={cached.labourSpent}
+        serviceSpent={cached.serviceSpent}
+      />
+    );
+  }
+
   const [project, dbStages, allExpenses, rawDocuments] = await Promise.all([
     prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
     prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
     prisma.expense.findMany({
       where: { projectId },
-      include: {
-        materialCategory: true,
-        labourCategory: true,
-        serviceCategory: true,
-        equipmentCategory: true,
-        professionalCategory: true,
-        vendor: true,
-        worker: true,
-        constructionStage: true,
-        receipts: true,
+      select: {
+        id: true,
+        date: true,
+        expenseType: true,
+        amount: true,
+        description: true,
+        paymentMethod: true,
+        quantity: true,
+        unit: true,
+        rate: true,
+        materialCategoryId: true,
+        materialCategory: { select: { name: true } },
+        labourCategoryId: true,
+        labourCategory: { select: { name: true } },
+        serviceCategoryId: true,
+        serviceCategory: { select: { name: true } },
+        equipmentCategoryId: true,
+        equipmentCategory: { select: { name: true } },
+        professionalCategoryId: true,
+        professionalCategory: { select: { name: true } },
+        vendor: { select: { name: true } },
+        worker: { select: { name: true } },
+        constructionStageId: true,
+        constructionStage: { select: { name: true } },
+        receipts: { select: { id: true } },
       },
       orderBy: { date: "desc" },
     }),
@@ -170,24 +213,42 @@ export default async function StageDetailPage({
       description: d.description,
     }));
 
+  const payload = {
+    projectId: project.id,
+    projectName: project.name,
+    step: stepNum,
+    stageName: matchedDbStage?.name || stageConfig.name,
+    stageId,
+    status: matchedDbStage?.status ?? "NOT_STARTED",
+    percentageComplete: matchedDbStage?.percentageComplete ?? 0,
+    expenses: serializedExpenses,
+    documents: stageDocuments,
+    totalSpent: total,
+    materialSpent: material,
+    labourSpent: labour,
+    serviceSpent: machinery,
+  };
+
+  setCached(cacheKey, payload);
+
   return (
     <StageDetailView
-      projectId={project.id}
-      projectName={project.name}
-      step={stepNum}
+      projectId={payload.projectId}
+      projectName={payload.projectName}
+      step={payload.step}
       stageConfig={stageConfig}
       prevStage={prevStage}
       nextStage={nextStage}
-      stageName={matchedDbStage?.name || stageConfig.name}
-      stageId={stageId}
-      status={matchedDbStage?.status ?? "NOT_STARTED"}
-      percentageComplete={matchedDbStage?.percentageComplete ?? 0}
-      expenses={serializedExpenses}
-      documents={stageDocuments}
-      totalSpent={total}
-      materialSpent={material}
-      labourSpent={labour}
-      serviceSpent={machinery}
+      stageName={payload.stageName}
+      stageId={payload.stageId}
+      status={payload.status}
+      percentageComplete={payload.percentageComplete}
+      expenses={payload.expenses}
+      documents={payload.documents}
+      totalSpent={payload.totalSpent}
+      materialSpent={payload.materialSpent}
+      labourSpent={payload.labourSpent}
+      serviceSpent={payload.serviceSpent}
     />
   );
 }
