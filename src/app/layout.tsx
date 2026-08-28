@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/context/language-context";
@@ -17,6 +17,13 @@ const sourceSerif = Source_Serif_4({
   display: "swap",
   weight: ["600", "700", "800"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: "#B85C22",
+};
 
 export const metadata: Metadata = {
   title: "House Construction Tracker",
