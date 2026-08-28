@@ -1,6 +1,6 @@
-const { chromium } = require('@playwright/test');
-const path = require('path');
-const fs = require('fs');
+import { chromium } from '@playwright/test';
+import path from 'path';
+import fs from 'fs';
 
 const OUT_DIR = 'C:/Users/jyoti/.gemini/antigravity/brain/95f26e66-ab89-4f4a-978f-d17c76b9ce52/screenshots';
 if (!fs.existsSync(OUT_DIR)) {

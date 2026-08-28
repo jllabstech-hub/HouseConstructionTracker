@@ -1,6 +1,6 @@
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
-import { loadProjectExpenses, loadWorkAreas } from "@/lib/finance/queries";
+import { loadWorkAreas } from "@/lib/finance/queries";
 import { getWorkWiseCost } from "@/lib/finance/aggregations";
 import { prisma } from "@/lib/prisma";
 import { EmptyState } from "@/components/ui/page-header";
@@ -11,8 +11,34 @@ export default async function ReportsPage() {
   const projectId = await getActiveProjectId(user.id);
   if (!projectId) return <EmptyState title="No project" body="Create a project to generate reports." />;
 
-  const [expenses, workAreas, materials, labours, vendors, workers, stages] = await Promise.all([
-    loadProjectExpenses(projectId),
+  const [rawExpenses, workAreas, materials, labours, vendors, workers, stages] = await Promise.all([
+    prisma.expense.findMany({
+      where: { projectId },
+      select: {
+        id: true,
+        date: true,
+        expenseType: true,
+        amount: true,
+        description: true,
+        paymentMethod: true,
+        quantity: true,
+        unit: true,
+        rate: true,
+        materialCategoryId: true,
+        materialCategory: { select: { name: true } },
+        labourCategoryId: true,
+        labourCategory: { select: { name: true } },
+        serviceCategoryId: true,
+        serviceCategory: { select: { name: true } },
+        vendorId: true,
+        vendor: { select: { name: true } },
+        workerId: true,
+        worker: { select: { name: true } },
+        constructionStageId: true,
+        constructionStage: { select: { name: true } },
+      },
+      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+    }),
     loadWorkAreas(user.id),
     prisma.materialCategory.findMany({ where: { userId: user.id }, orderBy: [{ groupName: "asc" }, { name: "asc" }] }),
     prisma.labourCategory.findMany({ where: { userId: user.id }, orderBy: [{ groupName: "asc" }, { name: "asc" }] }),
@@ -21,9 +47,16 @@ export default async function ReportsPage() {
     prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
   ]);
 
+  const expenses = rawExpenses.map((r) => ({
+    date: r.date,
+    expenseType: r.expenseType,
+    amount: r.amount,
+    materialCategoryId: r.materialCategoryId,
+    labourCategoryId: r.labourCategoryId,
+  }));
   const workWise = getWorkWiseCost(expenses, workAreas);
 
-  const serializedExpenses = expenses.map((row, idx) => ({
+  const serializedExpenses = rawExpenses.map((row, idx) => ({
     id: row.id ?? `exp-${idx}`,
     date: row.date instanceof Date ? row.date.toISOString() : String(row.date),
     expenseType: row.expenseType,
@@ -34,17 +67,17 @@ export default async function ReportsPage() {
     unit: row.unit ?? null,
     rate: row.rate ? row.rate.toString() : null,
     materialCategoryId: row.materialCategoryId ?? null,
-    materialCategoryName: row.materialCategoryName ?? null,
+    materialCategoryName: row.materialCategory?.name ?? null,
     labourCategoryId: row.labourCategoryId ?? null,
-    labourCategoryName: row.labourCategoryName ?? null,
+    labourCategoryName: row.labourCategory?.name ?? null,
     serviceCategoryId: row.serviceCategoryId ?? null,
-    serviceCategoryName: row.serviceCategoryName ?? null,
+    serviceCategoryName: row.serviceCategory?.name ?? null,
     vendorId: row.vendorId ?? null,
-    vendorName: row.vendorName ?? null,
+    vendorName: row.vendor?.name ?? null,
     workerId: row.workerId ?? null,
-    workerName: row.workerName ?? null,
-    stageId: row.stageId ?? row.constructionStageId ?? null,
-    stageName: row.stageName ?? row.constructionStageName ?? null,
+    workerName: row.worker?.name ?? null,
+    stageId: row.constructionStageId ?? null,
+    stageName: row.constructionStage?.name ?? null,
     receiptCount: 0,
   }));
 

@@ -1,7 +1,6 @@
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
-import { loadProjectExpenses } from "@/lib/finance/queries";
 import { getBudgetVariance, getCategoryTotal, getTypeTotals } from "@/lib/finance/aggregations";
 import { EmptyState } from "@/components/ui/page-header";
 import { BudgetEditor } from "@/components/budget/budget-editor";
@@ -14,9 +13,19 @@ export default async function BudgetPage() {
   const projectId = await getActiveProjectId(user.id);
   if (!projectId) return <EmptyState title="No project" body="Create a project to set budgets." />;
 
-  const [project, expenses, typeBudgets, categoryBudgets, materials, labours] = await Promise.all([
+  const [project, rawExpenses, typeBudgets, categoryBudgets, materials, labours] = await Promise.all([
     prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
-    loadProjectExpenses(projectId),
+    prisma.expense.findMany({
+      where: { projectId },
+      select: {
+        expenseType: true,
+        amount: true,
+        materialCategoryId: true,
+        labourCategoryId: true,
+        serviceCategoryId: true,
+        professionalCategoryId: true,
+      },
+    }),
     prisma.budget.findMany({ where: { projectId } }),
     prisma.budgetCategory.findMany({
       where: { projectId },
@@ -29,6 +38,16 @@ export default async function BudgetPage() {
   if (!project) {
     return <EmptyState title="No project found" body="Create or select a house project to set budgets." />;
   }
+
+  const expenses = rawExpenses.map((r) => ({
+    date: new Date(),
+    expenseType: r.expenseType,
+    amount: r.amount,
+    materialCategoryId: r.materialCategoryId,
+    labourCategoryId: r.labourCategoryId,
+    serviceCategoryId: r.serviceCategoryId,
+    professionalCategoryId: r.professionalCategoryId,
+  }));
 
   const totals = getTypeTotals(expenses);
   const overall = getBudgetVariance(project.totalBudget, totals.total);

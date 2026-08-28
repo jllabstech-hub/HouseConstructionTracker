@@ -1,7 +1,6 @@
 import { chromium } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-import path from "path";
 
 const BASE_URL = "http://localhost:7000";
 
@@ -47,7 +46,6 @@ async function runDeliberateFailureTesting() {
 
   // Secondary user for authorization testing
   const attackerEmail = `attacker_${timestamp}@example.com`;
-  const attackerPassword = "Password123!";
 
   try {
     // ---------------------------------------------------------
@@ -59,7 +57,7 @@ async function runDeliberateFailureTesting() {
     await page.fill('input[name="email"]', testUserEmail);
     await page.fill('input[name="password"]', testUserPassword);
     await page.click('button[type="submit"]');
-    await page.waitForURL(/\/(projects|dashboard)/, { timeout: 15000 });
+    await page.waitForURL(/dashboard/, { timeout: 15000 });
     console.log("   ✅ Primary user registered and authenticated.\n");
 
     // Retrieve user and default project ID from DB
@@ -71,7 +69,7 @@ async function runDeliberateFailureTesting() {
     // ---------------------------------------------------------
     console.log("1️⃣ Testing Condition 1: No projects...");
     // Delete all projects for a isolated sandbox user
-    const emptyUser = await prisma.user.create({
+    await prisma.user.create({
       data: { name: "Empty User", email: `empty_${timestamp}@example.com`, passwordHash: "dummy" },
     });
     // Set cookie or view projects page with empty user context
@@ -214,10 +212,11 @@ async function runDeliberateFailureTesting() {
     console.log(`   ✅ Handled cleanly: Served SVG fallback card (${brokenContentType}) instead of 500.\n`);
 
     // ---------------------------------------------------------
+    // ---------------------------------------------------------
     // CONDITION 12: Corrupt PDF / Malformed binary
     // ---------------------------------------------------------
     console.log("1️⃣2️⃣ Testing Condition 12: Corrupt PDF handling...");
-    const corruptDoc = await prisma.projectDocument.create({
+    await prisma.projectDocument.create({
       data: {
         projectId: activeProject.id,
         title: "Corrupt Document File",
@@ -239,10 +238,10 @@ async function runDeliberateFailureTesting() {
     // ---------------------------------------------------------
     console.log("1️⃣3️⃣ Testing Condition 13: Upload validation & size guard...");
     // Direct API validation for invalid payload
-    const uploadCheck = await page.evaluate(async (pId) => {
+    const uploadCheck = await page.evaluate(async () => {
       const res = await fetch("/api/documents/invalid-id", { method: "GET" });
       return res.status;
-    }, activeProject.id);
+    });
     console.log(`   ✅ Handled cleanly: Invalid document request returned status ${uploadCheck}.\n`);
 
     // ---------------------------------------------------------
@@ -283,7 +282,7 @@ async function runDeliberateFailureTesting() {
     // CONDITION 17: Invalid URL (404 Not Found)
     // ---------------------------------------------------------
     console.log("1️⃣7️⃣ Testing Condition 17: Invalid URL (404 Page)...");
-    const notFoundRes = await page.goto(`${BASE_URL}/nonexistent-page-route-12345`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${BASE_URL}/nonexistent-page-route-12345`, { waitUntil: "domcontentloaded" });
     const notFoundHtml = await page.content();
     assertNoRawLeaks(notFoundHtml, "Condition 17: Invalid URL");
     const hasReturnCta = notFoundHtml.includes("Dashboard") || notFoundHtml.includes("Return");

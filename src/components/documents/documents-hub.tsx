@@ -132,19 +132,18 @@ function formatDisplayDate(dateInput: Date | string) {
 
 export function DocumentsHub({
   projectId,
-  projectName,
   documents = [],
   floors = [],
   stages = [],
 }: {
   projectId: string;
-  projectName: string;
+  projectName?: string;
   documents?: DocumentItem[];
   floors?: { id: string; name: string }[];
   stages?: { id: string; name: string }[];
 }) {
   const router = useRouter();
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const [pending, start] = useTransition();
 
   // Primary Controls

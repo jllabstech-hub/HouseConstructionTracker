@@ -5,11 +5,9 @@ import {
   X,
   IndianRupee,
   Smartphone,
-  QrCode,
   Copy,
   Check,
   ExternalLink,
-  ShieldCheck,
   PlusCircle,
 } from "lucide-react";
 import Link from "next/link";
@@ -37,7 +35,6 @@ export function UpiPayModal({
 }) {
   const [amount, setAmount] = useState<string>("");
   const [note, setNote] = useState<string>("");
-  const [upiHandle, setUpiHandle] = useState<string>("@upi");
   const [customUpiId, setCustomUpiId] = useState<string>("");
   const [copied, setCopied] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);

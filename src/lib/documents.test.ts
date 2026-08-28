@@ -103,7 +103,9 @@ describe("Document Upload & Security Audit", () => {
     }
   });
 
-  it("verifies MAX_DOCUMENT_BYTES constant is exactly 20 MB", () => {
+  it("verifies security policy constants", () => {
+    expect(ALLOWED_EXTENSIONS.size).toBeGreaterThan(0);
+    expect(ALLOWED_MIME_TYPES.size).toBeGreaterThan(0);
     expect(MAX_DOCUMENT_BYTES).toBe(20 * 1024 * 1024);
   });
 });

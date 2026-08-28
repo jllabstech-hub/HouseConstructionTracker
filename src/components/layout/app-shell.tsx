@@ -67,7 +67,6 @@ export function AppShell({
   const isBudgetActive = pathname.startsWith("/budget");
   const isReportsActive = pathname.startsWith("/reports");
   const isHomeActive = pathname === "/dashboard";
-  const isAddActive = pathname === "/expenses/new";
 
   const primaryNav = [
     { href: "/dashboard", label: t.nav?.overview ?? "Home", icon: Home, active: isHomeActive },

@@ -34,7 +34,6 @@ import {
   HardHat,
   Briefcase,
   X,
-  Check,
   IndianRupee,
   Info,
   Store,
@@ -142,7 +141,6 @@ export function MasterForms({
   // Modal / Inline Edit States
   const [editingVendor, setEditingVendor] = useState<VendorItem | null>(null);
   const [editingWorker, setEditingWorker] = useState<WorkerItem | null>(null);
-  const [showAddModal, setShowAddModal] = useState<"VENDOR" | "WORKER" | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "vendor" | "worker"; id: string; name: string } | null>(null);
   const [payRecipient, setPayRecipient] = useState<PayRecipient | null>(null);
   const [showPayModal, setShowPayModal] = useState<boolean>(false);
@@ -244,10 +242,7 @@ export function MasterForms({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => {
-              setActiveTab("VENDORS");
-              setShowAddModal("VENDOR");
-            }}
+            onClick={() => setActiveTab("VENDORS")}
             className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-clay-700 transition"
           >
             <Plus className="h-4 w-4" />
@@ -256,10 +251,7 @@ export function MasterForms({
 
           <button
             type="button"
-            onClick={() => {
-              setActiveTab("WORKERS");
-              setShowAddModal("WORKER");
-            }}
+            onClick={() => setActiveTab("WORKERS")}
             className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white px-3.5 py-2 text-xs font-bold text-ink-800 shadow-2xs hover:bg-paper-50 transition"
           >
             <Plus className="h-4 w-4" />

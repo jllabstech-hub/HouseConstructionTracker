@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Trash2, ExternalLink, CheckCircle } from "lucide-react";
+import { Trash2, ExternalLink } from "lucide-react";
 import { deleteProject, switchProject } from "@/lib/actions/projects";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 

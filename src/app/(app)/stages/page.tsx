@@ -2,7 +2,6 @@ import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
 import { EmptyState } from "@/components/ui/page-header";
-import { loadProjectExpenses } from "@/lib/finance/queries";
 import { CHRONOLOGICAL_CONSTRUCTION_STAGES } from "@/lib/catalog/stage-ordering";
 import { StageHubView, type StageSummaryItem } from "@/components/stages/stage-hub-view";
 
@@ -23,7 +22,15 @@ export default async function StagesOverviewPage() {
   const [project, dbStages, rawExpenses] = await Promise.all([
     prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
     prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
-    loadProjectExpenses(projectId),
+    prisma.expense.findMany({
+      where: { projectId },
+      select: {
+        amount: true,
+        expenseType: true,
+        constructionStageId: true,
+        constructionStage: { select: { name: true } },
+      },
+    }),
   ]);
 
   if (!project) {
@@ -51,8 +58,8 @@ export default async function StagesOverviewPage() {
     // Filter expenses matching this stage
     const matchingExpenses = rawExpenses.filter((e) => {
       if (stageId && e.constructionStageId === stageId) return true;
-      if (e.constructionStageName) {
-        const cName = e.constructionStageName.toLowerCase();
+      if (e.constructionStage?.name) {
+        const cName = e.constructionStage.name.toLowerCase();
         return (
           cName === conf.name.toLowerCase() ||
           cName === conf.shortName.toLowerCase() ||

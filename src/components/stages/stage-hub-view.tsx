@@ -3,19 +3,14 @@
 import Link from "next/link";
 import { useState, useMemo } from "react";
 import {
-  ArrowRight,
   CheckCircle2,
   Clock,
   Layers,
   Search,
   Building,
-  Hammer,
-  Paintbrush,
-  Sparkles,
   X,
   TrendingUp,
   AlertCircle,
-  HelpCircle,
 } from "lucide-react";
 import { formatINR } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -55,19 +50,17 @@ export function formatLakhs(amount: number): string {
 }
 
 export function StageHubView({
-  projectId,
   projectName,
   stagesData,
   totalProjectSpent,
-  totalProjectBudget,
 }: {
-  projectId: string;
+  projectId?: string;
   projectName: string;
   stagesData: StageSummaryItem[];
   totalProjectSpent: number;
-  totalProjectBudget: number;
+  totalProjectBudget?: number;
 }) {
-  const { language, t, getStageName } = useLanguage();
+  const { language, getStageName } = useLanguage();
   const [activeFilter, setActiveFilter] = useState<"ALL" | "COMPLETED" | "IN_PROGRESS" | "UPCOMING">("ALL");
   const [search, setSearch] = useState("");
 

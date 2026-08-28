@@ -33,7 +33,6 @@ export function ExpenseTable({
   vendors = [],
   workers = [],
   categories = [],
-  totalSpent: initialTotalSpent,
   projectId = "",
 }: {
   expenses: ExpenseRowData[];

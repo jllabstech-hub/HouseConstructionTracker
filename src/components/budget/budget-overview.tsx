@@ -9,15 +9,11 @@ import {
   MoreHorizontal,
   Package,
   Sliders,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
 } from "lucide-react";
 import { formatINR } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 import { Drawer } from "@/components/ui/drawer";
-import { Button } from "@/components/ui/button";
 
 export type TypeBudgetRow = {
   type: "MATERIAL" | "LABOUR" | "SERVICE" | "EQUIPMENT" | "PROFESSIONAL" | "OTHER";
@@ -64,7 +60,6 @@ export function BudgetOverview({
   isOverallOver,
   typeRows,
   categoriesAtRisk = [],
-  projectId,
   children,
 }: {
   totalBudget: number | string;
@@ -77,7 +72,7 @@ export function BudgetOverview({
   projectId?: string;
   children?: React.ReactNode;
 }) {
-  const { language, t } = useLanguage();
+  const { language } = useLanguage();
   const [editorOpen, setEditorOpen] = useState(false);
 
   const numBudget = Number(totalBudget) || 0;
@@ -87,7 +82,6 @@ export function BudgetOverview({
   const clampedPercent = Math.min(100, Math.max(0, numUsed));
 
   // Determine health state for overall budget
-  const isHealthy = !isOverallOver && numUsed < 85;
   const isWarning = !isOverallOver && numUsed >= 85 && numUsed <= 100;
   const isOver = isOverallOver || numUsed > 100;
 

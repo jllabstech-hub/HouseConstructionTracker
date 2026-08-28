@@ -68,8 +68,6 @@ export function EmptyState({
   body: string;
   action?: React.ReactNode;
 }) {
-  const { language } = useLanguage();
-
   return (
     <div className="rounded-2xl border border-dashed border-ink-200 bg-white px-6 py-14 text-center">
       <h3 className="font-display text-xl text-ink-900 font-bold">{title}</h3>

@@ -42,41 +42,34 @@ export type StageDetailDocument = {
 };
 
 export function StageDetailView({
-  projectId,
-  projectName,
-  step,
   stageConfig,
   prevStage,
   nextStage,
-  stageName,
   stageId,
-  status,
-  percentageComplete,
   expenses,
   documents,
   totalSpent,
   materialSpent,
   labourSpent,
-  serviceSpent,
 }: {
-  projectId: string;
-  projectName: string;
-  step: number;
+  projectId?: string;
+  projectName?: string;
+  step?: number;
   stageConfig: StageConfig;
   prevStage: StageConfig | null;
   nextStage: StageConfig | null;
-  stageName: string;
+  stageName?: string;
   stageId?: string;
-  status: string;
-  percentageComplete: number;
+  status?: string;
+  percentageComplete?: number;
   expenses: StageDetailExpense[];
   documents: StageDetailDocument[];
   totalSpent: number;
   materialSpent: number;
   labourSpent: number;
-  serviceSpent: number;
+  serviceSpent?: number;
 }) {
-  const { language, t, getStageName } = useLanguage();
+  const { language, getStageName } = useLanguage();
   const localizedStageTitle = getStageName(stageConfig.name);
 
   return (

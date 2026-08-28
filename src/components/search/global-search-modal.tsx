@@ -1,33 +1,24 @@
 "use client";
 
-import { useState, useEffect, useRef, useTransition } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   Search,
   X,
   FileText,
   Download,
   Eye,
-  Share2,
-  Phone,
   PhoneCall,
-  MessageCircle,
   IndianRupee,
   Milestone,
   Files,
   ArrowRight,
   Sparkles,
   Receipt,
-  Building2,
-  HardHat,
-  Package,
   Store,
   Loader2,
   CornerDownLeft,
 } from "lucide-react";
-import { formatINR } from "@/lib/money";
-import { cn } from "@/lib/utils";
 import { useLanguage } from "@/context/language-context";
 
 type SearchResultData = {
@@ -108,6 +99,22 @@ export function GlobalSearchModal({
   const [data, setData] = useState<SearchResultData | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const fetchResults = useCallback(async (q: string) => {
+    if (!projectId) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/search?projectId=${projectId}&q=${encodeURIComponent(q)}`);
+      if (res.ok) {
+        const json = await res.json();
+        setData(json);
+      }
+    } catch {
+      // Ignore network errors
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId]);
+
   // Focus input when modal opens
   useEffect(() => {
     if (isOpen) {
@@ -117,7 +124,7 @@ export function GlobalSearchModal({
       setQuery("");
       setData(null);
     }
-  }, [isOpen, projectId]);
+  }, [isOpen, projectId, fetchResults]);
 
   // Handle hotkeys (Escape to close)
   useEffect(() => {
@@ -139,23 +146,7 @@ export function GlobalSearchModal({
       fetchResults(query);
     }, 180);
     return () => clearTimeout(timer);
-  }, [query, projectId, isOpen]);
-
-  const fetchResults = async (q: string) => {
-    if (!projectId) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/search?projectId=${projectId}&q=${encodeURIComponent(q)}`);
-      if (res.ok) {
-        const json = await res.json();
-        setData(json);
-      }
-    } catch {
-      // Ignore network errors
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [query, projectId, isOpen, fetchResults]);
 
   const handleNavigate = (url: string) => {
     onClose();

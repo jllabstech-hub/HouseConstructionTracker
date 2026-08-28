@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition, useEffect } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -13,9 +13,6 @@ import {
   MoreHorizontal,
   Package,
   Plus,
-  Receipt,
-  RotateCcw,
-  Sparkles,
   Trash2,
 } from "lucide-react";
 import { saveExpense, deleteExpense } from "@/lib/actions/expenses";
@@ -83,7 +80,7 @@ export function ExpenseForm({
   floors: Option[];
 }) {
   const router = useRouter();
-  const { language, t, getStageName } = useLanguage();
+  const { language, getStageName } = useLanguage();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -493,10 +490,11 @@ export function ExpenseForm({
         <div className="rounded-2xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
           {/* Date Picker */}
           <div>
-            <label className="text-xs font-bold text-ink-700 block mb-1.5">
+            <label htmlFor="expense-date" className="text-xs font-bold text-ink-700 block mb-1.5">
               {language === "te" ? "తేదీ" : "Date"}
             </label>
             <input
+              id="expense-date"
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -510,10 +508,12 @@ export function ExpenseForm({
             <>
               {/* Material Category Select */}
               <div>
-                <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                <label htmlFor="material-category-select" className="text-xs font-bold text-ink-700 block mb-1.5">
                   {language === "te" ? "సామాగ్రి రకం" : "Material Category"}
                 </label>
                 <select
+                  id="material-category-select"
+                  aria-label="Material category"
                   value={materialCategory}
                   onChange={(e) => handleMaterialCategoryChange(e.target.value)}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
@@ -528,10 +528,11 @@ export function ExpenseForm({
 
               {/* Description / Item Name */}
               <div>
-                <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                <label htmlFor="material-description" className="text-xs font-bold text-ink-700 block mb-1.5">
                   {language === "te" ? "వివరణ / వస్తువు పేరు" : "Description / Item Name"}
                 </label>
                 <input
+                  id="material-description"
                   type="text"
                   placeholder={language === "te" ? "ఉదా: అల్ట్రాటెక్ 53 గ్రేడ్ సిమెంట్" : "e.g. UltraTech 53 Grade Cement, 16mm Fe550D Steel"}
                   value={description}
@@ -544,10 +545,11 @@ export function ExpenseForm({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {/* Quantity */}
                 <div>
-                  <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                  <label htmlFor="material-quantity" className="text-xs font-bold text-ink-700 block mb-1.5">
                     {language === "te" ? "పరిమాణం" : "Quantity"}
                   </label>
                   <input
+                    id="material-quantity"
                     type="number"
                     step="any"
                     inputMode="decimal"
@@ -560,10 +562,11 @@ export function ExpenseForm({
 
                 {/* Unit */}
                 <div>
-                  <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                  <label htmlFor="material-unit" className="text-xs font-bold text-ink-700 block mb-1.5">
                     {language === "te" ? "యూనిట్" : "Unit"}
                   </label>
                   <select
+                    id="material-unit"
                     value={unit}
                     onChange={(e) => setUnit(e.target.value)}
                     className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
@@ -578,10 +581,11 @@ export function ExpenseForm({
 
                 {/* Rate (₹) */}
                 <div>
-                  <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                  <label htmlFor="material-rate" className="text-xs font-bold text-ink-700 block mb-1.5">
                     {language === "te" ? "ధర (₹ / యూనిట్)" : "Rate (₹ / Unit)"}
                   </label>
                   <input
+                    id="material-rate"
                     type="number"
                     step="any"
                     inputMode="decimal"
@@ -596,10 +600,11 @@ export function ExpenseForm({
               {/* Direct Amount Fallback (If no qty/rate) */}
               {(!quantity || !rate) && (
                 <div>
-                  <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                  <label htmlFor="material-direct-amount" className="text-xs font-bold text-ink-700 block mb-1.5">
                     {language === "te" ? "లేదా నేరుగా మొత్తం (₹)" : "Or Direct Total Amount (₹)"}
                   </label>
                   <input
+                    id="material-direct-amount"
                     type="number"
                     step="any"
                     inputMode="decimal"
@@ -618,10 +623,12 @@ export function ExpenseForm({
             <>
               {/* Labour Category Select */}
               <div>
-                <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                <label htmlFor="labour-category-select" className="text-xs font-bold text-ink-700 block mb-1.5">
                   {language === "te" ? "కూలీల విభాగం" : "Labour Category"}
                 </label>
                 <select
+                  id="labour-category-select"
+                  aria-label="Labour category"
                   value={labourCategory}
                   onChange={(e) => handleLabourCategoryChange(e.target.value)}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
@@ -636,10 +643,11 @@ export function ExpenseForm({
 
               {/* Work Description */}
               <div>
-                <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                <label htmlFor="labour-description" className="text-xs font-bold text-ink-700 block mb-1.5">
                   {language === "te" ? "పని వివరాలు" : "Work Description"}
                 </label>
                 <input
+                  id="labour-description"
                   type="text"
                   placeholder={language === "te" ? "ఉదా: పునాది కాంక్రీట్ పని లేదా స్లాబ్ షట్టరింగ్" : "e.g. Plinth beam shuttering & concrete work"}
                   value={description}
@@ -650,10 +658,11 @@ export function ExpenseForm({
 
               {/* Worker / Contractor */}
               <div>
-                <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                <label htmlFor="labour-worker-select" className="text-xs font-bold text-ink-700 block mb-1.5">
                   {language === "te" ? "మేస్త్రీ / వర్కర్" : "Worker / Contractor"}
                 </label>
                 <select
+                  id="labour-worker-select"
                   value={workerId}
                   onChange={(e) => setWorkerId(e.target.value)}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
@@ -704,10 +713,11 @@ export function ExpenseForm({
               {calcMode === "DAILY_WAGE" ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                    <label htmlFor="labour-workers-count" className="text-xs font-bold text-ink-700 block mb-1.5">
                       {language === "te" ? "వర్కర్ల సంఖ్య" : "Workers"}
                     </label>
                     <input
+                      id="labour-workers-count"
                       type="number"
                       min={1}
                       inputMode="numeric"
@@ -719,10 +729,11 @@ export function ExpenseForm({
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                    <label htmlFor="labour-days-count" className="text-xs font-bold text-ink-700 block mb-1.5">
                       {language === "te" ? "రోజులు" : "Days"}
                     </label>
                     <input
+                      id="labour-days-count"
                       type="number"
                       step="any"
                       min={0.5}
@@ -735,10 +746,11 @@ export function ExpenseForm({
                   </div>
 
                   <div>
-                    <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                    <label htmlFor="labour-daily-rate" className="text-xs font-bold text-ink-700 block mb-1.5">
                       {language === "te" ? "రోజు కూలీ (₹)" : "Daily Rate (₹)"}
                     </label>
                     <input
+                      id="labour-daily-rate"
                       type="number"
                       step="any"
                       inputMode="decimal"
@@ -752,10 +764,11 @@ export function ExpenseForm({
               ) : (
                 /* Fixed Contract Field */
                 <div>
-                  <label className="text-xs font-bold text-ink-700 block mb-1.5">
+                  <label htmlFor="labour-contract-amount" className="text-xs font-bold text-ink-700 block mb-1.5">
                     {language === "te" ? "కాంట్రాక్ట్ మొత్తం (₹)" : "Contract Amount (₹)"}
                   </label>
                   <input
+                    id="labour-contract-amount"
                     type="number"
                     step="any"
                     inputMode="decimal"

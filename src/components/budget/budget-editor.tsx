@@ -17,7 +17,6 @@ import {
   Tag,
   CheckCircle2,
   Trash2,
-  Sparkles,
   TrendingUp,
   HardHat,
   Truck,
@@ -66,8 +65,6 @@ export function BudgetEditor({
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [categoryAmount, setCategoryAmount] = useState("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  const totalBudgetNum = Number(totalAmount) || Number(currentTotal) || 0;
 
   const showSuccess = (msg: string) => {
     setSuccessMessage(msg);

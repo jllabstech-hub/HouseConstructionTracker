@@ -3,25 +3,17 @@
 import { useState, useMemo } from "react";
 import {
   AlertCircle,
-  Building,
-  Calendar,
   Check,
   ChevronDown,
   ChevronUp,
   Download,
   Eye,
   FileText,
-  Filter,
   HardHat,
   Layers,
-  MoreHorizontal,
   Package,
-  RotateCcw,
-  Search,
   Share2,
   SlidersHorizontal,
-  Sparkles,
-  TrendingUp,
   Wallet,
   X,
 } from "lucide-react";
@@ -94,7 +86,6 @@ export function ReportsTabs({
   workers = [],
   stages = [],
   floors = [],
-  workWise = [],
 }: {
   projectId: string;
   expenses: ReportExpenseItem[];
@@ -104,7 +95,7 @@ export function ReportsTabs({
   workers: EntityOption[];
   stages: { id: string; name: string; sortOrder: number }[];
   floors?: { id: string; name: string }[];
-  workWise: WorkWiseRow[];
+  workWise?: WorkWiseRow[];
 }) {
   const { language, getStageName } = useLanguage();
 
@@ -128,7 +119,6 @@ export function ReportsTabs({
   // 4. In-App Preview & Modal State
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
   const [shareSuccess, setShareSuccess] = useState(false);
-  const [pdfError, setPdfError] = useState<string | null>(null);
 
   // Compute Active Date Bounds
   const { fromDate, toDate, periodDescription } = useMemo(() => {

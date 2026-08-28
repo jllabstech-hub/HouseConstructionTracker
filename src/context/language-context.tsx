@@ -15,7 +15,6 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>("en");
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     try {
@@ -27,7 +26,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // ignore localStorage error if restricted
     }
-    setMounted(true);
   }, []);
 
   const setLanguage = (lang: Language) => {

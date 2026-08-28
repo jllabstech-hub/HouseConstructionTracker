@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { loadProjectExpenses } from "@/lib/finance/queries";
@@ -8,6 +9,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { StagesTable } from "@/components/projects/stages-table";
 import { StageManager } from "@/components/projects/structure-managers";
 import { ProjectNavTabs } from "@/components/projects/project-nav-tabs";
+import { ArrowLeft } from "lucide-react";
 
 export default async function StagesPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireUser();
@@ -28,10 +30,21 @@ export default async function StagesPage({ params }: { params: Promise<{ id: str
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Back Link */}
+      <div>
+        <Link
+          href={`/projects/${project.id}`}
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-600 hover:text-ink-900 transition"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          <span>Back to Project Overview</span>
+        </Link>
+      </div>
+
       <PageHeader
-        title={`${project.name} stages`}
-        subtitle="Track construction progress independently from financial expense types."
+        title={`${project.name} Stages`}
+        subtitle="Manage construction sequence milestones and mark completion percentages."
       />
       <ProjectNavTabs projectId={project.id} />
       <StagesTable stages={stageRows} />

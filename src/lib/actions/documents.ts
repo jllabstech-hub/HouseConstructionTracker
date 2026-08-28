@@ -9,11 +9,7 @@ import { requireProject, requireUser } from "@/lib/auth-guard";
 import { documentSchema } from "@/lib/validations";
 
 import {
-  ALLOWED_EXTENSIONS,
-  ALLOWED_MIME_TYPES,
-  MAX_DOCUMENT_BYTES,
   extensionFor,
-  sanitizeFileName,
   validateDocumentFile,
 } from "@/lib/document-validation";
 

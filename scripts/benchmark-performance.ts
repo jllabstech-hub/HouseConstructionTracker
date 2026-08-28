@@ -41,7 +41,7 @@ async function runBenchmark() {
 
   // 2. Spending Trend Monthly Aggregation
   const monthlyTimes: number[] = [];
-  let monthlyData: any[] = [];
+  let monthlyData: Awaited<ReturnType<typeof getMonthlyTrendOptimized>> = [];
   for (let i = 0; i < 5; i++) {
     const t = performance.now();
     monthlyData = await getMonthlyTrendOptimized(projectId);
@@ -56,7 +56,7 @@ async function runBenchmark() {
 
   // 3. Top Categories & Budget Alerts
   const catTimes: number[] = [];
-  let catData: any = null;
+  let catData: Awaited<ReturnType<typeof getTopCategoriesAndAlertsOptimized>> | null = null;
   for (let i = 0; i < 5; i++) {
     const t = performance.now();
     catData = await getTopCategoriesAndAlertsOptimized(projectId);
@@ -66,12 +66,12 @@ async function runBenchmark() {
 
   console.log("3️⃣ TOP CATEGORIES & BUDGET ALERTS (Suspense Streamed):");
   console.log(`   ⏱ Warm Avg: ${avgCat} ms`);
-  console.log(`   🏷 Top Categories Count: ${catData.topCategories.length}, Alerts: ${catData.budgetAlerts.length}`);
+  console.log(`   🏷 Top Categories Count: ${catData?.topCategories.length ?? 0}, Alerts: ${catData?.budgetAlerts.length ?? 0}`);
   console.log("   ✅ Status: Pass\n");
 
   // 4. Construction Progress Summary
   const progTimes: number[] = [];
-  let progData: any = null;
+  let progData: Awaited<ReturnType<typeof getConstructionProgressSummary>> | null = null;
   for (let i = 0; i < 5; i++) {
     const t = performance.now();
     progData = await getConstructionProgressSummary(projectId);
@@ -81,12 +81,12 @@ async function runBenchmark() {
 
   console.log("4️⃣ CONSTRUCTION PROGRESS SUMMARY (Suspense Streamed):");
   console.log(`   ⏱ Warm Avg: ${avgProg} ms`);
-  console.log(`   🏗 Overall Completion: ${progData.overallProgress}% (${progData.completedStages} completed, ${progData.inProgressStages} in progress)`);
+  console.log(`   🏗 Overall Completion: ${progData?.overallPercent ?? 0}% (${progData?.completedCount ?? 0} of ${progData?.totalStages ?? 0} stages completed)`);
   console.log("   ✅ Status: Pass\n");
 
   // 5. Recent Transactions (Paged to 5)
   const recTimes: number[] = [];
-  let recData: any[] = [];
+  let recData: Awaited<ReturnType<typeof getRecentExpensesOptimized>> = [];
   for (let i = 0; i < 5; i++) {
     const t = performance.now();
     recData = await getRecentExpensesOptimized(projectId, 5);

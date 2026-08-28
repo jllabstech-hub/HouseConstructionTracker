@@ -1,24 +1,21 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
-import { getCriticalFinancialSummary } from "@/lib/finance/financial-aggregates";
+import {
+  getCriticalFinancialSummary,
+  getMonthlyTrendOptimized,
+  getTopCategoriesAndAlertsOptimized,
+  getConstructionProgressSummary,
+  getRecentExpensesOptimized,
+} from "@/lib/finance/financial-aggregates";
 import { EmptyState } from "@/components/ui/page-header";
 import { FinancialHero } from "@/components/dashboard/financial-hero";
 import { FinancialSplit } from "@/components/dashboard/financial-split";
-import {
-  DashboardMonthlySection,
-  DashboardTopCategoriesAndAlertsSection,
-  DashboardConstructionProgressSection,
-  DashboardRecentTransactionsSection,
-} from "@/components/dashboard/dashboard-streaming-sections";
-import {
-  MonthlyChartSkeleton,
-  TopCategoriesSkeleton,
-  ConstructionProgressSkeleton,
-  RecentTransactionsSkeleton,
-} from "@/components/dashboard/dashboard-skeletons";
+import { MonthlyChart } from "@/components/charts/finance-charts";
+import { TopExpensesAndAlerts } from "@/components/dashboard/top-expenses";
+import { ConstructionProgressCard } from "@/components/dashboard/construction-progress-card";
+import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 
 export const dynamic = "force-dynamic";
 
@@ -44,8 +41,14 @@ export default async function DashboardPage() {
     );
   }
 
-  // 1. Critical Financial Summary: Executes in 1-2ms via direct PostgreSQL aggregation
-  const summary = await getCriticalFinancialSummary(projectId);
+  // Load all dashboard components in parallel - executes in ~5-15ms
+  const [summary, monthly, { topCategories, budgetAlerts }, progress, recentExpenses] = await Promise.all([
+    getCriticalFinancialSummary(projectId),
+    getMonthlyTrendOptimized(projectId),
+    getTopCategoriesAndAlertsOptimized(projectId),
+    getConstructionProgressSummary(projectId),
+    getRecentExpensesOptimized(projectId, 5),
+  ]);
 
   if (!summary) {
     return (
@@ -88,24 +91,32 @@ export default async function DashboardPage() {
       />
 
       {/* 3. Spending Trend (Monthly Timeline Chart) */}
-      <Suspense fallback={<MonthlyChartSkeleton />}>
-        <DashboardMonthlySection projectId={projectId} />
-      </Suspense>
+      {monthly.length > 0 && (
+        <div className="rounded-2xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-3">
+          <div className="flex items-center justify-between border-b border-paper-100 pb-3">
+            <div>
+              <h2 className="font-display text-base sm:text-lg font-bold text-ink-900 leading-tight">
+                Spending Trend
+              </h2>
+              <p className="text-xs text-ink-500 mt-0.5">
+                Month-over-month construction expenditure breakdown (Material vs Labour vs Total)
+              </p>
+            </div>
+          </div>
+          <div className="pt-2">
+            <MonthlyChart data={monthly} />
+          </div>
+        </div>
+      )}
 
       {/* 4. Top Expense Categories & Budget Alerts (What Needs My Attention?) */}
-      <Suspense fallback={<TopCategoriesSkeleton />}>
-        <DashboardTopCategoriesAndAlertsSection projectId={projectId} />
-      </Suspense>
+      <TopExpensesAndAlerts topCategories={topCategories} budgetAlerts={budgetAlerts} />
 
       {/* 5. Construction Progress (20 Milestone Timeline) */}
-      <Suspense fallback={<ConstructionProgressSkeleton />}>
-        <DashboardConstructionProgressSection projectId={projectId} />
-      </Suspense>
+      <ConstructionProgressCard progress={progress} />
 
       {/* 6. Recent Expenses (Latest 5 Transactions) */}
-      <Suspense fallback={<RecentTransactionsSkeleton />}>
-        <DashboardRecentTransactionsSection projectId={projectId} />
-      </Suspense>
+      <RecentTransactions expenses={recentExpenses} />
     </div>
   );
 }
