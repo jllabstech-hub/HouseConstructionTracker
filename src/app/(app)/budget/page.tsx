@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
+import { getCached, setCached } from "@/lib/cache-utils";
 import { getBudgetVariance, getCategoryTotal, getTypeTotals } from "@/lib/finance/aggregations";
 import { EmptyState } from "@/components/ui/page-header";
 import { BudgetEditor } from "@/components/budget/budget-editor";
@@ -12,6 +13,45 @@ export default async function BudgetPage() {
   const user = await requireUser();
   const projectId = await getActiveProjectId(user.id);
   if (!projectId) return <EmptyState title="No project" body="Create a project to set budgets." />;
+
+  const cacheKey = `budget:${projectId}`;
+  const cached = getCached<{
+    totalBudget: string;
+    actualSpent: string;
+    remainingCash: string;
+    usedPercent: string;
+    isOverallOver: boolean;
+    typeRows: TypeBudgetRow[];
+    categoriesAtRisk: CategoryRiskItem[];
+    materials: { id: string; name: string; groupName: string | null }[];
+    labours: { id: string; name: string; groupName: string | null }[];
+    typeBudgets: { id: string; expenseType: string; amount: number }[];
+    categoryBudgets: { id: string; expenseType: string; name: string; amount: number }[];
+  }>(cacheKey);
+
+  if (cached) {
+    return (
+      <BudgetOverview
+        totalBudget={cached.totalBudget}
+        actualSpent={cached.actualSpent}
+        remainingCash={cached.remainingCash}
+        usedPercent={cached.usedPercent}
+        isOverallOver={cached.isOverallOver}
+        typeRows={cached.typeRows}
+        categoriesAtRisk={cached.categoriesAtRisk}
+        projectId={projectId}
+      >
+        <BudgetEditor
+          projectId={projectId}
+          currentTotal={cached.totalBudget}
+          materials={cached.materials}
+          labours={cached.labours}
+          typeBudgets={cached.typeBudgets}
+          categoryBudgets={cached.categoryBudgets}
+        />
+      </BudgetOverview>
+    );
+  }
 
   const [project, rawExpenses, typeBudgets, categoryBudgets, materials, labours] = await Promise.all([
     prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
@@ -114,34 +154,50 @@ export default async function BudgetPage() {
     }
   }
 
+  const payload = {
+    totalBudget: project.totalBudget.toString(),
+    actualSpent: totals.total.toString(),
+    remainingCash: overall.remaining.toString(),
+    usedPercent: overall.usedPercent.toString(),
+    isOverallOver: overall.isOver,
+    typeRows,
+    categoriesAtRisk,
+    materials: materials.map((item) => ({ id: item.id, name: item.name, groupName: item.groupName })),
+    labours: labours.map((item) => ({ id: item.id, name: item.name, groupName: item.groupName })),
+    typeBudgets: typeBudgets.map((b) => ({ id: b.id, expenseType: b.expenseType, amount: Number(b.amount) })),
+    categoryBudgets: categoryBudgets.map((c) => ({
+      id: c.id,
+      expenseType: c.expenseType,
+      name:
+        c.materialCategory?.name ??
+        c.labourCategory?.name ??
+        c.serviceCategory?.name ??
+        c.professionalCategory?.name ??
+        c.expenseType,
+      amount: Number(c.amount),
+    })),
+  };
+
+  setCached(cacheKey, payload);
+
   return (
     <BudgetOverview
-      totalBudget={project.totalBudget.toString()}
-      actualSpent={totals.total.toString()}
-      remainingCash={overall.remaining.toString()}
-      usedPercent={overall.usedPercent.toString()}
-      isOverallOver={overall.isOver}
-      typeRows={typeRows}
-      categoriesAtRisk={categoriesAtRisk}
+      totalBudget={payload.totalBudget}
+      actualSpent={payload.actualSpent}
+      remainingCash={payload.remainingCash}
+      usedPercent={payload.usedPercent}
+      isOverallOver={payload.isOverallOver}
+      typeRows={payload.typeRows}
+      categoriesAtRisk={payload.categoriesAtRisk}
       projectId={projectId}
     >
       <BudgetEditor
         projectId={projectId}
-        currentTotal={project.totalBudget.toString()}
-        materials={materials.map((item) => ({ id: item.id, name: item.name, groupName: item.groupName }))}
-        labours={labours.map((item) => ({ id: item.id, name: item.name, groupName: item.groupName }))}
-        typeBudgets={typeBudgets.map((b) => ({ id: b.id, expenseType: b.expenseType, amount: Number(b.amount) }))}
-        categoryBudgets={categoryBudgets.map((c) => ({
-          id: c.id,
-          expenseType: c.expenseType,
-          name:
-            c.materialCategory?.name ??
-            c.labourCategory?.name ??
-            c.serviceCategory?.name ??
-            c.professionalCategory?.name ??
-            c.expenseType,
-          amount: Number(c.amount),
-        }))}
+        currentTotal={payload.totalBudget}
+        materials={payload.materials}
+        labours={payload.labours}
+        typeBudgets={payload.typeBudgets}
+        categoryBudgets={payload.categoryBudgets}
       />
     </BudgetOverview>
   );

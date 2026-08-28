@@ -3,6 +3,7 @@ import { getActiveProjectId } from "@/lib/project-context";
 import { loadWorkAreas } from "@/lib/finance/queries";
 import { getWorkWiseCost } from "@/lib/finance/aggregations";
 import { prisma } from "@/lib/prisma";
+import { getCached, setCached } from "@/lib/cache-utils";
 import { EmptyState } from "@/components/ui/page-header";
 import { ReportsTabs } from "@/components/reports/reports-tabs";
 
@@ -10,6 +11,27 @@ export default async function ReportsPage() {
   const user = await requireUser();
   const projectId = await getActiveProjectId(user.id);
   if (!projectId) return <EmptyState title="No project" body="Create a project to generate reports." />;
+
+  const cacheKey = `reports:${projectId}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const cached = getCached<any>(cacheKey);
+
+  if (cached) {
+    return (
+      <div className="space-y-6">
+        <ReportsTabs
+          projectId={projectId}
+          expenses={cached.expenses}
+          materials={cached.materials}
+          labours={cached.labours}
+          vendors={cached.vendors}
+          workers={cached.workers}
+          stages={cached.stages}
+          workWise={cached.workWise}
+        />
+      </div>
+    );
+  }
 
   const [rawExpenses, workAreas, materials, labours, vendors, workers, stages] = await Promise.all([
     prisma.expense.findMany({
@@ -81,23 +103,35 @@ export default async function ReportsPage() {
     receiptCount: 0,
   }));
 
+  const payload = {
+    expenses: serializedExpenses,
+    materials: materials.map((m) => ({ id: m.id, name: m.name, groupName: m.groupName })),
+    labours: labours.map((l) => ({ id: l.id, name: l.name, groupName: l.groupName })),
+    vendors: vendors.map((v) => ({ id: v.id, name: v.name, phone: v.phone })),
+    workers: workers.map((w) => ({ id: w.id, name: w.name, phone: w.phone, role: w.specialization })),
+    stages: stages.map((s) => ({ id: s.id, name: s.name, sortOrder: s.sortOrder })),
+    workWise: workWise.map((w) => ({
+      id: w.id,
+      name: w.name,
+      material: w.material.toString(),
+      labour: w.labour.toString(),
+      total: w.total.toString(),
+    })),
+  };
+
+  setCached(cacheKey, payload);
+
   return (
     <div className="space-y-6">
       <ReportsTabs
         projectId={projectId}
-        expenses={serializedExpenses}
-        materials={materials.map((m) => ({ id: m.id, name: m.name, groupName: m.groupName }))}
-        labours={labours.map((l) => ({ id: l.id, name: l.name, groupName: l.groupName }))}
-        vendors={vendors.map((v) => ({ id: v.id, name: v.name, phone: v.phone }))}
-        workers={workers.map((w) => ({ id: w.id, name: w.name, phone: w.phone, role: w.specialization }))}
-        stages={stages.map((s) => ({ id: s.id, name: s.name, sortOrder: s.sortOrder }))}
-        workWise={workWise.map((w) => ({
-          id: w.id,
-          name: w.name,
-          material: w.material.toString(),
-          labour: w.labour.toString(),
-          total: w.total.toString(),
-        }))}
+        expenses={payload.expenses}
+        materials={payload.materials}
+        labours={payload.labours}
+        vendors={payload.vendors}
+        workers={payload.workers}
+        stages={payload.stages}
+        workWise={payload.workWise}
       />
     </div>
   );

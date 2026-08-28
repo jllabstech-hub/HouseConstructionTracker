@@ -4,30 +4,47 @@ import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
 import { formatINR } from "@/lib/money";
 import { getProjectsSummaryBatch } from "@/lib/finance/financial-aggregates";
+import { getCached, setCached } from "@/lib/cache-utils";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ProjectCardActions } from "@/components/projects/project-card-actions";
+import type { Project } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProjectsPage() {
   const user = await requireUser();
-  const [projects, activeProjectId] = await Promise.all([
-    prisma.project.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-    }),
-    getActiveProjectId(user.id),
-  ]);
+  const cacheKey = `projects-list:${user.id}`;
+  const cached = getCached<{
+    cards: {
+      project: Project;
+      totals: { total: number; MATERIAL: number; LABOUR: number; OTHER: number };
+      isActive: boolean;
+    }[];
+  }>(cacheKey);
 
-  const projectIds = projects.map((p) => p.id);
-  const summaryMap = await getProjectsSummaryBatch(projectIds);
+  let cards = cached?.cards;
 
-  const cards = projects.map((project) => {
-    const totals = summaryMap.get(project.id) ?? { total: 0, MATERIAL: 0, LABOUR: 0, OTHER: 0 };
-    return { project, totals, isActive: project.id === activeProjectId };
-  });
+  if (!cards) {
+    const [projects, activeProjectId] = await Promise.all([
+      prisma.project.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+      }),
+      getActiveProjectId(user.id),
+    ]);
+
+    const projectIds = projects.map((p) => p.id);
+    const summaryMap = await getProjectsSummaryBatch(projectIds);
+
+    cards = projects.map((project) => {
+      const totals = summaryMap.get(project.id) ?? { total: 0, MATERIAL: 0, LABOUR: 0, OTHER: 0 };
+      return { project, totals, isActive: project.id === activeProjectId };
+    });
+
+    setCached(cacheKey, { cards });
+  }
 
   return (
     <div>

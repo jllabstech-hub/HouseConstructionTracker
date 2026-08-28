@@ -2,13 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
-import {
-  getCriticalFinancialSummary,
-  getMonthlyTrendOptimized,
-  getTopCategoriesAndAlertsOptimized,
-  getConstructionProgressSummary,
-  getRecentExpensesOptimized,
-} from "@/lib/finance/financial-aggregates";
+import { getDashboardFullData } from "@/lib/finance/financial-aggregates";
 import { EmptyState } from "@/components/ui/page-header";
 import { FinancialHero } from "@/components/dashboard/financial-hero";
 import { FinancialSplit } from "@/components/dashboard/financial-split";
@@ -41,16 +35,10 @@ export default async function DashboardPage() {
     );
   }
 
-  // Load all dashboard components in parallel - executes in ~5-15ms
-  const [summary, monthly, { topCategories, budgetAlerts }, progress, recentExpenses] = await Promise.all([
-    getCriticalFinancialSummary(projectId),
-    getMonthlyTrendOptimized(projectId),
-    getTopCategoriesAndAlertsOptimized(projectId),
-    getConstructionProgressSummary(projectId),
-    getRecentExpensesOptimized(projectId, 5),
-  ]);
+  // Ultra-fast single concurrent roundtrip
+  const data = await getDashboardFullData(projectId);
 
-  if (!summary) {
+  if (!data) {
     return (
       <EmptyState
         title="Start your house project"
@@ -67,6 +55,8 @@ export default async function DashboardPage() {
       />
     );
   }
+
+  const { summary, monthly, topCategories, budgetAlerts, progress, recentExpenses } = data;
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-10">

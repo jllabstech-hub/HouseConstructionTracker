@@ -7,6 +7,7 @@ import { requireProject, requireUser } from "@/lib/auth-guard";
 import { expenseSchema } from "@/lib/validations";
 import { computeLabourAmount, computeMaterialAmount } from "@/lib/finance/aggregations";
 import { parseMoneyInput, roundMoney } from "@/lib/money";
+import { invalidateProjectCache } from "@/lib/cache-utils";
 
 function emptyToNull(value?: string | null) {
   const trimmed = value?.trim();
@@ -97,7 +98,9 @@ export async function saveExpense(input: unknown, expenseId?: string) {
       ? await prisma.expense.update({ where: { id: expenseId }, data: payload })
       : await prisma.expense.create({ data: payload });
 
+    invalidateProjectCache(data.projectId);
     revalidatePath("/");
+    revalidatePath(`/dashboard`);
     revalidatePath(`/expenses`);
     revalidatePath(`/expenses/${saved.id}`);
     revalidatePath(`/projects/${data.projectId}`);
@@ -114,7 +117,9 @@ export async function deleteExpense(projectId: string, expenseId: string) {
   const expense = await prisma.expense.findFirst({ where: { id: expenseId, projectId } });
   if (!expense) return { error: "Expense not found or unauthorized" };
   await prisma.expense.deleteMany({ where: { id: expenseId, projectId } });
+  invalidateProjectCache(projectId);
   revalidatePath("/");
+  revalidatePath("/dashboard");
   revalidatePath("/expenses");
   return { ok: true };
 }

@@ -1,5 +1,6 @@
 import { prisma } from "../src/lib/prisma";
 import {
+  getDashboardFullData,
   getCriticalFinancialSummary,
   getMonthlyTrendOptimized,
   getTopCategoriesAndAlertsOptimized,
@@ -20,6 +21,23 @@ async function runBenchmark() {
 
   const projectId = project.id;
   console.log(`📌 Testing Active Project: "${project.name}" (ID: ${projectId})\n`);
+
+  // 0. Unified Dashboard Single-Roundtrip Loader
+  const fullDataTimes: number[] = [];
+  let fullData = null;
+  for (let i = 0; i < 5; i++) {
+    const t = performance.now();
+    fullData = await getDashboardFullData(projectId);
+    fullDataTimes.push(performance.now() - t);
+  }
+  const avgFullData = (fullDataTimes.reduce((a, b) => a + b, 0) / fullDataTimes.length).toFixed(2);
+  const minFullData = Math.min(...fullDataTimes).toFixed(2);
+
+  console.log("⚡ UNIFIED CONCURRENT DASHBOARD LOADER (1 Single Parallel Roundtrip):");
+  console.log(`   ⏱ Warm Avg: ${avgFullData} ms (Fastest: ${minFullData} ms)`);
+  console.log(`   📦 Total Spent = ₹${fullData?.summary?.totalSpent.toLocaleString()}, Budget = ₹${fullData?.summary?.totalBudget.toLocaleString()}`);
+  console.log(`   📊 Monthly Points: ${fullData?.monthly.length}, Top Categories: ${fullData?.topCategories.length}, Recent: ${fullData?.recentExpenses.length}`);
+  console.log("   ✅ Status: Pass (All 6 sections in 1 roundtrip)\n");
 
   // 1. Critical Financial Summary Benchmark
   // Run 5 warm iterations

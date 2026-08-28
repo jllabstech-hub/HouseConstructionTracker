@@ -8,8 +8,22 @@ let dbUrl =
   process.env.POSTGRES_URL ||
   process.env.POSTGRES_URL_NON_POOLING;
 
-if (dbUrl && dbUrl.includes("-pooler.") && !dbUrl.includes("pgbouncer=true")) {
-  dbUrl += (dbUrl.includes("?") ? "&" : "?") + "pgbouncer=true&connect_timeout=15";
+if (dbUrl) {
+  try {
+    const urlObj = new URL(dbUrl);
+    if (!urlObj.searchParams.has("connection_limit")) {
+      urlObj.searchParams.set("connection_limit", "15");
+    }
+    if (!urlObj.searchParams.has("pool_timeout")) {
+      urlObj.searchParams.set("pool_timeout", "10");
+    }
+    if (dbUrl.includes("-pooler.") && !urlObj.searchParams.has("pgbouncer")) {
+      urlObj.searchParams.set("pgbouncer", "true");
+    }
+    dbUrl = urlObj.toString();
+  } catch {
+    // URL parsing fallback
+  }
 }
 
 export const prisma =

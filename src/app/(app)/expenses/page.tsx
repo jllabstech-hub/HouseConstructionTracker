@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
+import { getCached, setCached } from "@/lib/cache-utils";
 import { ExpenseTable } from "@/components/expenses/expense-table";
 import { EmptyState } from "@/components/ui/page-header";
 import type { ExpenseRowData } from "@/components/expenses/expense-mobile-card";
@@ -15,8 +16,33 @@ export default async function ExpensesPage() {
     return <EmptyState title="No project found" body="Create or select a house project to view expenses." />;
   }
 
+  const cacheKey = `expenses:${projectId}`;
+  const cached = getCached<{
+    expenses: ExpenseRowData[];
+    stages: { id: string; name: string }[];
+    floors: { id: string; name: string }[];
+    vendors: { id: string; name: string }[];
+    workers: { id: string; name: string }[];
+    allCategories: { id: string; name: string }[];
+    totalSpent: number;
+  }>(cacheKey);
+
+  if (cached) {
+    return (
+      <ExpenseTable
+        projectId={projectId}
+        expenses={cached.expenses}
+        stages={cached.stages}
+        floors={cached.floors}
+        vendors={cached.vendors}
+        workers={cached.workers}
+        categories={cached.allCategories}
+        totalSpent={cached.totalSpent}
+      />
+    );
+  }
+
   const [
-    totalAgg,
     rawExpenses,
     stages,
     floors,
@@ -25,10 +51,6 @@ export default async function ExpensesPage() {
     matCategories,
     labCategories,
   ] = await Promise.all([
-    prisma.expense.aggregate({
-      where: { projectId },
-      _sum: { amount: true },
-    }),
     prisma.expense.findMany({
       where: { projectId },
       select: {
@@ -91,10 +113,13 @@ export default async function ExpensesPage() {
     }),
   ]);
 
-  const totalSpent = Number(totalAgg._sum.amount ?? 0);
+  let totalSpent = 0;
   const allCategories = [...matCategories, ...labCategories];
 
   const expenses: ExpenseRowData[] = rawExpenses.map((e) => {
+    const amt = Number(e.amount);
+    totalSpent += amt;
+
     const categoryName =
       e.materialCategory?.name ||
       e.labourCategory?.name ||
@@ -131,16 +156,28 @@ export default async function ExpensesPage() {
     };
   });
 
+  const payload = {
+    expenses,
+    stages,
+    floors,
+    vendors,
+    workers,
+    allCategories,
+    totalSpent,
+  };
+
+  setCached(cacheKey, payload);
+
   return (
     <ExpenseTable
       projectId={projectId}
-      expenses={expenses}
-      stages={stages}
-      floors={floors}
-      vendors={vendors}
-      workers={workers}
-      categories={allCategories}
-      totalSpent={totalSpent}
+      expenses={payload.expenses}
+      stages={payload.stages}
+      floors={payload.floors}
+      vendors={payload.vendors}
+      workers={payload.workers}
+      categories={payload.allCategories}
+      totalSpent={payload.totalSpent}
     />
   );
 }

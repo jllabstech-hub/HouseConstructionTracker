@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
+import { getCached, setCached } from "@/lib/cache-utils";
 import { EmptyState } from "@/components/ui/page-header";
 import { CHRONOLOGICAL_CONSTRUCTION_STAGES } from "@/lib/catalog/stage-ordering";
 import { StageHubView, type StageSummaryItem } from "@/components/stages/stage-hub-view";
@@ -15,6 +16,27 @@ export default async function StagesOverviewPage() {
       <EmptyState
         title="No active project"
         body="Create or select a house project to view the construction stages."
+      />
+    );
+  }
+
+  const cacheKey = `stages:${projectId}`;
+  const cached = getCached<{
+    projectId: string;
+    projectName: string;
+    stagesData: StageSummaryItem[];
+    totalProjectSpent: number;
+    totalProjectBudget: number;
+  }>(cacheKey);
+
+  if (cached) {
+    return (
+      <StageHubView
+        projectId={cached.projectId}
+        projectName={cached.projectName}
+        stagesData={cached.stagesData}
+        totalProjectSpent={cached.totalProjectSpent}
+        totalProjectBudget={cached.totalProjectBudget}
       />
     );
   }
@@ -101,13 +123,23 @@ export default async function StagesOverviewPage() {
     };
   });
 
+  const payload = {
+    projectId: project.id,
+    projectName: project.name,
+    stagesData,
+    totalProjectSpent,
+    totalProjectBudget: Number(project.totalBudget),
+  };
+
+  setCached(cacheKey, payload);
+
   return (
     <StageHubView
-      projectId={project.id}
-      projectName={project.name}
-      stagesData={stagesData}
-      totalProjectSpent={totalProjectSpent}
-      totalProjectBudget={Number(project.totalBudget)}
+      projectId={payload.projectId}
+      projectName={payload.projectName}
+      stagesData={payload.stagesData}
+      totalProjectSpent={payload.totalProjectSpent}
+      totalProjectBudget={payload.totalProjectBudget}
     />
   );
 }

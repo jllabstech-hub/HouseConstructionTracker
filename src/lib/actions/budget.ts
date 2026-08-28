@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireProject, requireUser } from "@/lib/auth-guard";
 import { budgetCategorySchema, budgetTypeSchema } from "@/lib/validations";
 import { parseMoneyInput } from "@/lib/money";
+import { invalidateProjectCache } from "@/lib/cache-utils";
 
 export async function saveTypeBudget(projectId: string, input: unknown) {
   const user = await requireUser();
@@ -24,7 +25,9 @@ export async function saveTypeBudget(projectId: string, input: unknown) {
       amount: new Prisma.Decimal(amount.toFixed(2)),
     },
   });
+  invalidateProjectCache(projectId);
   revalidatePath("/budget");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -70,7 +73,9 @@ export async function saveCategoryBudget(projectId: string, input: unknown) {
       },
     });
   }
+  invalidateProjectCache(projectId);
   revalidatePath("/budget");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -83,7 +88,9 @@ export async function updateProjectBudget(projectId: string, amountRaw: string) 
     where: { id: projectId },
     data: { totalBudget: new Prisma.Decimal(amount.toFixed(2)) },
   });
+  invalidateProjectCache(projectId);
   revalidatePath("/budget");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -91,6 +98,8 @@ export async function deleteCategoryBudget(projectId: string, id: string) {
   const user = await requireUser();
   await requireProject(projectId, user.id);
   await prisma.budgetCategory.deleteMany({ where: { id, projectId } });
+  invalidateProjectCache(projectId);
   revalidatePath("/budget");
+  revalidatePath("/dashboard");
   return { ok: true };
 }

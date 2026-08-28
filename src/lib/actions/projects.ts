@@ -8,6 +8,7 @@ import { seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { setActiveProjectId } from "@/lib/project-context";
 import { projectSchema, floorSchema, stageSchema } from "@/lib/validations";
 import { parseMoneyInput } from "@/lib/money";
+import { invalidateProjectCache } from "@/lib/cache-utils";
 
 function emptyToNull(value?: string | null) {
   const trimmed = value?.trim();
@@ -47,6 +48,7 @@ export async function createProject(input: unknown) {
     });
     await seedProjectStructure(project.id);
     await setActiveProjectId(project.id);
+    invalidateProjectCache(project.id);
     revalidatePath("/");
     revalidatePath("/projects");
     return { ok: true, id: project.id };
@@ -79,7 +81,9 @@ export async function updateProject(projectId: string, input: unknown) {
         notes: emptyToNull(parsed.data.notes),
       },
     });
+    invalidateProjectCache(projectId);
     revalidatePath("/");
+    revalidatePath("/dashboard");
     revalidatePath("/projects");
     revalidatePath(`/projects/${projectId}`);
     return { ok: true };
@@ -107,6 +111,7 @@ export async function updateProjectName(
     },
   });
 
+  invalidateProjectCache(projectId);
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/projects");
@@ -121,6 +126,7 @@ export async function switchProject(projectId: string) {
   const user = await requireUser();
   await requireProject(projectId, user.id);
   await setActiveProjectId(projectId);
+  invalidateProjectCache();
   revalidatePath("/");
   revalidatePath("/dashboard");
   revalidatePath("/expenses");
@@ -145,6 +151,7 @@ export async function createFloor(projectId: string, input: unknown) {
       sortOrder: (last?.sortOrder ?? -1) + 1,
     },
   });
+  invalidateProjectCache(projectId);
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}/floors`);
   return { ok: true };
@@ -154,6 +161,7 @@ export async function deleteFloor(projectId: string, floorId: string) {
   const user = await requireUser();
   await requireProject(projectId, user.id);
   await prisma.floor.deleteMany({ where: { id: floorId, projectId } });
+  invalidateProjectCache(projectId);
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}/floors`);
   return { ok: true };
@@ -176,9 +184,11 @@ export async function updateStage(projectId: string, stageId: string, input: unk
       notes: emptyToNull(parsed.data.notes),
     },
   });
+  invalidateProjectCache(projectId);
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}/stages`);
   revalidatePath("/stages");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -204,9 +214,11 @@ export async function createStage(projectId: string, input: unknown) {
       sortOrder: (last?.sortOrder ?? -1) + 1,
     },
   });
+  invalidateProjectCache(projectId);
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}/stages`);
   revalidatePath("/stages");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -214,9 +226,11 @@ export async function deleteStage(projectId: string, stageId: string) {
   const user = await requireUser();
   await requireProject(projectId, user.id);
   await prisma.constructionStage.deleteMany({ where: { id: stageId, projectId } });
+  invalidateProjectCache(projectId);
   revalidatePath("/projects");
   revalidatePath(`/projects/${projectId}/stages`);
   revalidatePath("/stages");
+  revalidatePath("/dashboard");
   return { ok: true };
 }
 
@@ -238,6 +252,7 @@ export async function deleteProject(projectId: string) {
       await setActiveProjectId(remaining[0].id);
     }
 
+    invalidateProjectCache();
     revalidatePath("/");
     revalidatePath("/dashboard");
     revalidatePath("/projects");
