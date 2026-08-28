@@ -24,7 +24,7 @@ export function FinancialHero({
   usedPercent: number;
   billsCount: number;
 }) {
-  const { language, t, getStageName } = useLanguage();
+  const { language, getStageName } = useLanguage();
   const isOverBudget = remainingBudget < 0;
   const clampedPercent = Math.min(100, Math.max(0, usedPercent));
 
@@ -65,19 +65,19 @@ export function FinancialHero({
         <div className="flex items-center gap-2.5 flex-wrap shrink-0">
           <Link
             href="/projects/new"
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-paper-300 bg-white hover:bg-paper-50 px-3.5 py-2 text-xs font-bold text-ink-800 shadow-2xs transition active:scale-95 whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-paper-300 bg-white hover:bg-paper-50 px-4 py-2.5 text-sm font-bold text-ink-800 shadow-2xs transition active:scale-95 whitespace-nowrap min-h-[42px]"
             title="Create a new house project"
           >
             <Building2 className="h-4 w-4 text-clay-600 shrink-0" />
-            <span className="whitespace-nowrap">{language === "te" ? "+ కొత్త ఇల్లు" : "+ New House"}</span>
+            <span className="whitespace-nowrap">+ New House</span>
           </Link>
 
           <Link
             href="/expenses/new"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 hover:bg-clay-700 px-5 py-2.5 text-sm font-bold text-white shadow-xs transition active:scale-95 whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 hover:bg-clay-700 px-4 py-2.5 text-sm font-bold text-white shadow-xs transition active:scale-95 whitespace-nowrap min-h-[42px]"
           >
             <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
-            <span className="whitespace-nowrap">{t.nav?.addExpense ?? "+ Add Expense"}</span>
+            <span className="whitespace-nowrap">+ Add Expense</span>
           </Link>
         </div>
       </div>
