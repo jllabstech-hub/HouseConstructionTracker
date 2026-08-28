@@ -322,17 +322,17 @@ export function ExpenseForm({
   // SUCCESS BANNER STATE (ZERO REDIRECT, 1-TAP CONTINUOUS LOGGING)
   if (savedSuccess) {
     return (
-      <div className="max-w-xl mx-auto py-8">
-        <div className="rounded-3xl border border-emerald-200 bg-white p-6 sm:p-8 shadow-xs text-center space-y-6">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-            <CheckCircle2 className="h-10 w-10" />
+      <div className="max-w-xl mx-auto py-4 sm:py-8 px-1">
+        <div className="rounded-2xl sm:rounded-3xl border border-emerald-200 bg-white p-5 sm:p-8 shadow-xs text-center space-y-4 sm:space-y-6">
+          <div className="mx-auto flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+            <CheckCircle2 className="h-7 w-7 sm:h-10 sm:w-10" />
           </div>
 
-          <div className="space-y-1.5">
-            <h2 className="font-display text-xl sm:text-2xl font-bold text-ink-900">
+          <div className="space-y-1">
+            <h2 className="font-display text-lg sm:text-2xl font-bold text-ink-900">
               {language === "te" ? "ఖర్చు విజయవంతంగా నమోదైంది!" : "Expense Recorded Successfully!"}
             </h2>
-            <p className="font-display text-2xl font-bold text-clay-700">
+            <p className="font-display text-xl sm:text-2xl font-bold text-clay-700">
               {formatINR(savedSuccess.amount)}
             </p>
             <p className="text-xs text-ink-500 font-medium">
@@ -341,19 +341,18 @@ export function ExpenseForm({
           </div>
 
           {/* Quick Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <div className="flex flex-col gap-2.5 pt-1 sm:pt-2">
             <button
               type="button"
               onClick={handleAddAnother}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-5 py-3 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 sm:py-3 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition"
             >
-              <Plus className="h-4 w-4 stroke-[2.5]" />
-              <span>{language === "te" ? "+ ఇంకో ఖర్చు నమోదు" : "+ Add Another"}</span>
+              <span>{language === "te" ? "ఇంకో ఖర్చు నమోదు" : "Add Another Expense"}</span>
             </button>
 
             <Link
               href={`/expenses/${savedSuccess.id}`}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-paper-300 bg-white px-5 py-3 text-sm font-bold text-ink-800 hover:bg-paper-50 active:scale-95 transition shadow-2xs"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-paper-300 bg-white px-5 py-2.5 sm:py-3 text-sm font-bold text-ink-800 hover:bg-paper-50 active:scale-95 transition shadow-2xs"
             >
               <span>{language === "te" ? "ఖర్చు వివరాలు" : "View Expense"}</span>
               <ArrowRight className="h-4 w-4" />
@@ -361,7 +360,7 @@ export function ExpenseForm({
 
             <Link
               href="/expenses"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-transparent px-4 py-3 text-xs font-semibold text-ink-600 hover:text-ink-900 transition"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-transparent px-4 py-2 text-xs font-semibold text-ink-600 hover:text-ink-900 transition"
             >
               <span>{language === "te" ? "అన్ని ఖర్చులు" : "All Expenses"}</span>
             </Link>
