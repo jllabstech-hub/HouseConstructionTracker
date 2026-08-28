@@ -8,7 +8,6 @@ import {
   ChevronDown,
   FileText,
   Files,
-  Globe,
   HardHat,
   Home,
   LogOut,
@@ -47,7 +46,7 @@ export function AppShell({
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [, start] = useTransition();
-  const { language, setLanguage, toggleLanguage, t } = useLanguage();
+  const { language, t } = useLanguage();
 
   // Keyboard shortcut: Ctrl+K / Cmd+K to open global search
   useEffect(() => {
@@ -113,17 +112,6 @@ export function AppShell({
             aria-label="Search"
           >
             <Search className="h-4 w-4 text-clay-600" />
-          </button>
-
-          {/* Language Toggle Button */}
-          <button
-            type="button"
-            onClick={toggleLanguage}
-            className="flex h-10 items-center gap-1 rounded-xl border border-paper-300 bg-paper-50 px-2.5 text-xs font-bold text-ink-700 hover:bg-paper-100 transition active:scale-95 shadow-2xs"
-            title="Change language / భాష మార్చండి"
-          >
-            <Globe className="h-3.5 w-3.5 text-clay-600" />
-            <span>{language === "en" ? "తెలుగు" : "EN"}</span>
           </button>
 
           {/* More Menu Toggle */}
@@ -251,42 +239,8 @@ export function AppShell({
             })}
           </nav>
 
-          {/* Desktop Footer (Language Toggle + User info + Sign Out) */}
+          {/* Desktop Footer (User info + Sign Out) */}
           <div className="pt-3 border-t border-paper-200/80 space-y-2">
-            {/* Language Switcher */}
-            <div className="flex items-center justify-between rounded-xl bg-paper-100 p-1 border border-paper-200">
-              <span className="text-[10px] font-bold text-ink-500 uppercase tracking-wider pl-1.5 flex items-center gap-1">
-                <Globe className="h-3 w-3 text-clay-600" />
-                <span>Lang:</span>
-              </span>
-              <div className="flex gap-0.5">
-                <button
-                  type="button"
-                  onClick={() => setLanguage("en")}
-                  className={cn(
-                    "rounded-lg px-2 py-0.5 text-[11px] font-bold transition",
-                    language === "en"
-                      ? "bg-white text-clay-700 shadow-2xs"
-                      : "text-ink-600 hover:text-ink-900"
-                  )}
-                >
-                  EN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLanguage("te")}
-                  className={cn(
-                    "rounded-lg px-2 py-0.5 text-[11px] font-bold transition",
-                    language === "te"
-                      ? "bg-clay-600 text-white shadow-2xs"
-                      : "text-ink-600 hover:text-ink-900"
-                  )}
-                >
-                  తెలుగు
-                </button>
-              </div>
-            </div>
-
             {/* User Profile + Logout */}
             <div className="flex items-center justify-between px-1.5 py-1">
               <div className="min-w-0 flex items-center gap-2">
@@ -556,40 +510,6 @@ export function AppShell({
               >
                 <X className="h-5 w-5" />
               </button>
-            </div>
-
-            {/* Mobile Language Switcher */}
-            <div className="flex items-center justify-between rounded-xl bg-paper-100 p-2 border border-paper-200">
-              <span className="flex items-center gap-1.5 text-xs font-bold text-ink-700">
-                <Globe className="h-4 w-4 text-clay-600" />
-                {language === "te" ? "భాష ఎంచుకోండి" : "Select Language"}:
-              </span>
-              <div className="flex gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setLanguage("en")}
-                  className={cn(
-                    "rounded-lg px-3 py-1 text-xs font-bold transition",
-                    language === "en"
-                      ? "bg-white text-clay-700 shadow-xs"
-                      : "text-ink-600 hover:text-ink-900"
-                  )}
-                >
-                  English
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLanguage("te")}
-                  className={cn(
-                    "rounded-lg px-3 py-1 text-xs font-bold transition",
-                    language === "te"
-                      ? "bg-clay-600 text-white shadow-xs"
-                      : "text-ink-600 hover:text-ink-900"
-                  )}
-                >
-                  తెలుగు
-                </button>
-              </div>
             </div>
 
             {/* Secondary Navigation Grid */}

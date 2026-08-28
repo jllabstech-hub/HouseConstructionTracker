@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext } from "react";
 import { Language, TRANSLATIONS, getStageLocalized } from "@/lib/i18n/translations";
 
 type LanguageContextType = {
@@ -14,38 +14,12 @@ type LanguageContextType = {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguageState] = useState<Language>("en");
-
-  useEffect(() => {
-    try {
-      const savedLang = localStorage.getItem("app_language") as Language | null;
-      if (savedLang === "te" || savedLang === "en") {
-        setLanguageState(savedLang);
-        document.documentElement.lang = savedLang;
-      }
-    } catch {
-      // ignore localStorage error if restricted
-    }
-  }, []);
-
-  const setLanguage = (lang: Language) => {
-    setLanguageState(lang);
-    try {
-      localStorage.setItem("app_language", lang);
-      document.documentElement.lang = lang;
-    } catch {
-      // ignore
-    }
-  };
-
-  const toggleLanguage = () => {
-    setLanguage(language === "en" ? "te" : "en");
-  };
-
-  const t = TRANSLATIONS[language] || TRANSLATIONS.en;
-
+  const language: Language = "en";
+  const setLanguage = () => {};
+  const toggleLanguage = () => {};
+  const t = TRANSLATIONS.en;
   const getStageName = (stageName: string, short: boolean = false) => {
-    return getStageLocalized(stageName, language, short);
+    return getStageLocalized(stageName, "en", short);
   };
 
   return (
@@ -66,7 +40,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (!context) {
-    // Return fallback if rendered outside provider
     return {
       language: "en" as Language,
       setLanguage: () => {},
