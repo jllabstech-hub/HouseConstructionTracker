@@ -8,7 +8,9 @@ import {
   updateProjectBudget,
   deleteCategoryBudget,
 } from "@/lib/actions/budget";
+import { createMaterialCategory, createLabourCategory } from "@/lib/actions/masters";
 import { formatINR, formatINRCompact } from "@/lib/money";
+import { QUICK_MATERIAL_PRESETS, QUICK_LABOUR_PRESETS } from "@/lib/catalog/category-constants";
 import { cn } from "@/lib/utils";
 import {
   Building2,
@@ -22,6 +24,7 @@ import {
   Wrench,
   UserCheck,
   MoreHorizontal,
+  Plus,
 } from "lucide-react";
 
 type CategoryOption = { id: string; name: string; groupName?: string | null };
@@ -64,9 +67,60 @@ export function BudgetEditor({
   const [categoryAmount, setCategoryAmount] = useState("");
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  // Dynamic Category Lists
+  const [materialsList, setMaterialsList] = useState<CategoryOption[]>(materials);
+  const [laboursList, setLaboursList] = useState<CategoryOption[]>(labours);
+
+  // Inline Category Creation
+  const [showNewCatModal, setShowNewCatModal] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [isCreatingCat, setIsCreatingCat] = useState(false);
+
   const showSuccess = (msg: string) => {
     setSuccessMessage(msg);
     setTimeout(() => setSuccessMessage(null), 3000);
+  };
+
+  const handleCreateNewCategory = async (nameToCreate?: string) => {
+    const name = (nameToCreate ?? newCatName).trim();
+    if (!name) return;
+    setIsCreatingCat(true);
+    try {
+      if (categoryType === "MATERIAL") {
+        const res = await createMaterialCategory({ name, groupName: "Custom" });
+        if (res.ok && res.category) {
+          const newCat = res.category;
+          setMaterialsList((prev) => (prev.some((c) => c.id === newCat.id) ? prev : [...prev, newCat]));
+          setSelectedCategoryId(newCat.id);
+          setNewCatName("");
+          setShowNewCatModal(false);
+        }
+      } else {
+        const res = await createLabourCategory({ name, groupName: "Custom" });
+        if (res.ok && res.category) {
+          const newCat = res.category;
+          setLaboursList((prev) => (prev.some((c) => c.id === newCat.id) ? prev : [...prev, newCat]));
+          setSelectedCategoryId(newCat.id);
+          setNewCatName("");
+          setShowNewCatModal(false);
+        }
+      }
+    } finally {
+      setIsCreatingCat(false);
+    }
+  };
+
+  const handleSelectPreset = async (presetName: string) => {
+    const list = categoryType === "MATERIAL" ? materialsList : laboursList;
+    const cleanPrefix = presetName.toLowerCase().split("/")[0].split("&")[0].trim();
+    const existing = list.find(
+      (c) => c.name.toLowerCase() === presetName.toLowerCase() || c.name.toLowerCase().includes(cleanPrefix)
+    );
+    if (existing) {
+      setSelectedCategoryId(existing.id);
+    } else {
+      await handleCreateNewCategory(presetName);
+    }
   };
 
   const handleTotalSubmit = (e: React.FormEvent) => {
@@ -106,7 +160,7 @@ export function BudgetEditor({
     });
   };
 
-  const activeCategories = categoryType === "MATERIAL" ? materials : labours;
+  const activeCategories = categoryType === "MATERIAL" ? materialsList : laboursList;
 
   return (
     <div className="space-y-5">
@@ -401,22 +455,110 @@ export function BudgetEditor({
               </div>
 
               {/* Category Select */}
-              <div>
-                <label className="block text-xs font-bold text-stone-800 mb-1.5">
-                  Select Category <span className="text-red-500">*</span>
-                </label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-stone-800">
+                    Select Category <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewCatModal((prev) => !prev)}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>+ Add New Category</span>
+                  </button>
+                </div>
+
+                {/* Major Quick Preset Chips */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {(categoryType === "MATERIAL" ? QUICK_MATERIAL_PRESETS : QUICK_LABOUR_PRESETS).map((preset) => {
+                    const currentCat = activeCategories.find((c) => c.id === selectedCategoryId);
+                    const cleanPrefix = preset.toLowerCase().split("/")[0].split("&")[0].trim();
+                    const isSelected = currentCat?.name.toLowerCase().includes(cleanPrefix);
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => handleSelectPreset(preset)}
+                        className={cn(
+                          "rounded-xl px-2.5 py-1 text-[11px] font-bold whitespace-nowrap transition active:scale-95 border cursor-pointer shrink-0",
+                          isSelected
+                            ? "bg-clay-600 text-white border-clay-600 shadow-xs"
+                            : "bg-paper-50 text-stone-700 border-paper-300 hover:bg-paper-100 hover:border-paper-400"
+                        )}
+                      >
+                        {preset}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Inline Custom Category Creator */}
+                {showNewCatModal && (
+                  <div className="p-3 rounded-2xl bg-clay-50/80 border border-clay-200 space-y-2 animate-in fade-in zoom-in-95 duration-150">
+                    <label className="text-xs font-bold text-clay-900 block">
+                      Add Custom {categoryType === "MATERIAL" ? "Material" : "Labour"} Category
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newCatName}
+                        onChange={(e) => setNewCatName(e.target.value)}
+                        placeholder="e.g. Solar Panels, False Ceiling, Borewell"
+                        className="flex-1 rounded-xl border border-paper-300 bg-white px-3 py-2 text-xs font-medium text-stone-900 placeholder:text-stone-400 focus:border-clay-500 focus:outline-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCreateNewCategory();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        disabled={isCreatingCat || !newCatName.trim()}
+                        onClick={() => handleCreateNewCategory()}
+                        className="rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-clay-700 disabled:opacity-50 transition shrink-0 cursor-pointer"
+                      >
+                        {isCreatingCat ? "Saving..." : "Save & Select"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewCatModal(false);
+                          setNewCatName("");
+                        }}
+                        className="rounded-xl border border-paper-300 bg-white px-2.5 py-2 text-xs font-bold text-stone-600 hover:bg-paper-100 transition shrink-0 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <select
                   required
                   value={selectedCategoryId}
-                  onChange={(e) => setSelectedCategoryId(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value === "__NEW__") {
+                      setShowNewCatModal(true);
+                    } else {
+                      setSelectedCategoryId(e.target.value);
+                    }
+                  }}
                   className="w-full rounded-xl border border-paper-300 bg-paper-50/60 px-3.5 py-2.5 text-xs font-bold text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 >
                   <option value="">-- Choose a category --</option>
-                  {activeCategories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} {c.groupName ? `(${c.groupName})` : ""}
-                    </option>
-                  ))}
+                  <optgroup label="Available Categories">
+                    {activeCategories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name} {c.groupName && c.groupName !== "Custom" ? `(${c.groupName})` : ""}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="__NEW__" className="font-bold text-clay-700">
+                    + Add New Custom Category...
+                  </option>
                 </select>
               </div>
 

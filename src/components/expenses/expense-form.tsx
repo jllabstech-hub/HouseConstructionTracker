@@ -17,14 +17,16 @@ import {
 } from "lucide-react";
 import { saveExpense, deleteExpense } from "@/lib/actions/expenses";
 import { uploadReceipt } from "@/lib/actions/receipts";
+import { createMaterialCategory, createLabourCategory } from "@/lib/actions/masters";
 import { computeLabourAmount, computeMaterialAmount } from "@/lib/finance/aggregations";
 import { formatINR, parseMoneyInput } from "@/lib/money";
 import { getMaterialPreset } from "@/lib/catalog/expense-presets";
+import { QUICK_MATERIAL_PRESETS, QUICK_LABOUR_PRESETS } from "@/lib/catalog/category-constants";
 import { FileDropzone } from "@/components/ui/file-dropzone";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 
-type Option = { id: string; name: string; groupName?: string; type?: string; phone?: string | null };
+type Option = { id: string; name: string; groupName?: string | null; type?: string; phone?: string | null };
 type ExpenseKind = "MATERIAL" | "LABOUR" | "OTHER";
 
 const UNITS = [
@@ -82,6 +84,19 @@ export function ExpenseForm({
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Dynamic Category Lists (allows immediate on-the-fly additions)
+  const [materialsList, setMaterialsList] = useState<Option[]>(materials);
+  const [laboursList, setLaboursList] = useState<Option[]>(labours);
+
+  // On-the-fly Category Creation States
+  const [showNewMaterialModal, setShowNewMaterialModal] = useState(false);
+  const [newMaterialName, setNewMaterialName] = useState("");
+  const [isCreatingMaterial, setIsCreatingMaterial] = useState(false);
+
+  const [showNewLabourModal, setShowNewLabourModal] = useState(false);
+  const [newLabourName, setNewLabourName] = useState("");
+  const [isCreatingLabour, setIsCreatingLabour] = useState(false);
 
   // Success State for 15-second fast continuous recording
   const [savedSuccess, setSavedSuccess] = useState<{ id: string; amount: number; title: string } | null>(null);
@@ -193,24 +208,108 @@ export function ExpenseForm({
   // Auto-set description and default unit when Material category changes
   const handleMaterialCategoryChange = (catId: string) => {
     setMaterialCategory(catId);
-    const cat = materials.find((m) => m.id === catId);
+    const cat = materialsList.find((m) => m.id === catId);
     if (cat) {
       const preset = getMaterialPreset(cat.name);
       if (preset.defaultUnit) setUnit(preset.defaultUnit);
-      if (!description || materials.some((m) => m.name === description)) {
+      if (!description || materialsList.some((m) => m.name === description)) {
         setDescription(cat.name);
       }
+    }
+  };
+
+  // Create new custom Material Category on the fly
+  const handleCreateNewMaterialCategory = async (nameToCreate?: string) => {
+    const name = (nameToCreate ?? newMaterialName).trim();
+    if (!name) return;
+    setIsCreatingMaterial(true);
+    setError(null);
+    try {
+      const res = await createMaterialCategory({ name, groupName: "Custom" });
+      if (res.ok && res.category) {
+        const newCat = res.category;
+        setMaterialsList((prev) => {
+          if (prev.some((c) => c.id === newCat.id)) return prev;
+          return [...prev, newCat];
+        });
+        handleMaterialCategoryChange(newCat.id);
+        setNewMaterialName("");
+        setShowNewMaterialModal(false);
+      } else if (res.error) {
+        setError(res.error);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create category");
+    } finally {
+      setIsCreatingMaterial(false);
+    }
+  };
+
+  // Quick Preset Chip Click for Material
+  const handleSelectMaterialPreset = async (presetName: string) => {
+    const cleanPrefix = presetName.toLowerCase().split("/")[0].trim();
+    const existing = materialsList.find(
+      (m) =>
+        m.name.toLowerCase() === presetName.toLowerCase() ||
+        m.name.toLowerCase().includes(cleanPrefix)
+    );
+    if (existing) {
+      handleMaterialCategoryChange(existing.id);
+    } else {
+      await handleCreateNewMaterialCategory(presetName);
     }
   };
 
   // Auto-set description when Labour category changes
   const handleLabourCategoryChange = (catId: string) => {
     setLabourCategory(catId);
-    const cat = labours.find((l) => l.id === catId);
+    const cat = laboursList.find((l) => l.id === catId);
     if (cat) {
-      if (!description || labours.some((l) => l.name === description)) {
+      if (!description || laboursList.some((l) => l.name === description)) {
         setDescription(cat.name);
       }
+    }
+  };
+
+  // Create new custom Labour Category on the fly
+  const handleCreateNewLabourCategory = async (nameToCreate?: string) => {
+    const name = (nameToCreate ?? newLabourName).trim();
+    if (!name) return;
+    setIsCreatingLabour(true);
+    setError(null);
+    try {
+      const res = await createLabourCategory({ name, groupName: "Custom" });
+      if (res.ok && res.category) {
+        const newCat = res.category;
+        setLaboursList((prev) => {
+          if (prev.some((c) => c.id === newCat.id)) return prev;
+          return [...prev, newCat];
+        });
+        handleLabourCategoryChange(newCat.id);
+        setNewLabourName("");
+        setShowNewLabourModal(false);
+      } else if (res.error) {
+        setError(res.error);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create category");
+    } finally {
+      setIsCreatingLabour(false);
+    }
+  };
+
+  // Quick Preset Chip Click for Labour
+  const handleSelectLabourPreset = async (presetName: string) => {
+    const cleanPrefix = presetName.toLowerCase().split("&")[0].trim();
+    const existing = laboursList.find(
+      (l) =>
+        l.name.toLowerCase() === presetName.toLowerCase() ||
+        l.name.toLowerCase().includes(cleanPrefix)
+    );
+    if (existing) {
+      handleLabourCategoryChange(existing.id);
+    } else {
+      await handleCreateNewLabourCategory(presetName);
     }
   };
 
@@ -252,7 +351,7 @@ export function ExpenseForm({
     let title = "Expense";
 
     if (type === "MATERIAL") {
-      const cat = materials.find((m) => m.id === materialCategory);
+      const cat = materialsList.find((m) => m.id === materialCategory);
       title = description.trim() || cat?.name || "Material";
       payload.materialCategoryId = materialCategory;
       payload.description = title;
@@ -261,7 +360,7 @@ export function ExpenseForm({
       payload.rate = rate || null;
       payload.vendorId = vendorId || null;
     } else if (type === "LABOUR") {
-      const cat = labours.find((l) => l.id === labourCategory);
+      const cat = laboursList.find((l) => l.id === labourCategory);
       title = description.trim() || cat?.name || "Labour";
       payload.labourCategoryId = labourCategory;
       payload.description = title;
@@ -499,23 +598,110 @@ export function ExpenseForm({
           {/* ================= IF MATERIAL ================= */}
           {type === "MATERIAL" && (
             <>
-              {/* Material Category Select */}
-              <div>
-                <label htmlFor="material-category-select" className="text-xs font-bold text-ink-700 block mb-1.5">
-                  Material Category
-                </label>
+              {/* Material Category Select & Quick Major Pills */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="material-category-select" className="text-xs font-bold text-ink-700">
+                    Material Category
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewMaterialModal((prev) => !prev)}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>+ Add New Category</span>
+                  </button>
+                </div>
+
+                {/* Major Quick Preset Chips */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {QUICK_MATERIAL_PRESETS.map((preset) => {
+                    const currentCat = materialsList.find((m) => m.id === materialCategory);
+                    const isSelected = currentCat?.name.toLowerCase().includes(preset.toLowerCase().split("/")[0].trim());
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => handleSelectMaterialPreset(preset)}
+                        className={cn(
+                          "rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap transition active:scale-95 border cursor-pointer shrink-0",
+                          isSelected
+                            ? "bg-clay-600 text-white border-clay-600 shadow-xs"
+                            : "bg-paper-50 text-ink-700 border-paper-300 hover:bg-paper-100 hover:border-paper-400"
+                        )}
+                      >
+                        {preset}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Inline Custom Category Creator */}
+                {showNewMaterialModal && (
+                  <div className="p-3 rounded-2xl bg-clay-50/80 border border-clay-200 space-y-2 animate-in fade-in zoom-in-95 duration-150">
+                    <label className="text-xs font-bold text-clay-900 block">
+                      Add Custom Material Category
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newMaterialName}
+                        onChange={(e) => setNewMaterialName(e.target.value)}
+                        placeholder="e.g. Solar Panels, UPVC Windows, Water Meter"
+                        className="flex-1 rounded-xl border border-paper-300 bg-white px-3 py-2 text-xs font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCreateNewMaterialCategory();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        disabled={isCreatingMaterial || !newMaterialName.trim()}
+                        onClick={() => handleCreateNewMaterialCategory()}
+                        className="rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-clay-700 disabled:opacity-50 transition shrink-0 cursor-pointer"
+                      >
+                        {isCreatingMaterial ? "Saving..." : "Save & Select"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewMaterialModal(false);
+                          setNewMaterialName("");
+                        }}
+                        className="rounded-xl border border-paper-300 bg-white px-2.5 py-2 text-xs font-bold text-ink-600 hover:bg-paper-100 transition shrink-0 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <select
                   id="material-category-select"
                   aria-label="Material category"
                   value={materialCategory}
-                  onChange={(e) => handleMaterialCategoryChange(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value === "__NEW__") {
+                      setShowNewMaterialModal(true);
+                    } else {
+                      handleMaterialCategoryChange(e.target.value);
+                    }
+                  }}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                 >
-                  {materials.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
+                  <optgroup label="Available Categories">
+                    {materialsList.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name} {m.groupName && m.groupName !== "Custom" ? `(${m.groupName})` : ""}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="__NEW__" className="font-bold text-clay-700">
+                    + Add New Custom Category...
+                  </option>
                 </select>
               </div>
 
@@ -614,23 +800,111 @@ export function ExpenseForm({
           {/* ================= IF LABOUR ================= */}
           {type === "LABOUR" && (
             <>
-              {/* Labour Category Select */}
-              <div>
-                <label htmlFor="labour-category-select" className="text-xs font-bold text-ink-700 block mb-1.5">
-                  Labour Category
-                </label>
+              {/* Labour Category Select & Quick Major Pills */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="labour-category-select" className="text-xs font-bold text-ink-700">
+                    Labour Category
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewLabourModal((prev) => !prev)}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>+ Add New Category</span>
+                  </button>
+                </div>
+
+                {/* Major Quick Preset Chips */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                  {QUICK_LABOUR_PRESETS.map((preset) => {
+                    const currentCat = laboursList.find((l) => l.id === labourCategory);
+                    const cleanPrefix = preset.toLowerCase().split("&")[0].trim();
+                    const isSelected = currentCat?.name.toLowerCase().includes(cleanPrefix);
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => handleSelectLabourPreset(preset)}
+                        className={cn(
+                          "rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap transition active:scale-95 border cursor-pointer shrink-0",
+                          isSelected
+                            ? "bg-clay-600 text-white border-clay-600 shadow-xs"
+                            : "bg-paper-50 text-ink-700 border-paper-300 hover:bg-paper-100 hover:border-paper-400"
+                        )}
+                      >
+                        {preset}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Inline Custom Labour Category Creator */}
+                {showNewLabourModal && (
+                  <div className="p-3 rounded-2xl bg-clay-50/80 border border-clay-200 space-y-2 animate-in fade-in zoom-in-95 duration-150">
+                    <label className="text-xs font-bold text-clay-900 block">
+                      Add Custom Labour Category
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newLabourName}
+                        onChange={(e) => setNewLabourName(e.target.value)}
+                        placeholder="e.g. False Ceiling Labour, Borewell Drilling"
+                        className="flex-1 rounded-xl border border-paper-300 bg-white px-3 py-2 text-xs font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCreateNewLabourCategory();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        disabled={isCreatingLabour || !newLabourName.trim()}
+                        onClick={() => handleCreateNewLabourCategory()}
+                        className="rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-clay-700 disabled:opacity-50 transition shrink-0 cursor-pointer"
+                      >
+                        {isCreatingLabour ? "Saving..." : "Save & Select"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewLabourModal(false);
+                          setNewLabourName("");
+                        }}
+                        className="rounded-xl border border-paper-300 bg-white px-2.5 py-2 text-xs font-bold text-ink-600 hover:bg-paper-100 transition shrink-0 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <select
                   id="labour-category-select"
                   aria-label="Labour category"
                   value={labourCategory}
-                  onChange={(e) => handleLabourCategoryChange(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value === "__NEW__") {
+                      setShowNewLabourModal(true);
+                    } else {
+                      handleLabourCategoryChange(e.target.value);
+                    }
+                  }}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                 >
-                  {labours.map((l) => (
-                    <option key={l.id} value={l.id}>
-                      {l.name}
-                    </option>
-                  ))}
+                  <optgroup label="Available Categories">
+                    {laboursList.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name} {l.groupName && l.groupName !== "Custom" ? `(${l.groupName})` : ""}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <option value="__NEW__" className="font-bold text-clay-700">
+                    + Add New Custom Category...
+                  </option>
                 </select>
               </div>
 

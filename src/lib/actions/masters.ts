@@ -16,17 +16,34 @@ export async function createMaterialCategory(input: unknown) {
     const user = await requireUser();
     const parsed = categorySchema.safeParse(input);
     if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid category" };
-    await prisma.materialCategory.create({
-      data: {
+    
+    const name = parsed.data.name.trim();
+    const groupName = emptyToNull(parsed.data.groupName) ?? "Custom";
+
+    const existing = await prisma.materialCategory.findFirst({
+      where: {
         userId: user.id,
-        name: parsed.data.name,
-        groupName: emptyToNull(parsed.data.groupName) ?? "Custom",
+        name: { equals: name, mode: "insensitive" },
       },
     });
+
+    if (existing) {
+      return { ok: true, category: { id: existing.id, name: existing.name, groupName: existing.groupName } };
+    }
+
+    const created = await prisma.materialCategory.create({
+      data: {
+        userId: user.id,
+        name,
+        groupName,
+      },
+    });
+
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
-    return { ok: true };
+    revalidatePath("/expenses");
+    return { ok: true, category: { id: created.id, name: created.name, groupName: created.groupName } };
   } catch (err: unknown) {
     if (
       err &&
@@ -47,17 +64,34 @@ export async function createLabourCategory(input: unknown) {
     const user = await requireUser();
     const parsed = categorySchema.safeParse(input);
     if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid category" };
-    await prisma.labourCategory.create({
-      data: {
+    
+    const name = parsed.data.name.trim();
+    const groupName = emptyToNull(parsed.data.groupName) ?? "Custom";
+
+    const existing = await prisma.labourCategory.findFirst({
+      where: {
         userId: user.id,
-        name: parsed.data.name,
-        groupName: emptyToNull(parsed.data.groupName) ?? "Custom",
+        name: { equals: name, mode: "insensitive" },
       },
     });
+
+    if (existing) {
+      return { ok: true, category: { id: existing.id, name: existing.name, groupName: existing.groupName } };
+    }
+
+    const created = await prisma.labourCategory.create({
+      data: {
+        userId: user.id,
+        name,
+        groupName,
+      },
+    });
+
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
-    return { ok: true };
+    revalidatePath("/expenses");
+    return { ok: true, category: { id: created.id, name: created.name, groupName: created.groupName } };
   } catch (err: unknown) {
     if (
       err &&
