@@ -6,52 +6,31 @@ export async function ensureDatabaseSchema() {
   try {
     console.log("Ensuring database schema, enums and tables exist via idempotent DDL...");
 
-    // 1. Create Enums if not exist
-    await prisma.$executeRawUnsafe(`
-      DO $$ BEGIN
-        CREATE TYPE "Role" AS ENUM ('ADMIN', 'VIEWER');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
+    // 1. Create Enums if not exist (each inside its own DO block)
+    const ENUM_STATEMENTS = [
+      `DO $$ BEGIN CREATE TYPE "Role" AS ENUM ('ADMIN', 'VIEWER'); EXCEPTION WHEN duplicate_object THEN null; END $$;`,
+      `DO $$ BEGIN CREATE TYPE "ProjectStatus" AS ENUM ('PLANNING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED'); EXCEPTION WHEN duplicate_object THEN null; END $$;`,
+      `DO $$ BEGIN CREATE TYPE "StageStatus" AS ENUM ('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', 'ON_HOLD'); EXCEPTION WHEN duplicate_object THEN null; END $$;`,
+      `DO $$ BEGIN CREATE TYPE "ExpenseType" AS ENUM ('MATERIAL', 'LABOUR', 'SERVICE', 'EQUIPMENT', 'PROFESSIONAL', 'OTHER'); EXCEPTION WHEN duplicate_object THEN null; END $$;`,
+      `DO $$ BEGIN CREATE TYPE "PaymentMethod" AS ENUM ('CASH', 'UPI', 'NEFT_RTGS', 'CHEQUE', 'CREDIT_CARD', 'DEBIT_CARD', 'OTHER'); EXCEPTION WHEN duplicate_object THEN null; END $$;`,
+      `DO $$ BEGIN CREATE TYPE "WorkerType" AS ENUM ('MASON', 'BAR_BENDER', 'CARPENTER', 'PAINTER', 'PLUMBER', 'ELECTRICIAN', 'TILE_LAYER', 'CENTRING_WORKER', 'FABRICATOR', 'GENERAL_LABOUR', 'CONTRACTOR', 'OTHER'); EXCEPTION WHEN duplicate_object THEN null; END $$;`,
+      `DO $$ BEGIN CREATE TYPE "LabourCalcMethod" AS ENUM ('DAILY_WAGE', 'FIXED_CONTRACT', 'WORK_BASED'); EXCEPTION WHEN duplicate_object THEN null; END $$;`,
+      `DO $$ BEGIN CREATE TYPE "ReportType" AS ENUM ('TOTAL_EXPENDITURE', 'MATERIAL_EXPENDITURE', 'LABOUR_EXPENDITURE', 'CATEGORY_WISE', 'WORK_WISE', 'MONTHLY', 'BUDGET_VS_ACTUAL', 'CONSTRUCTION_STAGE', 'VENDOR', 'WORKER', 'PAYMENT_METHOD', 'FLOOR_WISE', 'CUSTOM_DATE_RANGE'); EXCEPTION WHEN duplicate_object THEN null; END $$;`,
+      `DO $$ BEGIN CREATE TYPE "OcrStatus" AS ENUM ('PENDING', 'SKIPPED', 'COMPLETED', 'FAILED'); EXCEPTION WHEN duplicate_object THEN null; END $$;`,
+      `DO $$ BEGIN CREATE TYPE "DocumentCategory" AS ENUM ('FLOOR_PLAN', 'STRUCTURAL', 'ELEVATION', 'MEP', 'APPROVAL', 'SITE_PHOTO', 'CONTRACT', 'OTHER'); EXCEPTION WHEN duplicate_object THEN null; END $$;`,
+    ];
 
-      DO $$ BEGIN
-        CREATE TYPE "ProjectStatus" AS ENUM ('PLANNING', 'IN_PROGRESS', 'ON_HOLD', 'COMPLETED', 'CANCELLED');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
+    for (const stmt of ENUM_STATEMENTS) {
+      try {
+        await prisma.$executeRawUnsafe(stmt);
+      } catch (err) {
+        console.warn("Enum DDL notice:", err);
+      }
+    }
 
-      DO $$ BEGIN
-        CREATE TYPE "StageStatus" AS ENUM ('NOT_STARTED', 'IN_PROGRESS', 'COMPLETED', 'ON_HOLD');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-      DO $$ BEGIN
-        CREATE TYPE "ExpenseType" AS ENUM ('MATERIAL', 'LABOUR', 'SERVICE', 'EQUIPMENT', 'PROFESSIONAL', 'OTHER');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-      DO $$ BEGIN
-        CREATE TYPE "PaymentMethod" AS ENUM ('CASH', 'UPI', 'NEFT_RTGS', 'CHEQUE', 'CREDIT_CARD', 'DEBIT_CARD', 'OTHER');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-      DO $$ BEGIN
-        CREATE TYPE "WorkerType" AS ENUM ('MASON', 'BAR_BENDER', 'CARPENTER', 'PAINTER', 'PLUMBER', 'ELECTRICIAN', 'TILE_LAYER', 'CENTRING_WORKER', 'FABRICATOR', 'GENERAL_LABOUR', 'CONTRACTOR', 'OTHER');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-      DO $$ BEGIN
-        CREATE TYPE "LabourCalcMethod" AS ENUM ('DAILY_WAGE', 'FIXED_CONTRACT', 'WORK_BASED');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-      DO $$ BEGIN
-        CREATE TYPE "ReportType" AS ENUM ('TOTAL_EXPENDITURE', 'MATERIAL_EXPENDITURE', 'LABOUR_EXPENDITURE', 'CATEGORY_WISE', 'WORK_WISE', 'MONTHLY', 'BUDGET_VS_ACTUAL', 'CONSTRUCTION_STAGE', 'VENDOR', 'WORKER', 'PAYMENT_METHOD', 'FLOOR_WISE', 'CUSTOM_DATE_RANGE');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-      DO $$ BEGIN
-        CREATE TYPE "OcrStatus" AS ENUM ('PENDING', 'SKIPPED', 'COMPLETED', 'FAILED');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-      DO $$ BEGIN
-        CREATE TYPE "DocumentCategory" AS ENUM ('FLOOR_PLAN', 'STRUCTURAL', 'ELEVATION', 'MEP', 'APPROVAL', 'SITE_PHOTO', 'CONTRACT', 'OTHER');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
-    `);
-
-    // 2. Create Tables
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS "User" (
+    // 2. Create Tables (each table executed as an individual SQL statement)
+    const TABLE_STATEMENTS = [
+      `CREATE TABLE IF NOT EXISTS "User" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "name" TEXT,
         "email" TEXT NOT NULL UNIQUE,
@@ -60,9 +39,9 @@ export async function ensureDatabaseSchema() {
         "passwordHash" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "Account" (
+      `CREATE TABLE IF NOT EXISTS "Account" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
         "type" TEXT NOT NULL,
@@ -76,23 +55,23 @@ export async function ensureDatabaseSchema() {
         "id_token" TEXT,
         "session_state" TEXT,
         UNIQUE ("provider", "providerAccountId")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "Session" (
+      `CREATE TABLE IF NOT EXISTS "Session" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "sessionToken" TEXT NOT NULL UNIQUE,
         "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
         "expires" TIMESTAMP(3) NOT NULL
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "VerificationToken" (
+      `CREATE TABLE IF NOT EXISTS "VerificationToken" (
         "identifier" TEXT NOT NULL,
         "token" TEXT NOT NULL UNIQUE,
         "expires" TIMESTAMP(3) NOT NULL,
         UNIQUE ("identifier", "token")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "Project" (
+      `CREATE TABLE IF NOT EXISTS "Project" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -108,9 +87,9 @@ export async function ensureDatabaseSchema() {
         "notes" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "Floor" (
+      `CREATE TABLE IF NOT EXISTS "Floor" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -118,9 +97,9 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("projectId", "name")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "ConstructionStage" (
+      `CREATE TABLE IF NOT EXISTS "ConstructionStage" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -133,9 +112,9 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("projectId", "name")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "MaterialCategory" (
+      `CREATE TABLE IF NOT EXISTS "MaterialCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -146,9 +125,9 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("projectId", "groupName", "name")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "MaterialSubcategory" (
+      `CREATE TABLE IF NOT EXISTS "MaterialSubcategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "categoryId" TEXT NOT NULL REFERENCES "MaterialCategory"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -156,9 +135,9 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("categoryId", "name")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "LabourCategory" (
+      `CREATE TABLE IF NOT EXISTS "LabourCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -169,9 +148,9 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("projectId", "groupName", "name")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "LabourSubcategory" (
+      `CREATE TABLE IF NOT EXISTS "LabourSubcategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "categoryId" TEXT NOT NULL REFERENCES "LabourCategory"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -179,9 +158,9 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("categoryId", "name")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "ServiceCategory" (
+      `CREATE TABLE IF NOT EXISTS "ServiceCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -190,9 +169,9 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("projectId", "name")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "EquipmentCategory" (
+      `CREATE TABLE IF NOT EXISTS "EquipmentCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -201,9 +180,9 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("projectId", "name")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "ProfessionalCategory" (
+      `CREATE TABLE IF NOT EXISTS "ProfessionalCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -212,9 +191,9 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("projectId", "name")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "Vendor" (
+      `CREATE TABLE IF NOT EXISTS "Vendor" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -225,9 +204,9 @@ export async function ensureDatabaseSchema() {
         "notes" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "Worker" (
+      `CREATE TABLE IF NOT EXISTS "Worker" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -237,9 +216,9 @@ export async function ensureDatabaseSchema() {
         "notes" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "WorkArea" (
+      `CREATE TABLE IF NOT EXISTS "WorkArea" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
@@ -247,23 +226,23 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("projectId", "name")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "WorkAreaMaterial" (
+      `CREATE TABLE IF NOT EXISTS "WorkAreaMaterial" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "workAreaId" TEXT NOT NULL REFERENCES "WorkArea"("id") ON DELETE CASCADE,
         "categoryId" TEXT NOT NULL REFERENCES "MaterialCategory"("id") ON DELETE CASCADE,
         UNIQUE ("workAreaId", "categoryId")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "WorkAreaLabour" (
+      `CREATE TABLE IF NOT EXISTS "WorkAreaLabour" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "workAreaId" TEXT NOT NULL REFERENCES "WorkArea"("id") ON DELETE CASCADE,
         "categoryId" TEXT NOT NULL REFERENCES "LabourCategory"("id") ON DELETE CASCADE,
         UNIQUE ("workAreaId", "categoryId")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "Expense" (
+      `CREATE TABLE IF NOT EXISTS "Expense" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "date" DATE NOT NULL,
@@ -299,9 +278,9 @@ export async function ensureDatabaseSchema() {
         "workArea" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "Budget" (
+      `CREATE TABLE IF NOT EXISTS "Budget" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "expenseType" "ExpenseType" NOT NULL,
@@ -310,9 +289,9 @@ export async function ensureDatabaseSchema() {
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         UNIQUE ("projectId", "expenseType")
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "BudgetCategory" (
+      `CREATE TABLE IF NOT EXISTS "BudgetCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "expenseType" "ExpenseType" NOT NULL,
@@ -324,9 +303,9 @@ export async function ensureDatabaseSchema() {
         "professionalCategoryId" TEXT REFERENCES "ProfessionalCategory"("id") ON DELETE SET NULL,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "Receipt" (
+      `CREATE TABLE IF NOT EXISTS "Receipt" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "expenseId" TEXT NOT NULL REFERENCES "Expense"("id") ON DELETE CASCADE,
         "fileName" TEXT NOT NULL,
@@ -346,9 +325,9 @@ export async function ensureDatabaseSchema() {
         "ocrRawJson" JSONB,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "Report" (
+      `CREATE TABLE IF NOT EXISTS "Report" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "type" "ReportType" NOT NULL,
@@ -359,9 +338,9 @@ export async function ensureDatabaseSchema() {
         "lastGeneratedAt" TIMESTAMP(3),
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
+      );`,
 
-      CREATE TABLE IF NOT EXISTS "ProjectDocument" (
+      `CREATE TABLE IF NOT EXISTS "ProjectDocument" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "category" "DocumentCategory" NOT NULL DEFAULT 'FLOOR_PLAN',
@@ -378,128 +357,111 @@ export async function ensureDatabaseSchema() {
         "isPinned" BOOLEAN NOT NULL DEFAULT false,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
+      );`,
+    ];
 
-    // 2b. Migrate existing category tables from userId to projectId if needed
-    await prisma.$executeRawUnsafe(`
-      DO $$
+    for (const stmt of TABLE_STATEMENTS) {
+      try {
+        await prisma.$executeRawUnsafe(stmt);
+      } catch (err) {
+        console.warn("Table DDL notice:", err);
+      }
+    }
+
+    // 2b. Execute migration blocks (each in its own executeRawUnsafe call)
+    const MIGRATION_STATEMENTS = [
+      `DO $$
       BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='MaterialCategory' AND column_name='userId') THEN
           ALTER TABLE "MaterialCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          
-          UPDATE "MaterialCategory" mc
-          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = mc."userId" ORDER BY p."createdAt" ASC LIMIT 1)
-          WHERE mc."projectId" IS NULL;
-
+          UPDATE "MaterialCategory" mc SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = mc."userId" ORDER BY p."createdAt" ASC LIMIT 1) WHERE mc."projectId" IS NULL;
           DELETE FROM "MaterialCategory" WHERE "projectId" IS NULL;
-
-          DELETE FROM "MaterialCategory" a USING "MaterialCategory" b
-          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a."groupName" = b."groupName" AND a.name = b.name;
-
+          DELETE FROM "MaterialCategory" a USING "MaterialCategory" b WHERE a.id > b.id AND a."projectId" = b."projectId" AND a."groupName" = b."groupName" AND a.name = b.name;
           ALTER TABLE "MaterialCategory" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "MaterialCategory" DROP CONSTRAINT IF EXISTS "MaterialCategory_userId_groupName_name_key";
           ALTER TABLE "MaterialCategory" DROP COLUMN IF EXISTS "userId";
           ALTER TABLE "MaterialCategory" DROP CONSTRAINT IF EXISTS "MaterialCategory_projectId_groupName_name_key";
           ALTER TABLE "MaterialCategory" ADD CONSTRAINT "MaterialCategory_projectId_groupName_name_key" UNIQUE ("projectId", "groupName", "name");
         END IF;
+      END $$;`,
 
+      `DO $$
+      BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='LabourCategory' AND column_name='userId') THEN
           ALTER TABLE "LabourCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          
-          UPDATE "LabourCategory" lc
-          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = lc."userId" ORDER BY p."createdAt" ASC LIMIT 1)
-          WHERE lc."projectId" IS NULL;
-
+          UPDATE "LabourCategory" lc SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = lc."userId" ORDER BY p."createdAt" ASC LIMIT 1) WHERE lc."projectId" IS NULL;
           DELETE FROM "LabourCategory" WHERE "projectId" IS NULL;
-
-          DELETE FROM "LabourCategory" a USING "LabourCategory" b
-          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a."groupName" = b."groupName" AND a.name = b.name;
-
+          DELETE FROM "LabourCategory" a USING "LabourCategory" b WHERE a.id > b.id AND a."projectId" = b."projectId" AND a."groupName" = b."groupName" AND a.name = b.name;
           ALTER TABLE "LabourCategory" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "LabourCategory" DROP CONSTRAINT IF EXISTS "LabourCategory_userId_groupName_name_key";
           ALTER TABLE "LabourCategory" DROP COLUMN IF EXISTS "userId";
           ALTER TABLE "LabourCategory" DROP CONSTRAINT IF EXISTS "LabourCategory_projectId_groupName_name_key";
           ALTER TABLE "LabourCategory" ADD CONSTRAINT "LabourCategory_projectId_groupName_name_key" UNIQUE ("projectId", "groupName", "name");
         END IF;
+      END $$;`,
 
+      `DO $$
+      BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='ServiceCategory' AND column_name='userId') THEN
           ALTER TABLE "ServiceCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          
-          UPDATE "ServiceCategory" sc
-          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = sc."userId" ORDER BY p."createdAt" ASC LIMIT 1)
-          WHERE sc."projectId" IS NULL;
-
+          UPDATE "ServiceCategory" sc SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = sc."userId" ORDER BY p."createdAt" ASC LIMIT 1) WHERE sc."projectId" IS NULL;
           DELETE FROM "ServiceCategory" WHERE "projectId" IS NULL;
-
-          DELETE FROM "ServiceCategory" a USING "ServiceCategory" b
-          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
-
+          DELETE FROM "ServiceCategory" a USING "ServiceCategory" b WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
           ALTER TABLE "ServiceCategory" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "ServiceCategory" DROP CONSTRAINT IF EXISTS "ServiceCategory_userId_name_key";
           ALTER TABLE "ServiceCategory" DROP COLUMN IF EXISTS "userId";
           ALTER TABLE "ServiceCategory" DROP CONSTRAINT IF EXISTS "ServiceCategory_projectId_name_key";
           ALTER TABLE "ServiceCategory" ADD CONSTRAINT "ServiceCategory_projectId_name_key" UNIQUE ("projectId", "name");
         END IF;
+      END $$;`,
 
+      `DO $$
+      BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='EquipmentCategory' AND column_name='userId') THEN
           ALTER TABLE "EquipmentCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          
-          UPDATE "EquipmentCategory" ec
-          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = ec."userId" ORDER BY p."createdAt" ASC LIMIT 1)
-          WHERE ec."projectId" IS NULL;
-
+          UPDATE "EquipmentCategory" ec SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = ec."userId" ORDER BY p."createdAt" ASC LIMIT 1) WHERE ec."projectId" IS NULL;
           DELETE FROM "EquipmentCategory" WHERE "projectId" IS NULL;
-
-          DELETE FROM "EquipmentCategory" a USING "EquipmentCategory" b
-          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
-
+          DELETE FROM "EquipmentCategory" a USING "EquipmentCategory" b WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
           ALTER TABLE "EquipmentCategory" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "EquipmentCategory" DROP CONSTRAINT IF EXISTS "EquipmentCategory_userId_name_key";
           ALTER TABLE "EquipmentCategory" DROP COLUMN IF EXISTS "userId";
           ALTER TABLE "EquipmentCategory" DROP CONSTRAINT IF EXISTS "EquipmentCategory_projectId_name_key";
           ALTER TABLE "EquipmentCategory" ADD CONSTRAINT "EquipmentCategory_projectId_name_key" UNIQUE ("projectId", "name");
         END IF;
+      END $$;`,
 
+      `DO $$
+      BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='ProfessionalCategory' AND column_name='userId') THEN
           ALTER TABLE "ProfessionalCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          
-          UPDATE "ProfessionalCategory" pc
-          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = pc."userId" ORDER BY p."createdAt" ASC LIMIT 1)
-          WHERE pc."projectId" IS NULL;
-
+          UPDATE "ProfessionalCategory" pc SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = pc."userId" ORDER BY p."createdAt" ASC LIMIT 1) WHERE pc."projectId" IS NULL;
           DELETE FROM "ProfessionalCategory" WHERE "projectId" IS NULL;
-
-          DELETE FROM "ProfessionalCategory" a USING "ProfessionalCategory" b
-          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
-
+          DELETE FROM "ProfessionalCategory" a USING "ProfessionalCategory" b WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
           ALTER TABLE "ProfessionalCategory" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "ProfessionalCategory" DROP CONSTRAINT IF EXISTS "ProfessionalCategory_userId_name_key";
           ALTER TABLE "ProfessionalCategory" DROP COLUMN IF EXISTS "userId";
           ALTER TABLE "ProfessionalCategory" DROP CONSTRAINT IF EXISTS "ProfessionalCategory_projectId_name_key";
           ALTER TABLE "ProfessionalCategory" ADD CONSTRAINT "ProfessionalCategory_projectId_name_key" UNIQUE ("projectId", "name");
         END IF;
+      END $$;`,
 
+      `DO $$
+      BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='WorkArea' AND column_name='userId') THEN
           ALTER TABLE "WorkArea" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          
-          UPDATE "WorkArea" wa
-          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = wa."userId" ORDER BY p."createdAt" ASC LIMIT 1)
-          WHERE wa."projectId" IS NULL;
-
+          UPDATE "WorkArea" wa SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = wa."userId" ORDER BY p."createdAt" ASC LIMIT 1) WHERE wa."projectId" IS NULL;
           DELETE FROM "WorkArea" WHERE "projectId" IS NULL;
-
-          DELETE FROM "WorkArea" a USING "WorkArea" b
-          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
-
+          DELETE FROM "WorkArea" a USING "WorkArea" b WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
           ALTER TABLE "WorkArea" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "WorkArea" DROP CONSTRAINT IF EXISTS "WorkArea_userId_name_key";
           ALTER TABLE "WorkArea" DROP COLUMN IF EXISTS "userId";
           ALTER TABLE "WorkArea" DROP CONSTRAINT IF EXISTS "WorkArea_projectId_name_key";
           ALTER TABLE "WorkArea" ADD CONSTRAINT "WorkArea_projectId_name_key" UNIQUE ("projectId", "name");
         END IF;
+      END $$;`,
 
-        -- Expense column migrations
+      `DO $$
+      BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='Expense') THEN
           ALTER TABLE "Expense" ADD COLUMN IF NOT EXISTS "rate" DECIMAL(14,2);
           ALTER TABLE "Expense" ADD COLUMN IF NOT EXISTS "numberOfDays" DECIMAL(8,2);
@@ -527,8 +489,10 @@ export async function ensureDatabaseSchema() {
             UPDATE "Expense" SET "numberOfDays" = "daysWorked" WHERE "numberOfDays" IS NULL AND "daysWorked" IS NOT NULL;
           END IF;
         END IF;
+      END $$;`,
 
-        -- BudgetCategory column migrations
+      `DO $$
+      BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='BudgetCategory') THEN
           ALTER TABLE "BudgetCategory" ADD COLUMN IF NOT EXISTS "amount" DECIMAL(14,2);
           ALTER TABLE "BudgetCategory" ADD COLUMN IF NOT EXISTS "notes" TEXT;
@@ -541,15 +505,25 @@ export async function ensureDatabaseSchema() {
             UPDATE "BudgetCategory" SET "amount" = "allocatedAmount" WHERE "amount" IS NULL AND "allocatedAmount" IS NOT NULL;
           END IF;
         END IF;
+      END $$;`,
 
-        -- Budget column migrations
+      `DO $$
+      BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='Budget') THEN
           ALTER TABLE "Budget" ADD COLUMN IF NOT EXISTS "expenseType" "ExpenseType";
           ALTER TABLE "Budget" ADD COLUMN IF NOT EXISTS "amount" DECIMAL(14,2);
           ALTER TABLE "Budget" ADD COLUMN IF NOT EXISTS "notes" TEXT;
         END IF;
-      END $$;
-    `);
+      END $$;`,
+    ];
+
+    for (const stmt of MIGRATION_STATEMENTS) {
+      try {
+        await prisma.$executeRawUnsafe(stmt);
+      } catch (err) {
+        console.warn("Migration statement notice:", err);
+      }
+    }
 
     // 3. Ensure default Admin user exists
     const passwordHash = await bcrypt.hash("test123", 10);
