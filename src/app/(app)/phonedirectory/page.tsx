@@ -15,7 +15,7 @@ export default async function PhoneDirectoryPage() {
 
   if (cached) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 min-w-0 max-w-full">
         <MasterForms
           materials={cached.materials}
           labours={cached.labours}
@@ -56,7 +56,7 @@ export default async function PhoneDirectoryPage() {
   setCached(cacheKey, payload);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 max-w-full">
       <MasterForms
         materials={payload.materials}
         labours={payload.labours}

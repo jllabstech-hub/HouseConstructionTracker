@@ -243,7 +243,7 @@ export function MasterForms({
   const paginatedLabours = filteredLabours.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 max-w-full">
       {/* Top Header & Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-paper-200/80 pb-4">
         <div>
@@ -314,7 +314,7 @@ export function MasterForms({
       )}
 
       {/* Directory Tab Navigation */}
-      <div className="flex overflow-x-auto no-scrollbar gap-2 p-1.5 bg-paper-100/90 rounded-2xl border border-paper-200">
+      <div className="flex overflow-x-auto no-scrollbar gap-2 p-1.5 bg-paper-100/90 rounded-2xl border border-paper-200 min-w-0 max-w-full">
         {[
           { id: "VENDORS", label: "Shops & Vendors", count: effectiveVendors.length },
           { id: "WORKERS", label: "Workers & Masons", count: effectiveWorkers.length },
@@ -352,9 +352,9 @@ export function MasterForms({
 
       {/* 1. TAB: SHOPS & VENDORS */}
       {activeTab === "VENDORS" && (
-        <div className="grid gap-6 lg:grid-cols-3 items-start">
+        <div className="grid gap-6 lg:grid-cols-3 items-start min-w-0 max-w-full">
           {/* Shop List & Search */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 min-w-0 max-w-full">
             <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
               <div className="relative w-full">
                 <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
@@ -546,7 +546,7 @@ export function MasterForms({
           </div>
 
           {/* Add / Edit Shop Form */}
-          <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 sticky top-6">
+          <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 lg:sticky lg:top-6 min-w-0 max-w-full">
             <div className="flex items-center justify-between gap-2 border-b border-paper-100 pb-3">
               <div className="flex items-center gap-2">
                 <Store className="h-5 w-5 text-clay-600" />
@@ -694,9 +694,9 @@ export function MasterForms({
 
       {/* 2. TAB: WORKERS & MASONS */}
       {activeTab === "WORKERS" && (
-        <div className="grid gap-6 lg:grid-cols-3 items-start">
+        <div className="grid gap-6 lg:grid-cols-3 items-start min-w-0 max-w-full">
           {/* Worker List & Filters */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-4 min-w-0 max-w-full">
             <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
               <div className="relative w-full">
                 <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
@@ -729,7 +729,7 @@ export function MasterForms({
             </div>
 
             {/* Trade Filter Pills */}
-            <div className="flex overflow-x-auto no-scrollbar gap-1.5 pb-1">
+            <div className="flex overflow-x-auto no-scrollbar gap-1.5 pb-1 min-w-0 max-w-full">
               <button
                 type="button"
                 onClick={() => {
@@ -926,7 +926,7 @@ export function MasterForms({
           </div>
 
           {/* Add / Edit Worker Form */}
-          <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 sticky top-6">
+          <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 lg:sticky lg:top-6 min-w-0 max-w-full">
             <div className="flex items-center justify-between gap-2 border-b border-paper-100 pb-3">
               <div className="flex items-center gap-2">
                 <HardHat className="h-5 w-5 text-clay-600" />
@@ -975,7 +975,7 @@ export function MasterForms({
                   name="name"
                   required
                   defaultValue={editingWorker?.name ?? ""}
-                  placeholder="e.g. Ramana Mason / Sekhar Plumber"
+                  placeholder="e.g. Ramesh Mason / Shankar Plumber"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
@@ -986,9 +986,8 @@ export function MasterForms({
                 </label>
                 <select
                   name="type"
-                  required
                   defaultValue={editingWorker?.type ?? "MASON"}
-                  className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
+                  className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-bold text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 >
                   {WORKER_TYPES.map((wt) => (
                     <option key={wt.value} value={wt.value}>
@@ -1019,7 +1018,7 @@ export function MasterForms({
                   type="text"
                   name="specialization"
                   defaultValue={editingWorker?.specialization ?? ""}
-                  placeholder="e.g. Slab Concreting, Italian Marble, False Ceiling"
+                  placeholder="e.g. Slab Concreting / Italian Marble / False Ceiling"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
@@ -1032,7 +1031,7 @@ export function MasterForms({
                   name="notes"
                   rows={2}
                   defaultValue={editingWorker?.notes ?? ""}
-                  placeholder="e.g. Daily wage ₹850/day, PhonePe: 9876543210"
+                  placeholder="e.g. Daily wage ₹950/day, PhonePe: 9876543210"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
@@ -1063,8 +1062,8 @@ export function MasterForms({
 
       {/* 3. TAB: MATERIALS CATALOG */}
       {activeTab === "MATERIALS" && (
-        <div className="grid gap-6 lg:grid-cols-3 items-start">
-          <div className="lg:col-span-2 space-y-3">
+        <div className="grid gap-6 lg:grid-cols-3 items-start min-w-0 max-w-full">
+          <div className="lg:col-span-2 space-y-3 min-w-0 max-w-full">
             <div className="relative">
               <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
               <input
@@ -1101,7 +1100,7 @@ export function MasterForms({
           </div>
 
           {/* Add Material Category */}
-          <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 min-w-0 max-w-full">
             <div className="flex items-center gap-2">
               <Package className="h-5 w-5 text-clay-600" />
               <h3 className="font-bold text-ink-900 text-sm">Add Material Item</h3>
@@ -1150,8 +1149,8 @@ export function MasterForms({
 
       {/* 4. TAB: LABOUR TRADES */}
       {activeTab === "LABOURS" && (
-        <div className="grid gap-6 lg:grid-cols-3 items-start">
-          <div className="lg:col-span-2 space-y-3">
+        <div className="grid gap-6 lg:grid-cols-3 items-start min-w-0 max-w-full">
+          <div className="lg:col-span-2 space-y-3 min-w-0 max-w-full">
             <div className="relative">
               <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
               <input
@@ -1188,7 +1187,7 @@ export function MasterForms({
           </div>
 
           {/* Add Labour Category */}
-          <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 min-w-0 max-w-full">
             <div className="flex items-center gap-2">
               <Hammer className="h-5 w-5 text-clay-600" />
               <h3 className="font-bold text-ink-900 text-sm">Add Labour Trade</h3>
@@ -1237,8 +1236,8 @@ export function MasterForms({
 
       {/* 5. TAB: SERVICES & MACHINERY */}
       {activeTab === "SERVICES" && (
-        <div className="grid gap-6 lg:grid-cols-3 items-start">
-          <div className="lg:col-span-2 space-y-3">
+        <div className="grid gap-6 lg:grid-cols-3 items-start min-w-0 max-w-full">
+          <div className="lg:col-span-2 space-y-3 min-w-0 max-w-full">
             <div className="grid gap-3 sm:grid-cols-2">
               {services.map((srv) => (
                 <div key={srv.id} className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs">
@@ -1248,7 +1247,7 @@ export function MasterForms({
             </div>
           </div>
 
-          <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 min-w-0 max-w-full">
             <div className="flex items-center gap-2">
               <Truck className="h-5 w-5 text-clay-600" />
               <h3 className="font-bold text-ink-900 text-sm">Add Service / Machinery</h3>
