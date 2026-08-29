@@ -61,7 +61,7 @@ export async function getCriticalFinancialSummary(projectId: string): Promise<Cr
     }
   }
 
-  const totalBudget = Number(project.totalBudget);
+  const totalBudget = Number(project.totalBudget ?? 0);
   const remainingBudget = totalBudget - totalSpent;
   const usedPercent = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
@@ -590,7 +590,7 @@ async function fetchDashboardFullDataUncached(projectId: string) {
 
   const recentExpenses = rawExpenses.slice(0, 5).map((e) => ({
     id: e.id,
-    date: e.date.toISOString().slice(0, 10),
+    date: e.date instanceof Date ? e.date.toISOString().slice(0, 10) : String(e.date).slice(0, 10),
     type: e.expenseType,
     categoryName:
       e.materialCategory?.name ||

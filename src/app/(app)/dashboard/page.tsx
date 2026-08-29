@@ -3,10 +3,14 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
-import { getCriticalFinancialSummary } from "@/lib/finance/financial-aggregates";
+import { getCriticalFinancialSummary, getDashboardSecondaryData } from "@/lib/finance/financial-aggregates";
 import { EmptyState } from "@/components/ui/page-header";
 import { FinancialHero } from "@/components/dashboard/financial-hero";
 import { FinancialSplit } from "@/components/dashboard/financial-split";
+import { MonthlyChart } from "@/components/charts/finance-charts";
+import { TopExpensesAndAlerts } from "@/components/dashboard/top-expenses";
+import { ConstructionProgressCard } from "@/components/dashboard/construction-progress-card";
+import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 
 export const dynamic = "force-dynamic";
 
@@ -65,48 +69,49 @@ function CardsSkeleton() {
 // ----------- Async streamed components -----------
 
 async function SpendingChart({ projectId }: { projectId: string }) {
-  const { getDashboardSecondaryData } = await import("@/lib/finance/financial-aggregates");
-  const data = await getDashboardSecondaryData(projectId);
-  if (!data || data.monthly.length === 0) return null;
+  try {
+    const data = await getDashboardSecondaryData(projectId);
+    if (!data || data.monthly.length === 0) return null;
 
-  // Lazy-load the recharts-based component to avoid blocking initial bundle
-  const { MonthlyChart } = await import("@/components/charts/finance-charts");
-
-  return (
-    <div className="rounded-2xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-3">
-      <div className="flex items-center justify-between border-b border-paper-100 pb-3">
-        <div>
-          <h2 className="font-display text-base sm:text-lg font-bold text-ink-900 leading-tight">
-            Spending Trend
-          </h2>
-          <p className="text-xs text-ink-500 mt-0.5">
-            Month-over-month construction expenditure breakdown (Material vs Labour vs Total)
-          </p>
+    return (
+      <div className="rounded-2xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-3">
+        <div className="flex items-center justify-between border-b border-paper-100 pb-3">
+          <div>
+            <h2 className="font-display text-base sm:text-lg font-bold text-ink-900 leading-tight">
+              Spending Trend
+            </h2>
+            <p className="text-xs text-ink-500 mt-0.5">
+              Month-over-month construction expenditure breakdown (Material vs Labour vs Total)
+            </p>
+          </div>
+        </div>
+        <div className="pt-2">
+          <MonthlyChart data={data.monthly} />
         </div>
       </div>
-      <div className="pt-2">
-        <MonthlyChart data={data.monthly} />
-      </div>
-    </div>
-  );
+    );
+  } catch (err) {
+    console.error("SpendingChart stream error:", err);
+    return null;
+  }
 }
 
 async function BottomCards({ projectId }: { projectId: string }) {
-  const { getDashboardSecondaryData } = await import("@/lib/finance/financial-aggregates");
-  const { TopExpensesAndAlerts } = await import("@/components/dashboard/top-expenses");
-  const { ConstructionProgressCard } = await import("@/components/dashboard/construction-progress-card");
-  const { RecentTransactions } = await import("@/components/dashboard/recent-transactions");
+  try {
+    const data = await getDashboardSecondaryData(projectId);
+    if (!data) return null;
 
-  const data = await getDashboardSecondaryData(projectId);
-  if (!data) return null;
-
-  return (
-    <>
-      <TopExpensesAndAlerts topCategories={data.topCategories} budgetAlerts={data.budgetAlerts} />
-      <ConstructionProgressCard progress={data.progress} />
-      <RecentTransactions expenses={data.recentExpenses} />
-    </>
-  );
+    return (
+      <>
+        <TopExpensesAndAlerts topCategories={data.topCategories} budgetAlerts={data.budgetAlerts} />
+        <ConstructionProgressCard progress={data.progress} />
+        <RecentTransactions expenses={data.recentExpenses} />
+      </>
+    );
+  } catch (err) {
+    console.error("BottomCards stream error:", err);
+    return null;
+  }
 }
 
 // ----------- Main page -----------

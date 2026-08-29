@@ -29,6 +29,11 @@ export default function ErrorBoundary({
           <p className="text-xs sm:text-sm text-ink-500 leading-relaxed">
             We could not complete this action. Your data is secure. You can try reloading or return to your dashboard.
           </p>
+          {error?.message && (
+            <p className="text-[11px] font-mono text-ink-400 bg-paper-100 p-2 rounded-lg break-all text-left">
+              {error.message}
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
