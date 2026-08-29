@@ -67,20 +67,6 @@ export const getActiveProject = cache(async (userId?: string): Promise<ActivePro
 
   const active = (cookieId ? projects.find((p) => p.id === cookieId) : null) ?? projects[0];
 
-  // If cookie was missing or stale, persist the valid project ID
-  if (cookieId !== active.id) {
-    try {
-      jar.set(PROJECT_COOKIE, active.id, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 365,
-      });
-    } catch {
-      // Cookies might be read-only in certain Next.js RSC render contexts
-    }
-  }
-
   return {
     user,
     project: active,

@@ -28,55 +28,66 @@ export default async function DocumentsPage() {
     );
   }
 
-  const [project, rawDocuments, floors, stages] = await Promise.all([
-    prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
-    prisma.projectDocument.findMany({
-      where: { projectId },
-      orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
-    }),
-    prisma.floor.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
-    prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
-  ]);
+  try {
+    const [project, rawDocuments, floors, stages] = await Promise.all([
+      prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
+      prisma.projectDocument.findMany({
+        where: { projectId },
+        orderBy: [{ isPinned: "desc" }, { createdAt: "desc" }],
+      }),
+      prisma.floor.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
+      prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
+    ]);
 
-  if (!project) {
-    return <EmptyState title="No project found" body="Create or select a house project to manage blueprints and elevations." />;
+    if (!project) {
+      return <EmptyState title="No project found" body="Create or select a house project to manage blueprints and elevations." />;
+    }
+
+    const documents: DocumentItem[] = rawDocuments.map((d) => ({
+      id: d.id,
+      projectId: d.projectId,
+      category: d.category as DocumentItem["category"],
+      title: d.title,
+      description: d.description,
+      floorId: d.floorId,
+      constructionStageId: d.constructionStageId,
+      fileName: d.fileName,
+      storedName: d.storedName,
+      mimeType: d.mimeType,
+      sizeBytes: d.sizeBytes,
+      storagePath: d.storagePath,
+      version: d.version,
+      isPinned: d.isPinned,
+      createdAt: d.createdAt.toISOString(),
+    }));
+
+    const payload = {
+      projectId: project.id,
+      projectName: project.name,
+      documents,
+      floors: floors.map((f) => ({ id: f.id, name: f.name })),
+      stages: stages.map((s) => ({ id: s.id, name: s.name })),
+    };
+
+    setCached(cacheKey, payload);
+
+    return (
+      <DocumentsHub
+        projectId={payload.projectId}
+        projectName={payload.projectName}
+        documents={payload.documents}
+        floors={payload.floors}
+        stages={payload.stages}
+      />
+    );
+  } catch (err) {
+    console.error("DocumentsPage load error:", err);
+    return (
+      <EmptyState
+        title="Documents"
+        body="Unable to load documents at this moment. Please refresh."
+      />
+    );
   }
-
-  const documents: DocumentItem[] = rawDocuments.map((d) => ({
-    id: d.id,
-    projectId: d.projectId,
-    category: d.category as DocumentItem["category"],
-    title: d.title,
-    description: d.description,
-    floorId: d.floorId,
-    constructionStageId: d.constructionStageId,
-    fileName: d.fileName,
-    storedName: d.storedName,
-    mimeType: d.mimeType,
-    sizeBytes: d.sizeBytes,
-    storagePath: d.storagePath,
-    version: d.version,
-    isPinned: d.isPinned,
-    createdAt: d.createdAt.toISOString(),
-  }));
-
-  const payload = {
-    projectId: project.id,
-    projectName: project.name,
-    documents,
-    floors: floors.map((f) => ({ id: f.id, name: f.name })),
-    stages: stages.map((s) => ({ id: s.id, name: s.name })),
-  };
-
-  setCached(cacheKey, payload);
-
-  return (
-    <DocumentsHub
-      projectId={payload.projectId}
-      projectName={payload.projectName}
-      documents={payload.documents}
-      floors={payload.floors}
-      stages={payload.stages}
-    />
-  );
 }
+
