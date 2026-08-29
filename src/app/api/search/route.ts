@@ -503,7 +503,7 @@ export async function GET(request: Request) {
     { title: "Reports & PDF Statements", url: "/reports", subtitle: "Generate material, labour, vendor, worker & stage PDF reports", section: "Finance", keywords: "reports pdf statement export download whatsapp share print printout" },
     { title: "Phone Directory & UPI Pay", url: "/phonedirectory", subtitle: "Hardware vendors, masons, phone numbers, direct call & UPI pay", section: "Directory", keywords: "phone directory contacts shops vendors workers masons upi pay google pay phonepe" },
     { title: "Documents, Plans & Blueprints", url: "/documents", subtitle: "Architectural CAD drawings, structural plans & permits", section: "Documents", keywords: "documents plans blueprints cad permits sanction approval drawings 2d 3d pdf" },
-    { title: "Account & House Settings", url: "/settings", subtitle: "Profile, passwords, multi-house project management", section: "Management", keywords: "settings account profile password house project switch logout" },
+    { title: "Manage House Projects", url: "/projects", subtitle: "Switch, edit specifications, delete and add house projects", section: "Management", keywords: "projects houses manage add house delete house switch project" },
   ];
 
   const matchedNavigation = fullMenuTree

@@ -256,7 +256,6 @@ export async function deleteProject(projectId: string) {
     revalidatePath("/");
     revalidatePath("/dashboard");
     revalidatePath("/projects");
-    revalidatePath("/settings");
     return { ok: true };
   } catch (error: unknown) {
     console.error("deleteProject error:", error);

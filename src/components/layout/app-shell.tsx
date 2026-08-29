@@ -18,7 +18,6 @@ import {
   Plus,
   Receipt,
   Search,
-  Settings,
   Users,
   Wallet,
   X,
@@ -76,7 +75,6 @@ export function AppShell({
     { href: "/projects", label: "Manage Projects", icon: Building2, active: pathname.startsWith("/projects") },
     { href: "/phonedirectory", label: "Phone Directory", icon: Users, active: pathname === "/phonedirectory" || pathname === "/masters" },
     { href: "/documents", label: "Documents", icon: Files, active: pathname === "/documents" },
-    { href: "/settings", label: "Settings", icon: Settings, active: pathname === "/settings" },
   ];
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
@@ -567,18 +565,6 @@ export function AppShell({
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-ink-900 truncate">Documents</p>
                   <p className="text-[10px] text-ink-500 truncate">Plans & CAD</p>
-                </div>
-              </Link>
-
-              <Link
-                href="/settings"
-                onClick={() => setMobileDrawerOpen(false)}
-                className="flex items-center gap-2.5 rounded-xl border border-paper-200 bg-paper-50 p-3 hover:bg-paper-100 transition"
-              >
-                <Settings className="h-4.5 w-4.5 text-clay-600 shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-ink-900 truncate">Settings</p>
-                  <p className="text-[10px] text-ink-500 truncate">Account</p>
                 </div>
               </Link>
 
