@@ -205,6 +205,27 @@ export function ExpenseForm({
     return null;
   }, [type, quantity, rate, unit, calcMode, numberOfWorkers, numberOfDays, dailyRate]);
 
+  // Group categories for structured dividers
+  const groupedMaterials = useMemo(() => {
+    const groups: Record<string, Option[]> = {};
+    for (const m of materialsList) {
+      const g = m.groupName || "Other Categories";
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(m);
+    }
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [materialsList]);
+
+  const groupedLabours = useMemo(() => {
+    const groups: Record<string, Option[]> = {};
+    for (const l of laboursList) {
+      const g = l.groupName || "Other Categories";
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(l);
+    }
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [laboursList]);
+
   // Auto-set description and default unit when Material category changes
   const handleMaterialCategoryChange = (catId: string) => {
     setMaterialCategory(catId);
@@ -610,7 +631,7 @@ export function ExpenseForm({
                     className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span>+ Add New Category</span>
+                    <span>Add New Category</span>
                   </button>
                 </div>
 
@@ -692,16 +713,18 @@ export function ExpenseForm({
                   }}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                 >
-                  <optgroup label="Available Categories">
-                    {materialsList.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} {m.groupName && m.groupName !== "Custom" ? `(${m.groupName})` : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <option value="__NEW__" className="font-bold text-clay-700">
+                  <option value="__NEW__" className="font-bold text-clay-700 bg-clay-50/80">
                     + Add New Custom Category...
                   </option>
+                  {groupedMaterials.map(([groupName, items]) => (
+                    <optgroup key={groupName} label={`── ${groupName} ──`}>
+                      {items.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
                 </select>
               </div>
 
@@ -812,7 +835,7 @@ export function ExpenseForm({
                     className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span>+ Add New Category</span>
+                    <span>Add New Category</span>
                   </button>
                 </div>
 
@@ -895,16 +918,18 @@ export function ExpenseForm({
                   }}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                 >
-                  <optgroup label="Available Categories">
-                    {laboursList.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.name} {l.groupName && l.groupName !== "Custom" ? `(${l.groupName})` : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <option value="__NEW__" className="font-bold text-clay-700">
+                  <option value="__NEW__" className="font-bold text-clay-700 bg-clay-50/80">
                     + Add New Custom Category...
                   </option>
+                  {groupedLabours.map(([groupName, items]) => (
+                    <optgroup key={groupName} label={`── ${groupName} ──`}>
+                      {items.map((l) => (
+                        <option key={l.id} value={l.id}>
+                          {l.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
                 </select>
               </div>
 

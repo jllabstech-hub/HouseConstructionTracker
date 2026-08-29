@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   saveCategoryBudget,
@@ -161,6 +161,16 @@ export function BudgetEditor({
   };
 
   const activeCategories = categoryType === "MATERIAL" ? materialsList : laboursList;
+
+  const groupedCategories = useMemo(() => {
+    const groups: Record<string, CategoryOption[]> = {};
+    for (const c of activeCategories) {
+      const g = c.groupName || "Other Categories";
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(c);
+    }
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [activeCategories]);
 
   return (
     <div className="space-y-5">
@@ -466,7 +476,7 @@ export function BudgetEditor({
                     className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition cursor-pointer"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span>+ Add New Category</span>
+                    <span>Add New Category</span>
                   </button>
                 </div>
 
@@ -549,16 +559,18 @@ export function BudgetEditor({
                   className="w-full rounded-xl border border-paper-300 bg-paper-50/60 px-3.5 py-2.5 text-xs font-bold text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 >
                   <option value="">-- Choose a category --</option>
-                  <optgroup label="Available Categories">
-                    {activeCategories.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name} {c.groupName && c.groupName !== "Custom" ? `(${c.groupName})` : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <option value="__NEW__" className="font-bold text-clay-700">
+                  <option value="__NEW__" className="font-bold text-clay-700 bg-clay-50/80">
                     + Add New Custom Category...
                   </option>
+                  {groupedCategories.map(([groupName, items]) => (
+                    <optgroup key={groupName} label={`── ${groupName} ──`}>
+                      {items.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
                 </select>
               </div>
 
