@@ -458,3 +458,113 @@ export async function clearAllPhoneDirectory() {
   }
 }
 
+export async function deleteMaterialCategory(id: string) {
+  try {
+    const user = await requireUser();
+    await prisma.$transaction([
+      prisma.expense.updateMany({
+        where: { materialCategoryId: id },
+        data: { materialCategoryId: null },
+      }),
+      prisma.budgetCategory.deleteMany({
+        where: { materialCategoryId: id },
+      }),
+      prisma.workAreaMaterial.deleteMany({
+        where: { categoryId: id },
+      }),
+      prisma.materialCategory.deleteMany({
+        where: { id, userId: user.id },
+      }),
+    ]);
+    invalidateUserCache(user.id);
+    revalidatePath("/phonedirectory");
+    revalidatePath("/masters");
+    revalidatePath("/expenses");
+    return { ok: true };
+  } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      typeof (err as { digest?: unknown }).digest === "string" &&
+      ((err as { digest: string }).digest.startsWith("NEXT_REDIRECT"))
+    ) {
+      throw err;
+    }
+    console.error("Error deleting material category:", err);
+    return { error: err instanceof Error ? err.message : "Failed to delete material category" };
+  }
+}
+
+export async function deleteLabourCategory(id: string) {
+  try {
+    const user = await requireUser();
+    await prisma.$transaction([
+      prisma.expense.updateMany({
+        where: { labourCategoryId: id },
+        data: { labourCategoryId: null },
+      }),
+      prisma.budgetCategory.deleteMany({
+        where: { labourCategoryId: id },
+      }),
+      prisma.workAreaLabour.deleteMany({
+        where: { categoryId: id },
+      }),
+      prisma.labourCategory.deleteMany({
+        where: { id, userId: user.id },
+      }),
+    ]);
+    invalidateUserCache(user.id);
+    revalidatePath("/phonedirectory");
+    revalidatePath("/masters");
+    revalidatePath("/expenses");
+    return { ok: true };
+  } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      typeof (err as { digest?: unknown }).digest === "string" &&
+      ((err as { digest: string }).digest.startsWith("NEXT_REDIRECT"))
+    ) {
+      throw err;
+    }
+    console.error("Error deleting labour category:", err);
+    return { error: err instanceof Error ? err.message : "Failed to delete labour category" };
+  }
+}
+
+export async function deleteServiceCategory(id: string) {
+  try {
+    const user = await requireUser();
+    await prisma.$transaction([
+      prisma.expense.updateMany({
+        where: { serviceCategoryId: id },
+        data: { serviceCategoryId: null },
+      }),
+      prisma.budgetCategory.deleteMany({
+        where: { serviceCategoryId: id },
+      }),
+      prisma.serviceCategory.deleteMany({
+        where: { id, userId: user.id },
+      }),
+    ]);
+    invalidateUserCache(user.id);
+    revalidatePath("/phonedirectory");
+    revalidatePath("/masters");
+    revalidatePath("/expenses");
+    return { ok: true };
+  } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      typeof (err as { digest?: unknown }).digest === "string" &&
+      ((err as { digest: string }).digest.startsWith("NEXT_REDIRECT"))
+    ) {
+      throw err;
+    }
+    console.error("Error deleting service category:", err);
+    return { error: err instanceof Error ? err.message : "Failed to delete service category" };
+  }
+}
