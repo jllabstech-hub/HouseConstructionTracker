@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowLeft,
   ChevronLeft,
@@ -13,7 +14,7 @@ import {
   UploadCloud,
 } from "lucide-react";
 import { formatINR } from "@/lib/money";
-import { StageConfig } from "@/lib/catalog/stage-ordering";
+import { StageConfig, CHRONOLOGICAL_CONSTRUCTION_STAGES } from "@/lib/catalog/stage-ordering";
 
 export type StageDetailExpense = {
   id: string;
@@ -68,10 +69,12 @@ export function StageDetailView({
   labourSpent: number;
   serviceSpent?: number;
 }) {
+  const router = useRouter();
+
   return (
     <div className="space-y-6">
       {/* 1. Top Sequential Stepper & Breadcrumb */}
-      <div className="flex items-center justify-between border-b border-paper-200/80 pb-3">
+      <div className="flex items-center justify-between border-b border-paper-200/80 pb-3 flex-wrap gap-2.5">
         <Link
           href="/stages"
           className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-600 hover:text-ink-900 transition"
@@ -80,33 +83,82 @@ export function StageDetailView({
           <span>All 20 Stages</span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        {/* Stage Navigation: Previous Button + Direct Select Dropdown + Next Button */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {prevStage ? (
             <Link
               href={`/stages/${prevStage.step}`}
-              className="inline-flex items-center gap-1 rounded-xl border border-paper-300 bg-white px-3 py-1.5 text-xs font-bold text-ink-700 hover:bg-paper-50 transition"
+              className="inline-flex items-center gap-1 rounded-xl border border-paper-300 bg-white px-2.5 sm:px-3 py-1.5 text-xs font-bold text-ink-700 hover:bg-paper-50 hover:border-clay-400 shadow-2xs transition"
+              title={`Previous: ${prevStage.step}. ${prevStage.name}`}
             >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline">
+              <ChevronLeft className="h-4 w-4 shrink-0" />
+              <span className="hidden md:inline">
                 {prevStage.step}. {prevStage.shortName}
               </span>
+              <span className="md:hidden">Prev</span>
             </Link>
           ) : (
-            <span className="text-xs text-ink-400 opacity-50 px-2">First Stage</span>
+            <span className="text-[11px] font-semibold text-ink-400 opacity-50 px-2">First</span>
           )}
+
+          {/* Quick Jump Stage Dropdown */}
+          <div className="relative">
+            <select
+              aria-label="Select construction stage"
+              value={stageConfig.step}
+              onChange={(e) => {
+                const target = e.target.value;
+                if (target) {
+                  router.push(`/stages/${target}`);
+                }
+              }}
+              className="rounded-xl border border-clay-300 bg-clay-50/80 hover:bg-white hover:border-clay-500 px-2.5 sm:px-3 py-1.5 text-xs font-bold text-clay-900 shadow-2xs focus:border-clay-600 focus:outline-none cursor-pointer transition max-w-[220px] sm:max-w-xs truncate"
+            >
+              <optgroup label="── Phase 1: Substructure & Foundation ──">
+                {CHRONOLOGICAL_CONSTRUCTION_STAGES.filter((s) => s.phase === "STRUCTURAL").map((s) => (
+                  <option key={s.step} value={s.step}>
+                    Stage {s.step}: {s.shortName} ({s.name})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="── Phase 2: Superstructure & Framing ──">
+                {CHRONOLOGICAL_CONSTRUCTION_STAGES.filter((s) => s.phase === "ROUGH_IN").map((s) => (
+                  <option key={s.step} value={s.step}>
+                    Stage {s.step}: {s.shortName} ({s.name})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="── Phase 3: Finishing & Enclosure ──">
+                {CHRONOLOGICAL_CONSTRUCTION_STAGES.filter((s) => s.phase === "FINISHING").map((s) => (
+                  <option key={s.step} value={s.step}>
+                    Stage {s.step}: {s.shortName} ({s.name})
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="── Phase 4: Interiors & Handover ──">
+                {CHRONOLOGICAL_CONSTRUCTION_STAGES.filter((s) => s.phase === "INTERIORS").map((s) => (
+                  <option key={s.step} value={s.step}>
+                    Stage {s.step}: {s.shortName} ({s.name})
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
 
           {nextStage ? (
             <Link
               href={`/stages/${nextStage.step}`}
-              className="inline-flex items-center gap-1 rounded-xl border border-paper-300 bg-white px-3 py-1.5 text-xs font-bold text-ink-700 hover:bg-paper-50 transition"
+              className="inline-flex items-center gap-1 rounded-xl border border-paper-300 bg-white px-2.5 sm:px-3 py-1.5 text-xs font-bold text-ink-700 hover:bg-paper-50 hover:border-clay-400 shadow-2xs transition"
+              title={`Next: ${nextStage.step}. ${nextStage.name}`}
             >
-              <span className="hidden sm:inline">
+              <span className="hidden md:inline">
                 {nextStage.step}. {nextStage.shortName}
               </span>
-              <ChevronRight className="h-4 w-4" />
+              <span className="md:hidden">Next</span>
+              <ChevronRight className="h-4 w-4 shrink-0" />
             </Link>
           ) : (
-            <span className="text-xs text-ink-400 opacity-50 px-2">Final Stage</span>
+            <span className="text-[11px] font-semibold text-ink-400 opacity-50 px-2">Final</span>
           )}
         </div>
       </div>
