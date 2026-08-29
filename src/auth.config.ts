@@ -34,5 +34,16 @@ export const authConfig = {
       }
       return session;
     },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith("/")) return url;
+      try {
+        const parsedUrl = new URL(url);
+        const parsedBase = new URL(baseUrl);
+        if (parsedUrl.origin === parsedBase.origin) return url;
+      } catch {
+        // ignore
+      }
+      return "/";
+    },
   },
 } satisfies NextAuthConfig;

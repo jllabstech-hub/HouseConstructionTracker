@@ -82,6 +82,15 @@ export function AppShell({
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
 
+  const handleSignOut = async () => {
+    try {
+      await signOut({ redirect: false });
+    } catch {
+      // ignore
+    }
+    window.location.href = "/login";
+  };
+
   return (
     <div className="min-h-screen bg-paper-50 flex flex-col text-ink-900">
       {/* Mobile Top Bar */}
@@ -242,8 +251,8 @@ export function AppShell({
               </div>
               <button
                 type="button"
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="rounded-lg p-1 text-ink-400 hover:bg-paper-100 hover:text-red-600 transition"
+                onClick={handleSignOut}
+                className="rounded-lg p-1 text-ink-400 hover:bg-paper-100 hover:text-red-600 transition cursor-pointer"
                 title="Sign Out"
                 aria-label="Sign Out"
               >
@@ -564,11 +573,11 @@ export function AppShell({
 
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   setMobileDrawerOpen(false);
-                  signOut({ callbackUrl: "/" });
+                  await handleSignOut();
                 }}
-                className="flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50/50 p-3 text-red-700 hover:bg-red-100 transition text-left"
+                className="flex items-center gap-2.5 rounded-xl border border-red-200 bg-red-50/50 p-3 text-red-700 hover:bg-red-100 transition text-left cursor-pointer"
               >
                 <LogOut className="h-4.5 w-4.5 shrink-0" />
                 <div className="min-w-0">
