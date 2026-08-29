@@ -21,6 +21,20 @@ const nextConfig: NextConfig = {
     "@react-pdf/renderer",
     "pdfkit",
   ],
+  async redirects() {
+    return [
+      {
+        source: "/settings",
+        destination: "/dashboard",
+        permanent: true,
+      },
+      {
+        source: "/leads",
+        destination: "/dashboard",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
