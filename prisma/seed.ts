@@ -64,8 +64,8 @@ async function main() {
     create: {
       id: "demo-whitefield-house",
       userId: user.id,
-      name: "Whitefield Residence",
-      location: "Whitefield, Bengaluru",
+      name: "My Dream House",
+      location: "Prime City Location",
       plotArea: money(2400),
       builtUpArea: money(2850),
       numberOfFloors: 2,
@@ -180,9 +180,9 @@ async function main() {
       {
         projectId: project.id,
         category: "APPROVAL",
-        title: "BBMP / Gram Panchayat Building Plan Sanction Permit",
-        description: "Official municipal building permit LP no. 482/2026 with BESCOM electricity sanction and borewell clearance.",
-        fileName: "bbmp_building_sanction_permit.pdf",
+        title: "Municipal / Local Authority Building Plan Sanction Permit",
+        description: "Official building plan approval and sanction permit LP no. 482/2026 with electricity sanction and borewell clearance.",
+        fileName: "building_sanction_permit.pdf",
         storedName: "sanction_permit.pdf",
         mimeType: "application/pdf",
         sizeBytes: 1024 * 1200,
@@ -387,17 +387,17 @@ async function main() {
 
 async function upsertVendors(userId: string) {
   const data = [
-    { key: "balaji", name: "Sri Balaji Steels & Cement", company: "Balaji Traders", phone: "9845011122", address: "Whitefield Main Road, Bengaluru" },
-    { key: "jsw", name: "JSW Steel Depot", company: "JSW", phone: "9845022233", address: "Hoskote, Bengaluru" },
-    { key: "ultratech", name: "UltraTech Building Solutions", company: "UltraTech", phone: "9845033344", address: "Mahadevapura, Bengaluru" },
-    { key: "brickworks", name: "Malur Brick Works", company: "Malur Bricks", phone: "9845044455", address: "Malur, Kolar" },
-    { key: "sandco", name: "Kaveri Sand & Aggregate", company: "Kaveri Materials", phone: "9845055566", address: "Hosakote Taluk" },
-    { key: "woodland", name: "Woodland Interiors", company: "Woodland", phone: "9845066677", address: "Tavarekere, Bengaluru" },
-    { key: "kajaria", name: "Kajaria Galaxy Tiles", company: "Galaxy Ceramics", phone: "9845077788", address: "Old Madras Road, Bengaluru" },
-    { key: "electroworld", name: "ElectroWorld", company: "ElectroWorld Pvt Ltd", phone: "9845088899", address: "SP Road, Bengaluru" },
-    { key: "plumbmart", name: "PlumbMart Sanitary", company: "PlumbMart", phone: "9845099900", address: "KR Puram, Bengaluru" },
-    { key: "asianpaints", name: "ColourHome Paints", company: "Asian Paints Dealer", phone: "9845000011", address: "Whitefield, Bengaluru" },
-    { key: "fenesta", name: "Fenesta Windows", company: "DCM Shriram", phone: "9845001122", address: "Indiranagar, Bengaluru" },
+    { key: "balaji", name: "Sri Balaji Steels & Cement", company: "Balaji Traders", phone: "9845011122", address: "Main Road, Industrial Area" },
+    { key: "jsw", name: "JSW Steel Depot", company: "JSW", phone: "9845022233", address: "Highway Depot Road" },
+    { key: "ultratech", name: "UltraTech Building Solutions", company: "UltraTech", phone: "9845033344", address: "Commercial Complex" },
+    { key: "brickworks", name: "Prime Brick Works", company: "Prime Bricks", phone: "9845044455", address: "Kiln Yard Sector" },
+    { key: "sandco", name: "River Sand & Aggregate Suppliers", company: "River Sands Co", phone: "9845055566", address: "Ring Road Yard" },
+    { key: "woodland", name: "Woodland Interiors", company: "Woodland", phone: "9845066677", address: "Market Road" },
+    { key: "kajaria", name: "Kajaria Galaxy Tiles", company: "Galaxy Ceramics", phone: "9845077788", address: "Tiles Galleria, Main Road" },
+    { key: "electroworld", name: "ElectroWorld", company: "ElectroWorld Pvt Ltd", phone: "9845088899", address: "Electrical Wholesale Market" },
+    { key: "plumbmart", name: "PlumbMart Sanitary", company: "PlumbMart", phone: "9845099900", address: "Piping & Sanitary Hub" },
+    { key: "asianpaints", name: "ColourHome Paints", company: "Asian Paints Dealer", phone: "9845000011", address: "Central Paint Market" },
+    { key: "fenesta", name: "Fenesta Windows", company: "DCM Shriram", phone: "9845001122", address: "City Center Galleria" },
   ] as const;
 
   const ids: Record<string, string> = {};

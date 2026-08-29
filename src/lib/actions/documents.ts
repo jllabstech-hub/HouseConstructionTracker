@@ -346,9 +346,9 @@ export async function seedSampleDocuments(projectId: string) {
       {
         projectId,
         category: "APPROVAL" as const,
-        title: "BBMP / Gram Panchayat Building Plan Sanction Permit",
-        description: "Official municipal building permit LP no. 482/2026 with BESCOM electricity sanction and borewell clearance.",
-        fileName: "bbmp_building_sanction_permit.jpg",
+        title: "Municipal / Local Authority Building Plan Sanction Permit",
+        description: "Official building plan approval and sanction permit LP no. 482/2026 with electricity sanction and borewell clearance.",
+        fileName: "building_sanction_permit.jpg",
         storedName: "flooring.jpg",
         mimeType: "image/jpeg",
         sizeBytes: 1024 * 920,

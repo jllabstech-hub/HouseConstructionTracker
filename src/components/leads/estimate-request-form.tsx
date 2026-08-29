@@ -103,7 +103,7 @@ export function EstimateRequestForm() {
             <TextInput
               name="location"
               required
-              placeholder="City, Locality (e.g. Bangalore, Whitefield)"
+              placeholder="City, Locality (e.g. Sector 14, Main Road)"
             />
           </Field>
 

@@ -20,7 +20,7 @@ describe("lead validation schema", () => {
       name: "Ramesh Rao",
       phone: "9876543210",
       email: "ramesh@example.com",
-      location: "Bangalore, Whitefield",
+      location: "Sector 14, Main Road",
       plotArea: "1200",
       builtUpArea: "2400",
       floors: "G+1",
@@ -36,7 +36,7 @@ describe("lead validation schema", () => {
     const invalidPhone = {
       name: "Ramesh Rao",
       phone: "12345",
-      location: "Bangalore",
+      location: "Central City",
     };
     const parsed = leadSchema.safeParse(invalidPhone);
     expect(parsed.success).toBe(false);
@@ -50,7 +50,7 @@ describe("lead validation schema", () => {
       name: "Suresh Kumar",
       phone: "9123456789",
       email: "",
-      location: "Hyderabad",
+      location: "Lakeview Avenue",
     };
     const parsed = leadSchema.safeParse(withoutEmail);
     expect(parsed.success).toBe(true);

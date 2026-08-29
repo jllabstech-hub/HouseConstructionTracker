@@ -47,7 +47,7 @@ export const CHRONOLOGICAL_CONSTRUCTION_STAGES: StageConfig[] = [
         amount: 20000,
       },
       {
-        label: "Municipal / BBMP Plan Sanction Fee",
+        label: "Municipal / Authority Plan Sanction Fee",
         type: "PROFESSIONAL",
         categoryKeyword: "sanction",
         description: "Municipal building plan sanction and approval fee",

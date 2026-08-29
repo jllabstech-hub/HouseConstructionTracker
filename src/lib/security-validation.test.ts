@@ -7,7 +7,7 @@ describe("Security & Validation Suite", () => {
     const valid = documentSchema.safeParse({
       title: "Ground Floor Architectural Plan",
       category: "FLOOR_PLAN",
-      description: "Approved BBMP drawing",
+      description: "Approved municipal drawing",
       version: "v1.0",
     });
     expect(valid.success).toBe(true);
