@@ -72,7 +72,10 @@ export async function GET(request: Request) {
     }
 
     if (shouldRedirect) {
-      return NextResponse.redirect(new URL("/login?setup=success", request.url));
+      const forwardedHost = request.headers.get("x-forwarded-host");
+      const host = forwardedHost || request.headers.get("host") || new URL(request.url).host;
+      const proto = request.headers.get("x-forwarded-proto") || (host.includes("localhost") ? "http" : "https");
+      return NextResponse.redirect(new URL("/login?setup=success", `${proto}://${host}`));
     }
 
     return NextResponse.json({
