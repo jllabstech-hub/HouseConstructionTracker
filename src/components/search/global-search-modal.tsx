@@ -226,9 +226,13 @@ export function GlobalSearchModal({
           {query && !loading && (
             <button
               type="button"
-              onClick={() => setQuery("")}
+              onClick={() => {
+                setQuery("");
+                inputRef.current?.focus();
+              }}
               aria-label="Clear search input"
               className="rounded-full p-1.5 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition"
+              title="Clear input"
             >
               <X className="h-4 w-4" />
             </button>
@@ -239,9 +243,9 @@ export function GlobalSearchModal({
             type="button"
             onClick={onClose}
             aria-label="Close search"
-            className="rounded-xl p-1.5 text-ink-500 hover:bg-paper-100 hover:text-ink-900 transition flex sm:hidden items-center justify-center border border-paper-200 bg-paper-50 text-xs font-bold"
+            className="rounded-xl px-2.5 py-1 text-xs font-bold text-ink-600 hover:text-ink-900 hover:bg-paper-100 transition sm:hidden"
           >
-            <X className="h-4 w-4" />
+            {language === "te" ? "రద్దు" : "Cancel"}
           </button>
 
           <kbd
