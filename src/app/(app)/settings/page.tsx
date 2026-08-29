@@ -154,18 +154,18 @@ export default async function SettingsPage() {
       </div>
 
       {/* 3. My House Projects List & Add Button */}
-      <div className="rounded-3xl border border-paper-200 bg-white p-6 shadow-xs space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-ink-900">
-            <Building2 className="h-5 w-5 text-clay-600" />
-            <h2 className="font-serif text-base font-bold">My House Projects</h2>
+      <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-ink-900 min-w-0">
+            <Building2 className="h-5 w-5 text-clay-600 shrink-0" />
+            <h2 className="font-serif text-base font-bold truncate">My House Projects</h2>
           </div>
           <Link
             href="/projects/new"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 whitespace-nowrap shrink-0"
           >
             <Plus className="h-4 w-4 stroke-[2.5]" />
-            <span>Add New House</span>
+            <span className="whitespace-nowrap">Add New House</span>
           </Link>
         </div>
 
@@ -208,6 +208,17 @@ export default async function SettingsPage() {
               </Link>
             );
           })}
+        </div>
+
+        <div className="pt-1 flex items-center justify-between text-xs">
+          <span className="text-ink-400 text-[11px]">Need to switch or delete a house?</span>
+          <Link
+            href="/projects"
+            className="font-bold text-clay-700 hover:text-clay-900 inline-flex items-center gap-1 transition"
+          >
+            <span>All Projects & Delete</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
       </div>
 
