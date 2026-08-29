@@ -42,142 +42,187 @@ export default async function ExpensesPage() {
     );
   }
 
-  const [
-    rawExpenses,
-    stages,
-    floors,
-    vendors,
-    workers,
-    matCategories,
-    labCategories,
-  ] = await Promise.all([
-    prisma.expense.findMany({
-      where: { projectId },
-      select: {
-        id: true,
-        date: true,
-        expenseType: true,
-        amount: true,
-        description: true,
-        paymentMethod: true,
-        quantity: true,
-        unit: true,
-        rate: true,
-        materialCategoryId: true,
-        labourCategoryId: true,
-        serviceCategoryId: true,
-        equipmentCategoryId: true,
-        professionalCategoryId: true,
-        materialCategory: { select: { name: true } },
-        labourCategory: { select: { name: true } },
-        serviceCategory: { select: { name: true } },
-        equipmentCategory: { select: { name: true } },
-        professionalCategory: { select: { name: true } },
-        vendor: { select: { name: true } },
-        worker: { select: { name: true } },
-        constructionStage: { select: { name: true } },
-        floor: { select: { name: true } },
-        receipts: { select: { id: true } },
-      },
-      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-    }),
-    prisma.constructionStage.findMany({
-      where: { projectId },
-      orderBy: { sortOrder: "asc" },
-      select: { id: true, name: true },
-    }),
-    prisma.floor.findMany({
-      where: { projectId },
-      orderBy: { sortOrder: "asc" },
-      select: { id: true, name: true },
-    }),
-    prisma.vendor.findMany({
-      where: { userId: user.id },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-    prisma.worker.findMany({
-      where: { userId: user.id },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-    prisma.materialCategory.findMany({
-      where: { projectId },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-    prisma.labourCategory.findMany({
-      where: { projectId },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-  ]);
+  try {
+    const [
+      rawExpenses,
+      stages,
+      floors,
+      vendors,
+      workers,
+      matCategories,
+      labCategories,
+      srvCategories,
+      eqCategories,
+      profCategories,
+    ] = await Promise.all([
+      prisma.expense.findMany({
+        where: { projectId },
+        select: {
+          id: true,
+          date: true,
+          expenseType: true,
+          amount: true,
+          description: true,
+          paymentMethod: true,
+          quantity: true,
+          unit: true,
+          rate: true,
+          materialCategoryId: true,
+          labourCategoryId: true,
+          serviceCategoryId: true,
+          equipmentCategoryId: true,
+          professionalCategoryId: true,
+          materialCategory: { select: { name: true } },
+          labourCategory: { select: { name: true } },
+          serviceCategory: { select: { name: true } },
+          equipmentCategory: { select: { name: true } },
+          professionalCategory: { select: { name: true } },
+          vendor: { select: { name: true } },
+          worker: { select: { name: true } },
+          constructionStage: { select: { name: true } },
+          floor: { select: { name: true } },
+          receipts: { select: { id: true } },
+        },
+        orderBy: [{ date: "desc" }, { createdAt: "desc" }],
+      }),
+      prisma.constructionStage.findMany({
+        where: { projectId },
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.floor.findMany({
+        where: { projectId },
+        orderBy: { sortOrder: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.vendor.findMany({
+        where: { userId: user.id },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.worker.findMany({
+        where: { userId: user.id },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.materialCategory.findMany({
+        where: { projectId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.labourCategory.findMany({
+        where: { projectId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.serviceCategory.findMany({
+        where: { projectId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.equipmentCategory.findMany({
+        where: { projectId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+      prisma.professionalCategory.findMany({
+        where: { projectId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
+    ]);
 
-  let totalSpent = 0;
-  const allCategories = [...matCategories, ...labCategories];
+    let totalSpent = 0;
+    const allCategories = [
+      ...matCategories,
+      ...labCategories,
+      ...srvCategories,
+      ...eqCategories,
+      ...profCategories,
+    ];
 
-  const expenses: ExpenseRowData[] = rawExpenses.map((e) => {
-    const amt = Number(e.amount);
-    totalSpent += amt;
+    const expenses: ExpenseRowData[] = rawExpenses.map((e) => {
+      const amt = Number(e.amount ?? 0);
+      totalSpent += isNaN(amt) ? 0 : amt;
 
-    const categoryName =
-      e.materialCategory?.name ||
-      e.labourCategory?.name ||
-      e.serviceCategory?.name ||
-      e.equipmentCategory?.name ||
-      e.professionalCategory?.name ||
-      "General";
+      const categoryName =
+        e.materialCategory?.name ||
+        e.labourCategory?.name ||
+        e.serviceCategory?.name ||
+        e.equipmentCategory?.name ||
+        e.professionalCategory?.name ||
+        "General";
 
-    const categoryId =
-      e.materialCategoryId ||
-      e.labourCategoryId ||
-      e.serviceCategoryId ||
-      e.equipmentCategoryId ||
-      e.professionalCategoryId ||
-      "";
+      const categoryId =
+        e.materialCategoryId ||
+        e.labourCategoryId ||
+        e.serviceCategoryId ||
+        e.equipmentCategoryId ||
+        e.professionalCategoryId ||
+        "";
 
-    const vendorOrWorker = e.vendor?.name || e.worker?.name || null;
+      const vendorOrWorker = e.vendor?.name || e.worker?.name || null;
 
-    return {
-      id: e.id,
-      date: e.date.toISOString().slice(0, 10),
-      type: e.expenseType,
-      category: { id: categoryId, name: categoryName },
-      amount: e.amount.toString(),
-      description: e.description,
-      vendorName: vendorOrWorker,
-      stageName: e.constructionStage?.name ?? null,
-      floorName: e.floor?.name ?? null,
-      paymentMethod: e.paymentMethod,
-      quantity: e.quantity ? e.quantity.toString() : null,
-      unit: e.unit,
-      rate: e.rate ? e.rate.toString() : null,
-      receiptCount: e.receipts.length,
+      const dateStr =
+        e.date instanceof Date
+          ? e.date.toISOString().slice(0, 10)
+          : new Date(e.date as unknown as string).toISOString().slice(0, 10);
+
+      return {
+        id: e.id,
+        date: dateStr,
+        type: e.expenseType,
+        category: { id: categoryId, name: categoryName },
+        amount: (e.amount ?? 0).toString(),
+        description: e.description ?? null,
+        vendorName: vendorOrWorker,
+        stageName: e.constructionStage?.name ?? null,
+        floorName: e.floor?.name ?? null,
+        paymentMethod: e.paymentMethod,
+        quantity: e.quantity ? e.quantity.toString() : null,
+        unit: e.unit ?? null,
+        rate: e.rate ? e.rate.toString() : null,
+        receiptCount: e.receipts ? e.receipts.length : 0,
+      };
+    });
+
+    const payload = {
+      expenses,
+      stages,
+      floors,
+      vendors,
+      workers,
+      allCategories,
+      totalSpent,
     };
-  });
 
-  const payload = {
-    expenses,
-    stages,
-    floors,
-    vendors,
-    workers,
-    allCategories,
-    totalSpent,
-  };
+    setCached(cacheKey, payload);
 
-  setCached(cacheKey, payload);
-
-  return (
-    <ExpenseTable
-      projectId={projectId}
-      expenses={payload.expenses}
-      stages={payload.stages}
-      floors={payload.floors}
-      vendors={payload.vendors}
-      workers={payload.workers}
-      categories={payload.allCategories}
-      totalSpent={payload.totalSpent}
-    />
-  );
+    return (
+      <ExpenseTable
+        projectId={projectId}
+        expenses={payload.expenses}
+        stages={payload.stages}
+        floors={payload.floors}
+        vendors={payload.vendors}
+        workers={payload.workers}
+        categories={payload.allCategories}
+        totalSpent={payload.totalSpent}
+      />
+    );
+  } catch (err) {
+    console.error("ExpensesPage load error:", err);
+    return (
+      <ExpenseTable
+        projectId={projectId}
+        expenses={[]}
+        stages={[]}
+        floors={[]}
+        vendors={[]}
+        workers={[]}
+        categories={[]}
+        totalSpent={0}
+      />
+    );
+  }
 }

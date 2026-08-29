@@ -269,17 +269,20 @@ export async function ensureDatabaseSchema() {
         "date" DATE NOT NULL,
         "expenseType" "ExpenseType" NOT NULL,
         "amount" DECIMAL(14,2) NOT NULL,
-        "quantity" DECIMAL(14,3),
+        "quantity" DECIMAL(14,4),
         "unit" TEXT,
+        "rate" DECIMAL(14,2),
         "unitRate" DECIMAL(14,2),
         "taxAmount" DECIMAL(14,2),
-        "totalAmount" DECIMAL(14,2) NOT NULL,
+        "totalAmount" DECIMAL(14,2),
         "numberOfWorkers" INTEGER,
+        "numberOfDays" DECIMAL(8,2),
         "daysWorked" DECIMAL(6,2),
         "dailyWageRate" DECIMAL(14,2),
         "labourCalcMethod" "LabourCalcMethod",
-        "description" TEXT,
+        "description" TEXT NOT NULL,
         "invoiceNumber" TEXT,
+        "notes" TEXT,
         "paymentMethod" "PaymentMethod" NOT NULL DEFAULT 'CASH',
         "paymentRef" TEXT,
         "materialCategoryId" TEXT REFERENCES "MaterialCategory"("id") ON DELETE SET NULL,
@@ -301,21 +304,20 @@ export async function ensureDatabaseSchema() {
       CREATE TABLE IF NOT EXISTS "Budget" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
-        "totalBudget" DECIMAL(14,2) NOT NULL,
-        "materialBudget" DECIMAL(14,2) NOT NULL DEFAULT 0,
-        "labourBudget" DECIMAL(14,2) NOT NULL DEFAULT 0,
-        "contingencyBudget" DECIMAL(14,2) NOT NULL DEFAULT 0,
-        "otherBudget" DECIMAL(14,2) NOT NULL DEFAULT 0,
+        "expenseType" "ExpenseType" NOT NULL,
+        "amount" DECIMAL(14,2) NOT NULL,
+        "notes" TEXT,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE ("projectId")
+        UNIQUE ("projectId", "expenseType")
       );
 
       CREATE TABLE IF NOT EXISTS "BudgetCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
         "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "expenseType" "ExpenseType" NOT NULL,
-        "allocatedAmount" DECIMAL(14,2) NOT NULL,
+        "amount" DECIMAL(14,2) NOT NULL,
+        "notes" TEXT,
         "materialCategoryId" TEXT REFERENCES "MaterialCategory"("id") ON DELETE SET NULL,
         "labourCategoryId" TEXT REFERENCES "LabourCategory"("id") ON DELETE SET NULL,
         "serviceCategoryId" TEXT REFERENCES "ServiceCategory"("id") ON DELETE SET NULL,
@@ -495,6 +497,35 @@ export async function ensureDatabaseSchema() {
           ALTER TABLE "WorkArea" DROP COLUMN IF EXISTS "userId";
           ALTER TABLE "WorkArea" DROP CONSTRAINT IF EXISTS "WorkArea_projectId_name_key";
           ALTER TABLE "WorkArea" ADD CONSTRAINT "WorkArea_projectId_name_key" UNIQUE ("projectId", "name");
+        END IF;
+
+        -- Expense column migrations
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='Expense') THEN
+          ALTER TABLE "Expense" ADD COLUMN IF NOT EXISTS "rate" DECIMAL(14,2);
+          ALTER TABLE "Expense" ADD COLUMN IF NOT EXISTS "numberOfDays" DECIMAL(8,2);
+          ALTER TABLE "Expense" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Expense' AND column_name='unitRate') THEN
+            UPDATE "Expense" SET "rate" = "unitRate" WHERE "rate" IS NULL AND "unitRate" IS NOT NULL;
+          END IF;
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='Expense' AND column_name='daysWorked') THEN
+            UPDATE "Expense" SET "numberOfDays" = "daysWorked" WHERE "numberOfDays" IS NULL AND "daysWorked" IS NOT NULL;
+          END IF;
+        END IF;
+
+        -- BudgetCategory column migrations
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='BudgetCategory') THEN
+          ALTER TABLE "BudgetCategory" ADD COLUMN IF NOT EXISTS "amount" DECIMAL(14,2);
+          ALTER TABLE "BudgetCategory" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='BudgetCategory' AND column_name='allocatedAmount') THEN
+            UPDATE "BudgetCategory" SET "amount" = "allocatedAmount" WHERE "amount" IS NULL AND "allocatedAmount" IS NOT NULL;
+          END IF;
+        END IF;
+
+        -- Budget column migrations
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='Budget') THEN
+          ALTER TABLE "Budget" ADD COLUMN IF NOT EXISTS "expenseType" "ExpenseType";
+          ALTER TABLE "Budget" ADD COLUMN IF NOT EXISTS "amount" DECIMAL(14,2);
+          ALTER TABLE "Budget" ADD COLUMN IF NOT EXISTS "notes" TEXT;
         END IF;
       END $$;
     `);
