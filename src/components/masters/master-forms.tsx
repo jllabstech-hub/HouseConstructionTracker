@@ -12,6 +12,9 @@ import {
   updateWorker,
   deleteVendor,
   deleteWorker,
+  clearAllVendors,
+  clearAllWorkers,
+  clearAllPhoneDirectory,
 } from "@/lib/actions/masters";
 import { formatINR } from "@/lib/money";
 import { getVendorTotal, getWorkerTotal, type ExpenseRecord } from "@/lib/finance/aggregations";
@@ -142,6 +145,7 @@ export function MasterForms({
   const [editingVendor, setEditingVendor] = useState<VendorItem | null>(null);
   const [editingWorker, setEditingWorker] = useState<WorkerItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "vendor" | "worker"; id: string; name: string } | null>(null);
+  const [clearTarget, setClearTarget] = useState<"VENDORS" | "WORKERS" | "ALL" | null>(null);
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [payRecipient, setPayRecipient] = useState<PayRecipient | null>(null);
@@ -243,7 +247,37 @@ export function MasterForms({
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {((activeTab === "VENDORS" && vendors.length > 0) ||
+            (activeTab === "WORKERS" && workers.length > 0) ||
+            (vendors.length > 0 || workers.length > 0)) && (
+            <button
+              type="button"
+              onClick={() =>
+                setClearTarget(
+                  activeTab === "VENDORS" ? "VENDORS" : activeTab === "WORKERS" ? "WORKERS" : "ALL"
+                )
+              }
+              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/80 hover:bg-red-100 px-3 py-2 text-xs font-bold text-red-700 shadow-2xs transition active:scale-95 cursor-pointer"
+              title="Clear entries with a single click"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-red-600" />
+              <span>
+                {activeTab === "VENDORS"
+                  ? language === "te"
+                    ? `షాపులన్నీ తొలగించండి (${vendors.length})`
+                    : `Clear All Shops (${vendors.length})`
+                  : activeTab === "WORKERS"
+                  ? language === "te"
+                    ? `వర్కర్లందరినీ తొలగించండి (${workers.length})`
+                    : `Clear All Workers (${workers.length})`
+                  : language === "te"
+                  ? "అన్నీ తొలగించండి"
+                  : "Clear All"}
+              </span>
+            </button>
+          )}
+
           <button
             type="button"
             onClick={() => setActiveTab("VENDORS")}
@@ -333,9 +367,21 @@ export function MasterForms({
                   className="w-full rounded-2xl border border-paper-300 bg-white py-2.5 pl-10 pr-4 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-xs"
                 />
               </div>
-              <p className="text-xs text-ink-500 font-medium whitespace-nowrap">
-                {language === "te" ? `మొత్తం ${filteredVendors.length} షాపులు` : `Showing ${filteredVendors.length} shops`}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-ink-500 font-medium whitespace-nowrap">
+                  {language === "te" ? `మొత్తం ${filteredVendors.length} షాపులు` : `Showing ${filteredVendors.length} shops`}
+                </p>
+                {vendors.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setClearTarget("VENDORS")}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-800 hover:underline bg-red-50/80 border border-red-200 rounded-lg px-2 py-0.5 transition cursor-pointer"
+                  >
+                    <Trash2 className="h-3 w-3 text-red-600" />
+                    <span>{language === "te" ? "షాపులన్నీ తొలగించు" : "Clear All"}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {filteredVendors.length === 0 ? (
@@ -665,9 +711,21 @@ export function MasterForms({
                   className="w-full rounded-2xl border border-paper-300 bg-white py-2.5 pl-10 pr-4 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-xs"
                 />
               </div>
-              <p className="text-xs text-ink-500 font-medium whitespace-nowrap">
-                {language === "te" ? `మొత్తం ${filteredWorkers.length} మంది వర్కర్లు` : `Showing ${filteredWorkers.length} workers`}
-              </p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-ink-500 font-medium whitespace-nowrap">
+                  {language === "te" ? `మొత్తం ${filteredWorkers.length} మంది వర్కర్లు` : `Showing ${filteredWorkers.length} workers`}
+                </p>
+                {workers.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setClearTarget("WORKERS")}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-800 hover:underline bg-red-50/80 border border-red-200 rounded-lg px-2 py-0.5 transition cursor-pointer"
+                  >
+                    <Trash2 className="h-3 w-3 text-red-600" />
+                    <span>{language === "te" ? "వర్కర్లందరినీ తొలగించు" : "Clear All"}</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Trade Filter Pills */}
@@ -1265,6 +1323,67 @@ export function MasterForms({
             : `Are you sure you want to delete "${deleteTarget?.name ?? "this entry"}"? This action cannot be undone.`
         }
         confirmText={language === "te" ? "తొలగించు" : "Delete"}
+        loading={isDeleting}
+      />
+
+      {/* Clear All Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!clearTarget}
+        onClose={() => {
+          if (!isDeleting) setClearTarget(null);
+        }}
+        onConfirm={async () => {
+          if (!clearTarget || isDeleting) return;
+          const target = clearTarget;
+          setIsDeleting(true);
+          setDeleteError(null);
+
+          try {
+            const res =
+              target === "VENDORS"
+                ? await clearAllVendors()
+                : target === "WORKERS"
+                ? await clearAllWorkers()
+                : await clearAllPhoneDirectory();
+
+            if (res && "error" in res && res.error) {
+              setDeleteError(res.error);
+              setIsDeleting(false);
+              return;
+            }
+            router.refresh();
+            setClearTarget(null);
+          } catch (err) {
+            setDeleteError(err instanceof Error ? err.message : "Failed to clear entries");
+          } finally {
+            setIsDeleting(false);
+          }
+        }}
+        title={
+          clearTarget === "VENDORS"
+            ? (language === "te" ? "షాపులన్నీ ఒకేసారి తొలగించాలా?" : "Clear All Shops & Vendors?")
+            : clearTarget === "WORKERS"
+            ? (language === "te" ? "వర్కర్లందరినీ ఒకేసారి తొలగించాలా?" : "Clear All Workers & Contractors?")
+            : (language === "te" ? "కాంటాక్ట్‌లన్నీ ఒకేసారి తొలగించాలా?" : "Clear All Phone Directory Entries?")
+        }
+        description={
+          clearTarget === "VENDORS"
+            ? (language === "te"
+                ? `మీరు ఖచ్చితంగా మొత్తం ${vendors.length} షాపులు/వెండర్లను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
+                : `Are you sure you want to delete all ${vendors.length} shops & vendors in a single click? This action cannot be undone.`)
+            : clearTarget === "WORKERS"
+            ? (language === "te"
+                ? `మీరు ఖచ్చితంగా మొత్తం ${workers.length} వర్కర్లను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
+                : `Are you sure you want to delete all ${workers.length} workers & contractors in a single click? This action cannot be undone.`)
+            : (language === "te"
+                ? `మీరు ఖచ్చితంగా ఫోన్ డైరెక్టరీలోని అన్ని ఎంట్రీలను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
+                : `Are you sure you want to delete all phone directory entries in a single click? This action cannot be undone.`)
+        }
+        confirmText={
+          language === "te"
+            ? `అన్నీ తొలగించు (${clearTarget === "VENDORS" ? vendors.length : clearTarget === "WORKERS" ? workers.length : vendors.length + workers.length})`
+            : `Clear All (${clearTarget === "VENDORS" ? vendors.length : clearTarget === "WORKERS" ? workers.length : vendors.length + workers.length})`
+        }
         loading={isDeleting}
       />
 

@@ -239,7 +239,13 @@ export async function updateWorker(id: string, input: unknown) {
 export async function deleteVendor(id: string) {
   try {
     const user = await requireUser();
-    await prisma.vendor.deleteMany({ where: { id, userId: user.id } });
+    await prisma.$transaction([
+      prisma.expense.updateMany({
+        where: { vendorId: id },
+        data: { vendorId: null },
+      }),
+      prisma.vendor.deleteMany({ where: { id, userId: user.id } }),
+    ]);
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
@@ -262,7 +268,13 @@ export async function deleteVendor(id: string) {
 export async function deleteWorker(id: string) {
   try {
     const user = await requireUser();
-    await prisma.worker.deleteMany({ where: { id, userId: user.id } });
+    await prisma.$transaction([
+      prisma.expense.updateMany({
+        where: { workerId: id },
+        data: { workerId: null },
+      }),
+      prisma.worker.deleteMany({ where: { id, userId: user.id } }),
+    ]);
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
@@ -279,6 +291,136 @@ export async function deleteWorker(id: string) {
     }
     console.error("Error deleting worker:", err);
     return { error: err instanceof Error ? err.message : "Failed to delete worker" };
+  }
+}
+
+export async function clearAllVendors() {
+  try {
+    const user = await requireUser();
+    const userVendors = await prisma.vendor.findMany({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+    const vendorIds = userVendors.map((v) => v.id);
+
+    if (vendorIds.length > 0) {
+      await prisma.$transaction([
+        prisma.expense.updateMany({
+          where: { vendorId: { in: vendorIds } },
+          data: { vendorId: null },
+        }),
+        prisma.vendor.deleteMany({
+          where: { userId: user.id },
+        }),
+      ]);
+    }
+
+    invalidateUserCache(user.id);
+    revalidatePath("/phonedirectory");
+    revalidatePath("/masters");
+    return { ok: true };
+  } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      typeof (err as { digest?: unknown }).digest === "string" &&
+      ((err as { digest: string }).digest.startsWith("NEXT_REDIRECT"))
+    ) {
+      throw err;
+    }
+    console.error("Error clearing vendors:", err);
+    return { error: err instanceof Error ? err.message : "Failed to clear shops" };
+  }
+}
+
+export async function clearAllWorkers() {
+  try {
+    const user = await requireUser();
+    const userWorkers = await prisma.worker.findMany({
+      where: { userId: user.id },
+      select: { id: true },
+    });
+    const workerIds = userWorkers.map((w) => w.id);
+
+    if (workerIds.length > 0) {
+      await prisma.$transaction([
+        prisma.expense.updateMany({
+          where: { workerId: { in: workerIds } },
+          data: { workerId: null },
+        }),
+        prisma.worker.deleteMany({
+          where: { userId: user.id },
+        }),
+      ]);
+    }
+
+    invalidateUserCache(user.id);
+    revalidatePath("/phonedirectory");
+    revalidatePath("/masters");
+    return { ok: true };
+  } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      typeof (err as { digest?: unknown }).digest === "string" &&
+      ((err as { digest: string }).digest.startsWith("NEXT_REDIRECT"))
+    ) {
+      throw err;
+    }
+    console.error("Error clearing workers:", err);
+    return { error: err instanceof Error ? err.message : "Failed to clear workers" };
+  }
+}
+
+export async function clearAllPhoneDirectory() {
+  try {
+    const user = await requireUser();
+    const [userVendors, userWorkers] = await Promise.all([
+      prisma.vendor.findMany({ where: { userId: user.id }, select: { id: true } }),
+      prisma.worker.findMany({ where: { userId: user.id }, select: { id: true } }),
+    ]);
+    const vendorIds = userVendors.map((v) => v.id);
+    const workerIds = userWorkers.map((w) => w.id);
+
+    await prisma.$transaction([
+      ...(vendorIds.length > 0
+        ? [
+            prisma.expense.updateMany({
+              where: { vendorId: { in: vendorIds } },
+              data: { vendorId: null },
+            }),
+            prisma.vendor.deleteMany({ where: { userId: user.id } }),
+          ]
+        : []),
+      ...(workerIds.length > 0
+        ? [
+            prisma.expense.updateMany({
+              where: { workerId: { in: workerIds } },
+              data: { workerId: null },
+            }),
+            prisma.worker.deleteMany({ where: { userId: user.id } }),
+          ]
+        : []),
+    ]);
+
+    invalidateUserCache(user.id);
+    revalidatePath("/phonedirectory");
+    revalidatePath("/masters");
+    return { ok: true };
+  } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      typeof (err as { digest?: unknown }).digest === "string" &&
+      ((err as { digest: string }).digest.startsWith("NEXT_REDIRECT"))
+    ) {
+      throw err;
+    }
+    console.error("Error clearing phone directory:", err);
+    return { error: err instanceof Error ? err.message : "Failed to clear directory" };
   }
 }
 
