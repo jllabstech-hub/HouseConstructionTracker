@@ -346,11 +346,11 @@ export function AppShell({
         <button
           type="button"
           onClick={() => setAddSheetOpen(true)}
-          className="flex h-12 w-12 items-center justify-center rounded-full bg-clay-600 text-white shadow-lg hover:bg-clay-700 active:scale-95 transition -mt-5 border-2 border-white ring-2 ring-clay-600/20 shrink-0"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-clay-600 text-white shadow-md hover:bg-clay-700 active:scale-95 transition shrink-0 self-center"
           title={t.nav?.addExpense ?? "Add Expense"}
           aria-label={t.nav?.addExpense ?? "Add Expense"}
         >
-          <Plus className="h-6 w-6 stroke-[2.5]" />
+          <Plus className="h-5 w-5 stroke-[2.5]" />
         </button>
 
         {/* 4. Reports */}
