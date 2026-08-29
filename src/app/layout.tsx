@@ -29,6 +29,15 @@ export const metadata: Metadata = {
   title: "House Construction Tracker",
   description:
     "Track every rupee spent on your house. Separate material purchases from labour payments, compare budget vs actual, and share professional PDF reports.",
+  applicationName: "House Tracker",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "House Tracker",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
