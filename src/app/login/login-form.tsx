@@ -2,14 +2,18 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { Sparkles, Building2, ShieldCheck, AlertCircle, Loader2 } from "lucide-react";
 import { loginUser } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Field, TextInput } from "@/components/ui/fields";
 
-export default function LoginForm() {
-  const params = useSearchParams();
+export default function LoginForm({
+  setup,
+  callbackUrl,
+}: {
+  setup?: string;
+  callbackUrl?: string;
+}) {
   const [email, setEmail] = useState("admin");
   const [password, setPassword] = useState("test123");
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +33,7 @@ export default function LoginForm() {
           setError(result.error);
           return;
         }
-        const target = params.get("callbackUrl") || "/dashboard";
+        const target = callbackUrl || "/dashboard";
         window.location.href = target;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
@@ -53,7 +57,7 @@ export default function LoginForm() {
           setError(result.error);
           return;
         }
-        const target = params.get("callbackUrl") || "/dashboard";
+        const target = callbackUrl || "/dashboard";
         window.location.href = target;
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
@@ -75,7 +79,7 @@ export default function LoginForm() {
           </div>
         </div>
 
-        {params.get("setup") === "success" && (
+        {setup === "success" && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-3.5 text-xs font-semibold text-emerald-800 flex items-start gap-2">
             <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
             <div>
