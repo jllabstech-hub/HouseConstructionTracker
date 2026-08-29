@@ -72,7 +72,7 @@ export function AppShell({
   ];
 
   const moreNav = [
-    { href: "/projects", label: "Manage Projects", icon: Building2, active: pathname.startsWith("/projects") },
+    { href: "/projects", label: "My Houses", icon: Building2, active: pathname.startsWith("/projects") },
     { href: "/phonedirectory", label: "Phone Directory", icon: Users, active: pathname === "/phonedirectory" || pathname === "/masters" },
     { href: "/documents", label: "Documents", icon: Files, active: pathname === "/documents" },
   ];

@@ -1,12 +1,9 @@
 "use client";
 
-import Link from "next/link";
-import { Building2, Wallet, PiggyBank, Landmark } from "lucide-react";
+import { Wallet, PiggyBank, Landmark } from "lucide-react";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 
 export function FinancialHero({
-  projectName,
-  location,
   currentStageName,
   totalSpent,
   totalBudget,
@@ -27,48 +24,19 @@ export function FinancialHero({
   const clampedPercent = Math.min(100, Math.max(0, usedPercent));
 
   return (
-    <div className="space-y-5">
-      {/* 1. Project Header Row */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-paper-200/80 pb-4">
-        <div>
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <Link
-              href="/projects"
-              className="font-display text-2xl sm:text-3xl font-bold text-ink-900 tracking-tight hover:text-clay-800 transition"
-              title="View all projects"
-            >
-              {projectName}
-            </Link>
-            {location && (
-              <span className="rounded-md bg-paper-100 px-2.5 py-0.5 text-xs font-semibold text-ink-600">
-                {location}
-              </span>
-            )}
-            <span className="rounded-md bg-clay-50 border border-clay-200/60 px-2.5 py-0.5 text-xs font-semibold text-clay-800">
-              {currentStageName || "Foundation & Structure"}
-            </span>
-          </div>
-          <p className="text-xs text-ink-500 mt-1">
-            Live home construction financial dashboard
-          </p>
+    <div className="space-y-4">
+      {/* Current stage pill */}
+      {currentStageName && (
+        <div className="flex items-center gap-2">
+          <span className="rounded-full bg-clay-50 border border-clay-200/60 px-3 py-1 text-xs font-semibold text-clay-800">
+            🏗️ {currentStageName}
+          </span>
         </div>
+      )}
 
-        {/* Secondary Action (+ New House) */}
-        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
-          <Link
-            href="/projects/new"
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-paper-300 bg-white hover:bg-paper-50 px-4 py-2.5 text-sm font-bold text-ink-800 shadow-2xs transition active:scale-95 whitespace-nowrap min-h-[42px]"
-            title="Create a new house project"
-          >
-            <Building2 className="h-4 w-4 text-clay-600 shrink-0" />
-            <span className="whitespace-nowrap">New House</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* 2. Key Financial Questions: Total Spent | Budget | Remaining */}
+      {/* Key Financial Cards: Total Spent | Budget | Remaining */}
       <div className="grid gap-3.5 sm:grid-cols-3">
-        {/* Question 1: How much have I spent? */}
+        {/* How much have I spent? */}
         <div className="rounded-2xl border border-clay-200 bg-clay-50/40 p-5 sm:p-6 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
@@ -109,7 +77,7 @@ export function FinancialHero({
           </div>
         </div>
 
-        {/* Question 2: How much budget remains? */}
+        {/* How much budget remains? */}
         <div className="rounded-2xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between">
