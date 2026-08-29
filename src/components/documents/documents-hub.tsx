@@ -176,6 +176,7 @@ export function DocumentsHub({
   const [lightboxDoc, setLightboxDoc] = useState<DocumentItem | null>(null);
   const [editingDoc, setEditingDoc] = useState<DocumentItem | null>(null);
   const [docToDelete, setDocToDelete] = useState<DocumentItem | null>(null);
+  const [deletedDocIds, setDeletedDocIds] = useState<Set<string>>(new Set());
   const [activeMenuDocId, setActiveMenuDocId] = useState<string | null>(null);
   const [copiedDocId, setCopiedDocId] = useState<string | null>(null);
   const [previewErrors, setPreviewErrors] = useState<Record<string, boolean>>({});
@@ -213,6 +214,7 @@ export function DocumentsHub({
     const effectiveCategory = drawerCategory !== "ALL" ? drawerCategory : selectedType;
 
     return documents
+      .filter((doc) => !deletedDocIds.has(doc.id))
       .sort((a, b) => {
         if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -255,7 +257,7 @@ export function DocumentsHub({
           doc.fileName.toLowerCase().includes(q)
         );
       });
-  }, [documents, selectedType, drawerCategory, drawerFloor, drawerStage, drawerPinned, drawerDate, search]);
+  }, [documents, selectedType, drawerCategory, drawerFloor, drawerStage, drawerPinned, drawerDate, search, deletedDocIds]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -1301,15 +1303,37 @@ export function DocumentsHub({
         onClose={() => setDocToDelete(null)}
         onConfirm={() => {
           if (!docToDelete) return;
+          const target = docToDelete;
+          // Optimistically remove from local view and close dialog
+          setDeletedDocIds((prev) => new Set(prev).add(target.id));
+          setDocToDelete(null);
+
           start(async () => {
-            await deleteDocument(docToDelete.id);
-            setDocToDelete(null);
-            router.refresh();
+            try {
+              const res = await deleteDocument(target.id);
+              if (res && "error" in res && res.error) {
+                setDeletedDocIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(target.id);
+                  return next;
+                });
+                alert(res.error);
+                return;
+              }
+              router.refresh();
+            } catch (err) {
+              setDeletedDocIds((prev) => {
+                const next = new Set(prev);
+                next.delete(target.id);
+                return next;
+              });
+              alert(err instanceof Error ? err.message : "Failed to delete document");
+            }
           });
         }}
         title="Delete Document?"
         description={`Are you sure you want to permanently delete "${docToDelete?.title}"?`}
-        confirmText={pending ? "Deleting..." : "Delete Document"}
+        confirmText="Delete Document"
         variant="danger"
       />
     </div>

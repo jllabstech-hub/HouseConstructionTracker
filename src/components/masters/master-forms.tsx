@@ -142,6 +142,8 @@ export function MasterForms({
   const [editingVendor, setEditingVendor] = useState<VendorItem | null>(null);
   const [editingWorker, setEditingWorker] = useState<WorkerItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "vendor" | "worker"; id: string; name: string } | null>(null);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [payRecipient, setPayRecipient] = useState<PayRecipient | null>(null);
   const [showPayModal, setShowPayModal] = useState<boolean>(false);
 
@@ -160,32 +162,36 @@ export function MasterForms({
 
   // Filtered Vendors
   const filteredVendors = useMemo(() => {
-    return vendors.filter((v) => {
-      if (!search) return true;
-      const q = search.toLowerCase();
-      return (
-        v.name.toLowerCase().includes(q) ||
-        (v.company && v.company.toLowerCase().includes(q)) ||
-        (v.phone && v.phone.toLowerCase().includes(q)) ||
-        (v.address && v.address.toLowerCase().includes(q))
-      );
-    });
-  }, [vendors, search]);
+    return vendors
+      .filter((v) => !deletedIds.has(v.id))
+      .filter((v) => {
+        if (!search) return true;
+        const q = search.toLowerCase();
+        return (
+          v.name.toLowerCase().includes(q) ||
+          (v.company && v.company.toLowerCase().includes(q)) ||
+          (v.phone && v.phone.toLowerCase().includes(q)) ||
+          (v.address && v.address.toLowerCase().includes(q))
+        );
+      });
+  }, [vendors, search, deletedIds]);
 
   // Filtered Workers
   const filteredWorkers = useMemo(() => {
-    return workers.filter((w) => {
-      if (selectedTrade !== "ALL" && w.type !== selectedTrade) return false;
-      if (!search) return true;
-      const q = search.toLowerCase();
-      return (
-        w.name.toLowerCase().includes(q) ||
-        w.type.toLowerCase().includes(q) ||
-        (w.phone && w.phone.toLowerCase().includes(q)) ||
-        (w.specialization && w.specialization.toLowerCase().includes(q))
-      );
-    });
-  }, [workers, search, selectedTrade]);
+    return workers
+      .filter((w) => !deletedIds.has(w.id))
+      .filter((w) => {
+        if (selectedTrade !== "ALL" && w.type !== selectedTrade) return false;
+        if (!search) return true;
+        const q = search.toLowerCase();
+        return (
+          w.name.toLowerCase().includes(q) ||
+          w.type.toLowerCase().includes(q) ||
+          (w.phone && w.phone.toLowerCase().includes(q)) ||
+          (w.specialization && w.specialization.toLowerCase().includes(q))
+        );
+      });
+  }, [workers, search, selectedTrade, deletedIds]);
 
   // Filtered Materials
   const filteredMaterials = useMemo(() => {
@@ -259,6 +265,19 @@ export function MasterForms({
           </button>
         </div>
       </div>
+
+      {deleteError && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-800 flex items-center justify-between shadow-2xs">
+          <span>{deleteError}</span>
+          <button
+            type="button"
+            onClick={() => setDeleteError(null)}
+            className="text-red-600 hover:text-red-800 font-bold ml-3"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       {/* Directory Tab Navigation */}
       <div className="flex overflow-x-auto no-scrollbar gap-2 p-1.5 bg-paper-100/90 rounded-2xl border border-paper-200">
@@ -457,8 +476,9 @@ export function MasterForms({
 
                         <button
                           type="button"
+                          disabled={pending || deletedIds.has(vendor.id)}
                           onClick={() => setDeleteTarget({ type: "vendor", id: vendor.id, name: vendor.name })}
-                          className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition"
+                          className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <Trash2 className="h-3 w-3" />
                           <span>{t.masters.delete}</span>
@@ -827,8 +847,9 @@ export function MasterForms({
 
                         <button
                           type="button"
+                          disabled={pending || deletedIds.has(worker.id)}
                           onClick={() => setDeleteTarget({ type: "worker", id: worker.id, name: worker.name })}
-                          className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition"
+                          className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
                         >
                           <Trash2 className="h-3 w-3" />
                           <span>{t.masters.delete}</span>
@@ -1217,14 +1238,38 @@ export function MasterForms({
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {
           if (!deleteTarget) return;
+          const target = deleteTarget;
+          // Optimistically remove from UI and close dialog immediately
+          setDeletedIds((prev) => new Set(prev).add(target.id));
+          setDeleteTarget(null);
+          setDeleteError(null);
+
           start(async () => {
-            if (deleteTarget.type === "vendor") {
-              await deleteVendor(deleteTarget.id);
-            } else {
-              await deleteWorker(deleteTarget.id);
+            try {
+              const res =
+                target.type === "vendor"
+                  ? await deleteVendor(target.id)
+                  : await deleteWorker(target.id);
+              if (res && "error" in res && res.error) {
+                // Revert optimistic removal on failure
+                setDeletedIds((prev) => {
+                  const next = new Set(prev);
+                  next.delete(target.id);
+                  return next;
+                });
+                setDeleteError(res.error);
+                return;
+              }
+              router.refresh();
+            } catch (err) {
+              // Revert optimistic removal on exception
+              setDeletedIds((prev) => {
+                const next = new Set(prev);
+                next.delete(target.id);
+                return next;
+              });
+              setDeleteError(err instanceof Error ? err.message : "Failed to delete entry");
             }
-            setDeleteTarget(null);
-            router.refresh();
           });
         }}
         title={deleteTarget?.type === "vendor" ? "Delete Vendor / Store" : "Delete Construction Worker"}
