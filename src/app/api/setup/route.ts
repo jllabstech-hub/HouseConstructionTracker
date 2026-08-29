@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { seedUserMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
+import { seedProjectMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { ensureDatabaseSchema } from "@/lib/db/init-db";
 
 export const dynamic = "force-dynamic";
@@ -50,9 +50,6 @@ export async function GET(request: Request) {
       throw new Error("Failed to initialize user record");
     }
 
-    // 3. Seed user masters (materials, labours, work areas) if missing
-    await seedUserMasters(user.id);
-
     // 4. Ensure default project exists
     let project = await prisma.project.findFirst({ where: { userId: user.id } });
     if (!project) {
@@ -70,6 +67,9 @@ export async function GET(request: Request) {
       });
       await seedProjectStructure(project.id, { demoProgress: true });
     }
+
+    // 5. Seed project masters (materials, labours, work areas) if missing
+    await seedProjectMasters(project.id);
 
     if (shouldRedirect) {
       const forwardedHost = request.headers.get("x-forwarded-host");

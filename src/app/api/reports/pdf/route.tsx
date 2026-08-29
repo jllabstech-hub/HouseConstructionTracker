@@ -60,7 +60,7 @@ export async function GET(request: Request) {
 
     const [expenses, workAreas, budgetCategories, stages] = await Promise.all([
       loadProjectExpenses(projectId, { from, to }),
-      loadWorkAreas(session.user.id),
+      loadWorkAreas(projectId),
       prisma.budgetCategory.findMany({
         where: { projectId },
         include: { materialCategory: true, labourCategory: true },

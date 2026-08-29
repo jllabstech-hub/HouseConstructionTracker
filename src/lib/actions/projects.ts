@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireProject, requireUser } from "@/lib/auth-guard";
-import { seedProjectStructure } from "@/lib/catalog/seed-masters";
+import { seedProjectMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { setActiveProjectId } from "@/lib/project-context";
 import { projectSchema, floorSchema, stageSchema } from "@/lib/validations";
 import { parseMoneyInput } from "@/lib/money";
@@ -47,6 +47,7 @@ export async function createProject(input: unknown) {
       },
     });
     await seedProjectStructure(project.id);
+    await seedProjectMasters(project.id);
     await setActiveProjectId(project.id);
     invalidateProjectCache(project.id);
     revalidatePath("/");

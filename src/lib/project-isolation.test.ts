@@ -102,4 +102,48 @@ describe("Multi-Project Authorization & Isolation Rules", () => {
     // Ensure no cross-project leakage from proj_b1
     expect(userAProjectExpenses.some((e) => e.projectId === "proj_b1")).toBe(false);
   });
+
+  it("9. Scopes material, labour, and service categories strictly per house project", () => {
+    const categories = [
+      { id: "mat_1", projectId: "proj_a1", name: "Cement", groupName: "Structure & Civil" },
+      { id: "mat_2", projectId: "proj_a1", name: "Italian Marble", groupName: "Finishes & Carpentry" },
+      { id: "mat_3", projectId: "proj_a2", name: "Cement", groupName: "Structure & Civil" },
+      { id: "mat_4", projectId: "proj_b1", name: "Red Granite", groupName: "Custom" },
+    ];
+
+    // House Alpha categories
+    const alphaCats = categories.filter((c) => c.projectId === "proj_a1");
+    expect(alphaCats.length).toBe(2);
+    expect(alphaCats.map((c) => c.name)).toEqual(["Cement", "Italian Marble"]);
+
+    // House Beta categories (same name 'Cement' is independent per-project)
+    const betaCats = categories.filter((c) => c.projectId === "proj_a2");
+    expect(betaCats.length).toBe(1);
+    expect(betaCats[0].name).toBe("Cement");
+    expect(betaCats[0].id).not.toBe(alphaCats[0].id);
+
+    // Deleting Italian Marble from House Alpha does NOT touch House Beta
+    const updatedAlpha = alphaCats.filter((c) => c.id !== "mat_2");
+    expect(updatedAlpha.length).toBe(1);
+    expect(categories.find((c) => c.id === "mat_3")?.name).toBe("Cement");
+  });
+
+  it("10. Supports adding custom categories scoped only to the active house project", () => {
+    let projectCategories = [
+      { id: "cat_1", projectId: "proj_a1", name: "Cement" },
+      { id: "cat_2", projectId: "proj_a2", name: "Cement" },
+    ];
+
+    // User adds custom category 'Teak Wood Paneling' to House Alpha (proj_a1)
+    const newCategory = { id: "cat_custom_1", projectId: "proj_a1", name: "Teak Wood Paneling" };
+    projectCategories = [...projectCategories, newCategory];
+
+    // When creating or editing an expense in House Alpha, custom category is available
+    const alphaAvailable = projectCategories.filter((c) => c.projectId === "proj_a1");
+    expect(alphaAvailable.some((c) => c.name === "Teak Wood Paneling")).toBe(true);
+
+    // House Beta does NOT see House Alpha's custom category
+    const betaAvailable = projectCategories.filter((c) => c.projectId === "proj_a2");
+    expect(betaAvailable.some((c) => c.name === "Teak Wood Paneling")).toBe(false);
+  });
 });

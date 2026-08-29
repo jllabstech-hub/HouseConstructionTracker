@@ -86,9 +86,9 @@ export async function loadProjectExpenses(projectId: string, range?: DateRange, 
   return rows.map(mapExpense);
 }
 
-export async function loadWorkAreas(userId: string): Promise<WorkAreaDefinition[]> {
+export async function loadWorkAreas(projectId: string): Promise<WorkAreaDefinition[]> {
   const areas = await prisma.workArea.findMany({
-    where: { userId },
+    where: { projectId },
     include: { materials: true, labours: true },
     orderBy: { sortOrder: "asc" },
   });
@@ -104,7 +104,7 @@ export async function getDashboardData(projectId: string, userId: string, range?
   const [project, expenses, workAreas, budgets, budgetCategories] = await Promise.all([
     prisma.project.findFirst({ where: { id: projectId, userId } }),
     loadProjectExpenses(projectId, range),
-    loadWorkAreas(userId),
+    loadWorkAreas(projectId),
     prisma.budget.findMany({ where: { projectId } }),
     prisma.budgetCategory.findMany({
       where: { projectId },

@@ -43,9 +43,9 @@ export const MATERIAL_CONSOLIDATION_MAP: Record<string, { targetName: string; gr
   "waterproofing & chemicals": { targetName: "Waterproofing & Chemicals", groupName: "Specialized & Other" },
 };
 
-export async function consolidateLegacyCategories(userId: string) {
+export async function consolidateLegacyCategories(projectId: string) {
   try {
-    const existingMaterials = await prisma.materialCategory.findMany({ where: { userId } });
+    const existingMaterials = await prisma.materialCategory.findMany({ where: { projectId } });
     if (existingMaterials.length === 0) return;
 
     for (const cat of existingMaterials) {
@@ -53,7 +53,7 @@ export async function consolidateLegacyCategories(userId: string) {
       const mapping = MATERIAL_CONSOLIDATION_MAP[key];
       if (mapping && (cat.name !== mapping.targetName || cat.groupName !== mapping.groupName)) {
         const targetCat = await prisma.materialCategory.findFirst({
-          where: { userId, name: mapping.targetName },
+          where: { projectId, name: mapping.targetName },
         });
 
         if (targetCat && targetCat.id !== cat.id) {
@@ -79,16 +79,16 @@ export async function consolidateLegacyCategories(userId: string) {
   }
 }
 
-export async function seedUserMasters(userId: string) {
-  await consolidateLegacyCategories(userId);
+export async function seedProjectMasters(projectId: string) {
+  await consolidateLegacyCategories(projectId);
 
-  const materialsCount = await prisma.materialCategory.count({ where: { userId } });
+  const materialsCount = await prisma.materialCategory.count({ where: { projectId } });
   if (materialsCount === 0) {
-    const materialsData: { userId: string; name: string; groupName: string; sortOrder: number; isDefault: boolean }[] = [];
+    const materialsData: { projectId: string; name: string; groupName: string; sortOrder: number; isDefault: boolean }[] = [];
     for (const [groupIndex, group] of MATERIAL_CATALOG.entries()) {
       for (const [itemIndex, name] of group.items.entries()) {
         materialsData.push({
-          userId,
+          projectId,
           name,
           groupName: group.group,
           sortOrder: groupIndex * 100 + itemIndex,
@@ -99,13 +99,13 @@ export async function seedUserMasters(userId: string) {
     await prisma.materialCategory.createMany({ data: materialsData, skipDuplicates: true });
   }
 
-  const laboursCount = await prisma.labourCategory.count({ where: { userId } });
+  const laboursCount = await prisma.labourCategory.count({ where: { projectId } });
   if (laboursCount === 0) {
-    const laboursData: { userId: string; name: string; groupName: string; sortOrder: number; isDefault: boolean }[] = [];
+    const laboursData: { projectId: string; name: string; groupName: string; sortOrder: number; isDefault: boolean }[] = [];
     for (const [groupIndex, group] of LABOUR_CATALOG.entries()) {
       for (const [itemIndex, name] of group.items.entries()) {
         laboursData.push({
-          userId,
+          projectId,
           name,
           groupName: group.group,
           sortOrder: groupIndex * 100 + itemIndex,
@@ -116,43 +116,46 @@ export async function seedUserMasters(userId: string) {
     await prisma.labourCategory.createMany({ data: laboursData, skipDuplicates: true });
   }
 
-  const servicesCount = await prisma.serviceCategory.count({ where: { userId } });
+  const servicesCount = await prisma.serviceCategory.count({ where: { projectId } });
   if (servicesCount === 0) {
     await prisma.serviceCategory.createMany({
-      data: SERVICE_CATALOG.map((name, index) => ({ userId, name, sortOrder: index, isDefault: true })),
+      data: SERVICE_CATALOG.map((name, index) => ({ projectId, name, sortOrder: index, isDefault: true })),
       skipDuplicates: true,
     });
   }
 
-  const equipmentsCount = await prisma.equipmentCategory.count({ where: { userId } });
+  const equipmentsCount = await prisma.equipmentCategory.count({ where: { projectId } });
   if (equipmentsCount === 0) {
     await prisma.equipmentCategory.createMany({
-      data: EQUIPMENT_CATALOG.map((name, index) => ({ userId, name, sortOrder: index, isDefault: true })),
+      data: EQUIPMENT_CATALOG.map((name, index) => ({ projectId, name, sortOrder: index, isDefault: true })),
       skipDuplicates: true,
     });
   }
 
-  const professionalsCount = await prisma.professionalCategory.count({ where: { userId } });
+  const professionalsCount = await prisma.professionalCategory.count({ where: { projectId } });
   if (professionalsCount === 0) {
     await prisma.professionalCategory.createMany({
-      data: PROFESSIONAL_CATALOG.map((name, index) => ({ userId, name, sortOrder: index, isDefault: true })),
+      data: PROFESSIONAL_CATALOG.map((name, index) => ({ projectId, name, sortOrder: index, isDefault: true })),
       skipDuplicates: true,
     });
   }
 
-  await seedWorkAreas(userId);
+  await seedWorkAreas(projectId);
 }
 
-export async function seedWorkAreas(userId: string) {
-  const existingCount = await prisma.workArea.count({ where: { userId } });
+// Backwards-compatible alias if needed during transition
+export const seedUserMasters = seedProjectMasters;
+
+export async function seedWorkAreas(projectId: string) {
+  const existingCount = await prisma.workArea.count({ where: { projectId } });
   if (existingCount > 0) return;
 
-  const materials = await prisma.materialCategory.findMany({ where: { userId } });
-  const labours = await prisma.labourCategory.findMany({ where: { userId } });
+  const materials = await prisma.materialCategory.findMany({ where: { projectId } });
+  const labours = await prisma.labourCategory.findMany({ where: { projectId } });
 
   for (const [index, template] of WORK_AREA_TEMPLATES.entries()) {
     const workArea = await prisma.workArea.create({
-      data: { userId, name: template.name, sortOrder: index },
+      data: { projectId, name: template.name, sortOrder: index },
     });
 
     const materialIds = materials

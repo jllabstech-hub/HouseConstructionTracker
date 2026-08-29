@@ -71,8 +71,8 @@ export default async function BudgetPage() {
       where: { projectId },
       include: { materialCategory: true, labourCategory: true, serviceCategory: true, professionalCategory: true },
     }),
-    prisma.materialCategory.findMany({ where: { userId: user.id }, orderBy: { name: "asc" } }),
-    prisma.labourCategory.findMany({ where: { userId: user.id }, orderBy: { name: "asc" } }),
+    prisma.materialCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+    prisma.labourCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
   ]);
 
   if (!project) {

@@ -119,6 +119,7 @@ const SHOP_CATEGORY_PRESETS = [
 ];
 
 export function MasterForms({
+  projectId,
   materials = [],
   labours = [],
   vendors = [],
@@ -126,6 +127,7 @@ export function MasterForms({
   services = [],
   expenses = [],
 }: {
+  projectId?: string;
   materials?: MaterialItem[];
   labours?: LabourItem[];
   vendors?: VendorItem[];
@@ -1131,6 +1133,7 @@ export function MasterForms({
                 });
               }}
             >
+              {projectId && <input type="hidden" name="projectId" value={projectId} />}
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">Material Name</label>
                 <input
@@ -1228,6 +1231,7 @@ export function MasterForms({
                 });
               }}
             >
+              {projectId && <input type="hidden" name="projectId" value={projectId} />}
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">Trade Name</label>
                 <input
@@ -1296,6 +1300,7 @@ export function MasterForms({
                 });
               }}
             >
+              {projectId && <input type="hidden" name="projectId" value={projectId} />}
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">Service / Equipment Name</label>
                 <input

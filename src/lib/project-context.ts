@@ -2,7 +2,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
-import { seedProjectStructure } from "@/lib/catalog/seed-masters";
+import { seedProjectMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { getCached, setCached } from "@/lib/cache-utils";
 import type { Project } from "@prisma/client";
 
@@ -50,6 +50,7 @@ export const getActiveProject = cache(async (userId?: string): Promise<ActivePro
           },
         });
         await seedProjectStructure(newProject.id, { demoProgress: true });
+        await seedProjectMasters(newProject.id);
         projects = [newProject];
       } catch (healErr) {
         console.warn("Auto-create project failed:", healErr);

@@ -51,8 +51,8 @@ export async function GET(request: Request) {
   // Load project expenses & masters in parallel
   const [expenses, materials, labours, vendors, workers, stages, documents, receipts] = await Promise.all([
     loadProjectExpenses(projectId),
-    prisma.materialCategory.findMany({ where: { userId: session.user.id } }),
-    prisma.labourCategory.findMany({ where: { userId: session.user.id } }),
+    prisma.materialCategory.findMany({ where: { projectId } }),
+    prisma.labourCategory.findMany({ where: { projectId } }),
     prisma.vendor.findMany({ where: { userId: session.user.id } }),
     prisma.worker.findMany({ where: { userId: session.user.id } }),
     prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),

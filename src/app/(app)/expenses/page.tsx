@@ -102,12 +102,12 @@ export default async function ExpensesPage() {
       select: { id: true, name: true },
     }),
     prisma.materialCategory.findMany({
-      where: { userId: user.id },
+      where: { projectId },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),
     prisma.labourCategory.findMany({
-      where: { userId: user.id },
+      where: { projectId },
       orderBy: { name: "asc" },
       select: { id: true, name: true },
     }),

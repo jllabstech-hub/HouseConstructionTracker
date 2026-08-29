@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { seedUserMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
+import { seedProjectMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 
 export async function ensureDatabaseSchema() {
   try {
@@ -137,7 +137,7 @@ export async function ensureDatabaseSchema() {
 
       CREATE TABLE IF NOT EXISTS "MaterialCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
-        "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+        "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
         "groupName" TEXT NOT NULL,
         "unit" TEXT,
@@ -145,7 +145,7 @@ export async function ensureDatabaseSchema() {
         "sortOrder" INTEGER NOT NULL DEFAULT 0,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE ("userId", "groupName", "name")
+        UNIQUE ("projectId", "groupName", "name")
       );
 
       CREATE TABLE IF NOT EXISTS "MaterialSubcategory" (
@@ -160,7 +160,7 @@ export async function ensureDatabaseSchema() {
 
       CREATE TABLE IF NOT EXISTS "LabourCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
-        "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+        "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
         "groupName" TEXT NOT NULL,
         "defaultDailyRate" DECIMAL(14,2),
@@ -168,7 +168,7 @@ export async function ensureDatabaseSchema() {
         "sortOrder" INTEGER NOT NULL DEFAULT 0,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE ("userId", "groupName", "name")
+        UNIQUE ("projectId", "groupName", "name")
       );
 
       CREATE TABLE IF NOT EXISTS "LabourSubcategory" (
@@ -183,35 +183,35 @@ export async function ensureDatabaseSchema() {
 
       CREATE TABLE IF NOT EXISTS "ServiceCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
-        "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+        "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
         "isDefault" BOOLEAN NOT NULL DEFAULT false,
         "sortOrder" INTEGER NOT NULL DEFAULT 0,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE ("userId", "name")
+        UNIQUE ("projectId", "name")
       );
 
       CREATE TABLE IF NOT EXISTS "EquipmentCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
-        "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+        "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
         "isDefault" BOOLEAN NOT NULL DEFAULT false,
         "sortOrder" INTEGER NOT NULL DEFAULT 0,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE ("userId", "name")
+        UNIQUE ("projectId", "name")
       );
 
       CREATE TABLE IF NOT EXISTS "ProfessionalCategory" (
         "id" TEXT NOT NULL PRIMARY KEY,
-        "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+        "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
         "isDefault" BOOLEAN NOT NULL DEFAULT false,
         "sortOrder" INTEGER NOT NULL DEFAULT 0,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE ("userId", "name")
+        UNIQUE ("projectId", "name")
       );
 
       CREATE TABLE IF NOT EXISTS "Vendor" (
@@ -241,12 +241,12 @@ export async function ensureDatabaseSchema() {
 
       CREATE TABLE IF NOT EXISTS "WorkArea" (
         "id" TEXT NOT NULL PRIMARY KEY,
-        "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+        "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
         "name" TEXT NOT NULL,
         "sortOrder" INTEGER NOT NULL DEFAULT 0,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE ("userId", "name")
+        UNIQUE ("projectId", "name")
       );
 
       CREATE TABLE IF NOT EXISTS "WorkAreaMaterial" (
@@ -379,6 +379,78 @@ export async function ensureDatabaseSchema() {
       );
     `);
 
+    // 2b. Migrate existing category tables from userId to projectId if needed
+    await prisma.$executeRawUnsafe(`
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='MaterialCategory' AND column_name='userId') THEN
+          ALTER TABLE "MaterialCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
+          UPDATE "MaterialCategory" mc SET "projectId" = p.id FROM "Project" p WHERE mc."userId" = p."userId" AND mc."projectId" IS NULL;
+          DELETE FROM "MaterialCategory" WHERE "projectId" IS NULL;
+          ALTER TABLE "MaterialCategory" ALTER COLUMN "projectId" SET NOT NULL;
+          ALTER TABLE "MaterialCategory" DROP CONSTRAINT IF EXISTS "MaterialCategory_userId_groupName_name_key";
+          ALTER TABLE "MaterialCategory" DROP COLUMN IF EXISTS "userId";
+          ALTER TABLE "MaterialCategory" DROP CONSTRAINT IF EXISTS "MaterialCategory_projectId_groupName_name_key";
+          ALTER TABLE "MaterialCategory" ADD CONSTRAINT "MaterialCategory_projectId_groupName_name_key" UNIQUE ("projectId", "groupName", "name");
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='LabourCategory' AND column_name='userId') THEN
+          ALTER TABLE "LabourCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
+          UPDATE "LabourCategory" lc SET "projectId" = p.id FROM "Project" p WHERE lc."userId" = p."userId" AND lc."projectId" IS NULL;
+          DELETE FROM "LabourCategory" WHERE "projectId" IS NULL;
+          ALTER TABLE "LabourCategory" ALTER COLUMN "projectId" SET NOT NULL;
+          ALTER TABLE "LabourCategory" DROP CONSTRAINT IF EXISTS "LabourCategory_userId_groupName_name_key";
+          ALTER TABLE "LabourCategory" DROP COLUMN IF EXISTS "userId";
+          ALTER TABLE "LabourCategory" DROP CONSTRAINT IF EXISTS "LabourCategory_projectId_groupName_name_key";
+          ALTER TABLE "LabourCategory" ADD CONSTRAINT "LabourCategory_projectId_groupName_name_key" UNIQUE ("projectId", "groupName", "name");
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='ServiceCategory' AND column_name='userId') THEN
+          ALTER TABLE "ServiceCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
+          UPDATE "ServiceCategory" sc SET "projectId" = p.id FROM "Project" p WHERE sc."userId" = p."userId" AND sc."projectId" IS NULL;
+          DELETE FROM "ServiceCategory" WHERE "projectId" IS NULL;
+          ALTER TABLE "ServiceCategory" ALTER COLUMN "projectId" SET NOT NULL;
+          ALTER TABLE "ServiceCategory" DROP CONSTRAINT IF EXISTS "ServiceCategory_userId_name_key";
+          ALTER TABLE "ServiceCategory" DROP COLUMN IF EXISTS "userId";
+          ALTER TABLE "ServiceCategory" DROP CONSTRAINT IF EXISTS "ServiceCategory_projectId_name_key";
+          ALTER TABLE "ServiceCategory" ADD CONSTRAINT "ServiceCategory_projectId_name_key" UNIQUE ("projectId", "name");
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='EquipmentCategory' AND column_name='userId') THEN
+          ALTER TABLE "EquipmentCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
+          UPDATE "EquipmentCategory" ec SET "projectId" = p.id FROM "Project" p WHERE ec."userId" = p."userId" AND ec."projectId" IS NULL;
+          DELETE FROM "EquipmentCategory" WHERE "projectId" IS NULL;
+          ALTER TABLE "EquipmentCategory" ALTER COLUMN "projectId" SET NOT NULL;
+          ALTER TABLE "EquipmentCategory" DROP CONSTRAINT IF EXISTS "EquipmentCategory_userId_name_key";
+          ALTER TABLE "EquipmentCategory" DROP COLUMN IF EXISTS "userId";
+          ALTER TABLE "EquipmentCategory" DROP CONSTRAINT IF EXISTS "EquipmentCategory_projectId_name_key";
+          ALTER TABLE "EquipmentCategory" ADD CONSTRAINT "EquipmentCategory_projectId_name_key" UNIQUE ("projectId", "name");
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='ProfessionalCategory' AND column_name='userId') THEN
+          ALTER TABLE "ProfessionalCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
+          UPDATE "ProfessionalCategory" pc SET "projectId" = p.id FROM "Project" p WHERE pc."userId" = p."userId" AND pc."projectId" IS NULL;
+          DELETE FROM "ProfessionalCategory" WHERE "projectId" IS NULL;
+          ALTER TABLE "ProfessionalCategory" ALTER COLUMN "projectId" SET NOT NULL;
+          ALTER TABLE "ProfessionalCategory" DROP CONSTRAINT IF EXISTS "ProfessionalCategory_userId_name_key";
+          ALTER TABLE "ProfessionalCategory" DROP COLUMN IF EXISTS "userId";
+          ALTER TABLE "ProfessionalCategory" DROP CONSTRAINT IF EXISTS "ProfessionalCategory_projectId_name_key";
+          ALTER TABLE "ProfessionalCategory" ADD CONSTRAINT "ProfessionalCategory_projectId_name_key" UNIQUE ("projectId", "name");
+        END IF;
+
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='WorkArea' AND column_name='userId') THEN
+          ALTER TABLE "WorkArea" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
+          UPDATE "WorkArea" wa SET "projectId" = p.id FROM "Project" p WHERE wa."userId" = p."userId" AND wa."projectId" IS NULL;
+          DELETE FROM "WorkArea" WHERE "projectId" IS NULL;
+          ALTER TABLE "WorkArea" ALTER COLUMN "projectId" SET NOT NULL;
+          ALTER TABLE "WorkArea" DROP CONSTRAINT IF EXISTS "WorkArea_userId_name_key";
+          ALTER TABLE "WorkArea" DROP COLUMN IF EXISTS "userId";
+          ALTER TABLE "WorkArea" DROP CONSTRAINT IF EXISTS "WorkArea_projectId_name_key";
+          ALTER TABLE "WorkArea" ADD CONSTRAINT "WorkArea_projectId_name_key" UNIQUE ("projectId", "name");
+        END IF;
+      END $$;
+    `);
+
     // 3. Ensure default Admin user exists
     const passwordHash = await bcrypt.hash("test123", 10);
     const adminUser = await prisma.user.upsert({
@@ -387,10 +459,7 @@ export async function ensureDatabaseSchema() {
       create: { email: "admin", name: "Admin", passwordHash },
     });
 
-    // 4. Seed user masters (materials & labours)
-    await seedUserMasters(adminUser.id);
-
-    // 5. Ensure default project exists with 20 stages
+    // 4. Ensure default project exists with 20 stages & masters
     let project = await prisma.project.findFirst({ where: { userId: adminUser.id } });
     if (!project) {
       project = await prisma.project.create({
@@ -407,6 +476,9 @@ export async function ensureDatabaseSchema() {
       });
       await seedProjectStructure(project.id, { demoProgress: true });
     }
+
+    // 5. Seed project masters (materials & labours)
+    await seedProjectMasters(project.id);
 
     console.log("Database schema successfully verified and created via DDL.");
     return { created: true, message: "Tables created successfully", userId: adminUser.id, projectId: project.id };

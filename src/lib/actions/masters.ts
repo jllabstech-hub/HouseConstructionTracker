@@ -2,8 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth-guard";
-import { invalidateUserCache } from "@/lib/cache-utils";
+import { requireProject, requireUser } from "@/lib/auth-guard";
+import { getActiveProjectId } from "@/lib/project-context";
+import { invalidateProjectCache, invalidateUserCache } from "@/lib/cache-utils";
 import { categorySchema, vendorSchema, workerSchema } from "@/lib/validations";
 
 function emptyToNull(value?: string | null) {
@@ -17,12 +18,16 @@ export async function createMaterialCategory(input: unknown) {
     const parsed = categorySchema.safeParse(input);
     if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid category" };
     
+    const projectId = parsed.data.projectId || (await getActiveProjectId(user.id));
+    if (!projectId) return { error: "Active house project not found" };
+    await requireProject(projectId, user.id);
+
     const name = parsed.data.name.trim();
     const groupName = emptyToNull(parsed.data.groupName) ?? "Custom";
 
     const existing = await prisma.materialCategory.findFirst({
       where: {
-        userId: user.id,
+        projectId,
         name: { equals: name, mode: "insensitive" },
       },
     });
@@ -33,12 +38,13 @@ export async function createMaterialCategory(input: unknown) {
 
     const created = await prisma.materialCategory.create({
       data: {
-        userId: user.id,
+        projectId,
         name,
         groupName,
       },
     });
 
+    invalidateProjectCache(projectId);
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
@@ -65,12 +71,16 @@ export async function createLabourCategory(input: unknown) {
     const parsed = categorySchema.safeParse(input);
     if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid category" };
     
+    const projectId = parsed.data.projectId || (await getActiveProjectId(user.id));
+    if (!projectId) return { error: "Active house project not found" };
+    await requireProject(projectId, user.id);
+
     const name = parsed.data.name.trim();
     const groupName = emptyToNull(parsed.data.groupName) ?? "Custom";
 
     const existing = await prisma.labourCategory.findFirst({
       where: {
-        userId: user.id,
+        projectId,
         name: { equals: name, mode: "insensitive" },
       },
     });
@@ -81,12 +91,13 @@ export async function createLabourCategory(input: unknown) {
 
     const created = await prisma.labourCategory.create({
       data: {
-        userId: user.id,
+        projectId,
         name,
         groupName,
       },
     });
 
+    invalidateProjectCache(projectId);
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
@@ -112,9 +123,15 @@ export async function createServiceCategory(input: unknown) {
     const user = await requireUser();
     const parsed = categorySchema.safeParse(input);
     if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid category" };
+
+    const projectId = parsed.data.projectId || (await getActiveProjectId(user.id));
+    if (!projectId) return { error: "Active house project not found" };
+    await requireProject(projectId, user.id);
+
     await prisma.serviceCategory.create({
-      data: { userId: user.id, name: parsed.data.name },
+      data: { projectId, name: parsed.data.name },
     });
+    invalidateProjectCache(projectId);
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
@@ -461,6 +478,15 @@ export async function clearAllPhoneDirectory() {
 export async function deleteMaterialCategory(id: string) {
   try {
     const user = await requireUser();
+    const cat = await prisma.materialCategory.findUnique({
+      where: { id },
+      include: { project: { select: { id: true, userId: true } } },
+    });
+    if (!cat || cat.project.userId !== user.id) {
+      return { error: "Category not found or access denied" };
+    }
+    const projectId = cat.projectId;
+
     await prisma.$transaction([
       prisma.expense.updateMany({
         where: { materialCategoryId: id },
@@ -472,10 +498,11 @@ export async function deleteMaterialCategory(id: string) {
       prisma.workAreaMaterial.deleteMany({
         where: { categoryId: id },
       }),
-      prisma.materialCategory.deleteMany({
-        where: { id, userId: user.id },
+      prisma.materialCategory.delete({
+        where: { id },
       }),
     ]);
+    invalidateProjectCache(projectId);
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
@@ -499,6 +526,15 @@ export async function deleteMaterialCategory(id: string) {
 export async function deleteLabourCategory(id: string) {
   try {
     const user = await requireUser();
+    const cat = await prisma.labourCategory.findUnique({
+      where: { id },
+      include: { project: { select: { id: true, userId: true } } },
+    });
+    if (!cat || cat.project.userId !== user.id) {
+      return { error: "Category not found or access denied" };
+    }
+    const projectId = cat.projectId;
+
     await prisma.$transaction([
       prisma.expense.updateMany({
         where: { labourCategoryId: id },
@@ -510,10 +546,11 @@ export async function deleteLabourCategory(id: string) {
       prisma.workAreaLabour.deleteMany({
         where: { categoryId: id },
       }),
-      prisma.labourCategory.deleteMany({
-        where: { id, userId: user.id },
+      prisma.labourCategory.delete({
+        where: { id },
       }),
     ]);
+    invalidateProjectCache(projectId);
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
@@ -537,6 +574,15 @@ export async function deleteLabourCategory(id: string) {
 export async function deleteServiceCategory(id: string) {
   try {
     const user = await requireUser();
+    const cat = await prisma.serviceCategory.findUnique({
+      where: { id },
+      include: { project: { select: { id: true, userId: true } } },
+    });
+    if (!cat || cat.project.userId !== user.id) {
+      return { error: "Category not found or access denied" };
+    }
+    const projectId = cat.projectId;
+
     await prisma.$transaction([
       prisma.expense.updateMany({
         where: { serviceCategoryId: id },
@@ -545,10 +591,11 @@ export async function deleteServiceCategory(id: string) {
       prisma.budgetCategory.deleteMany({
         where: { serviceCategoryId: id },
       }),
-      prisma.serviceCategory.deleteMany({
-        where: { id, userId: user.id },
+      prisma.serviceCategory.delete({
+        where: { id },
       }),
     ]);
+    invalidateProjectCache(projectId);
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");

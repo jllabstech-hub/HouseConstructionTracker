@@ -87,7 +87,7 @@ export function BudgetEditor({
     setIsCreatingCat(true);
     try {
       if (categoryType === "MATERIAL") {
-        const res = await createMaterialCategory({ name, groupName: "Custom" });
+        const res = await createMaterialCategory({ projectId, name, groupName: "Custom" });
         if (res.ok && res.category) {
           const newCat = res.category;
           setMaterialsList((prev) => (prev.some((c) => c.id === newCat.id) ? prev : [...prev, newCat]));
@@ -96,7 +96,7 @@ export function BudgetEditor({
           setShowNewCatModal(false);
         }
       } else {
-        const res = await createLabourCategory({ name, groupName: "Custom" });
+        const res = await createLabourCategory({ projectId, name, groupName: "Custom" });
         if (res.ok && res.category) {
           const newCat = res.category;
           setLaboursList((prev) => (prev.some((c) => c.id === newCat.id) ? prev : [...prev, newCat]));

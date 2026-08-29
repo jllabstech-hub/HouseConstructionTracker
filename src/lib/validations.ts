@@ -79,6 +79,7 @@ export const stageSchema = z.object({
 });
 
 export const categorySchema = z.object({
+  projectId: optionalText,
   name: z.string().trim().min(1, "Name is required"),
   groupName: optionalText,
 });

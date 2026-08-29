@@ -1,7 +1,7 @@
 import { Prisma, type ExpenseType, type LabourCalcMethod, type PaymentMethod, type WorkerType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
-import { seedProjectStructure, seedUserMasters, MATERIAL_CONSOLIDATION_MAP } from "../src/lib/catalog/seed-masters";
+import { seedProjectStructure, seedProjectMasters, MATERIAL_CONSOLIDATION_MAP } from "../src/lib/catalog/seed-masters";
 import { Decimal } from "@prisma/client/runtime/library";
 
 const DEMO_EMAIL = "admin";
@@ -32,14 +32,37 @@ async function main() {
     });
   }
 
-  await seedUserMasters(user.id);
+  const vendors = await upsertVendors(user.id);
+  const workers = await upsertWorkers(user.id);
+
+  const project = await prisma.project.upsert({
+    where: { id: "demo-whitefield-house" },
+    update: { userId: user.id },
+    create: {
+      id: "demo-whitefield-house",
+      userId: user.id,
+      name: "My Dream House",
+      location: "Prime City Location",
+      plotArea: money(2400),
+      builtUpArea: money(2850),
+      numberOfFloors: 2,
+      startDate: onDay(3, 1),
+      expectedCompletionDate: onDay(12, 15),
+      totalBudget: money(40_00_000),
+      status: "IN_PROGRESS",
+      notes: "G+1 independent house with terrace sit-out and compound wall.",
+    },
+  });
+
+  await seedProjectStructure(project.id, { demoProgress: true });
+  await seedProjectMasters(project.id);
 
   const [materials, labours, services, equipment, professionals] = await Promise.all([
-    prisma.materialCategory.findMany({ where: { userId: user.id } }),
-    prisma.labourCategory.findMany({ where: { userId: user.id } }),
-    prisma.serviceCategory.findMany({ where: { userId: user.id } }),
-    prisma.equipmentCategory.findMany({ where: { userId: user.id } }),
-    prisma.professionalCategory.findMany({ where: { userId: user.id } }),
+    prisma.materialCategory.findMany({ where: { projectId: project.id } }),
+    prisma.labourCategory.findMany({ where: { projectId: project.id } }),
+    prisma.serviceCategory.findMany({ where: { projectId: project.id } }),
+    prisma.equipmentCategory.findMany({ where: { projectId: project.id } }),
+    prisma.professionalCategory.findMany({ where: { projectId: project.id } }),
   ]);
 
   const mat = (name: string, _group?: string) => {
@@ -67,30 +90,6 @@ async function main() {
   const svc = (name: string) => services.find((row) => row.name === name)!.id;
   const eq = (name: string) => equipment.find((row) => row.name === name)!.id;
   const pro = (name: string) => professionals.find((row) => row.name === name)!.id;
-
-  const vendors = await upsertVendors(user.id);
-  const workers = await upsertWorkers(user.id);
-
-  const project = await prisma.project.upsert({
-    where: { id: "demo-whitefield-house" },
-    update: { userId: user.id },
-    create: {
-      id: "demo-whitefield-house",
-      userId: user.id,
-      name: "My Dream House",
-      location: "Prime City Location",
-      plotArea: money(2400),
-      builtUpArea: money(2850),
-      numberOfFloors: 2,
-      startDate: onDay(3, 1),
-      expectedCompletionDate: onDay(12, 15),
-      totalBudget: money(40_00_000),
-      status: "IN_PROGRESS",
-      notes: "G+1 independent house with terrace sit-out and compound wall.",
-    },
-  });
-
-  await seedProjectStructure(project.id, { demoProgress: true });
 
   const floors = await prisma.floor.findMany({ where: { projectId: project.id } });
   const stages = await prisma.constructionStage.findMany({ where: { projectId: project.id } });

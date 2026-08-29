@@ -256,7 +256,7 @@ export function ExpenseForm({
     setIsCreatingMaterial(true);
     setError(null);
     try {
-      const res = await createMaterialCategory({ name, groupName: "Custom" });
+      const res = await createMaterialCategory({ projectId, name, groupName: "Custom" });
       if (res.ok && res.category) {
         const newCat = res.category;
         setMaterialsList((prev) => {
@@ -309,7 +309,7 @@ export function ExpenseForm({
     setIsCreatingLabour(true);
     setError(null);
     try {
-      const res = await createLabourCategory({ name, groupName: "Custom" });
+      const res = await createLabourCategory({ projectId, name, groupName: "Custom" });
       if (res.ok && res.category) {
         const newCat = res.category;
         setLaboursList((prev) => {

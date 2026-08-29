@@ -106,14 +106,8 @@ model User {
   accounts                 Account[]
   sessions                 Session[]
   projects                 Project[]
-  materialCategories       MaterialCategory[]
-  labourCategories         LabourCategory[]
-  serviceCategories        ServiceCategory[]
-  equipmentCategories      EquipmentCategory[]
-  professionalCategories   ProfessionalCategory[]
   vendors                  Vendor[]
   workers                  Worker[]
-  workAreas                WorkArea[]
 }
 
 model Account {
@@ -172,13 +166,19 @@ model Project {
   createdAt              DateTime      @default(now())
   updatedAt              DateTime      @updatedAt
 
-  floors           Floor[]
-  stages           ConstructionStage[]
-  expenses         Expense[]
-  budgets          Budget[]
-  budgetCategories BudgetCategory[]
-  reports          Report[]
-  documents        ProjectDocument[]
+  floors                 Floor[]
+  stages                 ConstructionStage[]
+  expenses               Expense[]
+  budgets                Budget[]
+  budgetCategories       BudgetCategory[]
+  reports                Report[]
+  documents              ProjectDocument[]
+  materialCategories     MaterialCategory[]
+  labourCategories       LabourCategory[]
+  serviceCategories      ServiceCategory[]
+  equipmentCategories    EquipmentCategory[]
+  professionalCategories ProfessionalCategory[]
+  workAreas              WorkArea[]
 
   @@index([userId])
 }
@@ -222,8 +222,8 @@ model ConstructionStage {
 
 model MaterialCategory {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name      String
   groupName String
   sortOrder Int      @default(0)
@@ -236,8 +236,8 @@ model MaterialCategory {
   budgetItems   BudgetCategory[]
   workAreaLinks WorkAreaMaterial[]
 
-  @@unique([userId, groupName, name])
-  @@index([userId])
+  @@unique([projectId, groupName, name])
+  @@index([projectId])
 }
 
 model MaterialSubcategory {
@@ -256,8 +256,8 @@ model MaterialSubcategory {
 
 model LabourCategory {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name      String
   groupName String
   sortOrder Int      @default(0)
@@ -270,8 +270,8 @@ model LabourCategory {
   budgetItems   BudgetCategory[]
   workAreaLinks WorkAreaLabour[]
 
-  @@unique([userId, groupName, name])
-  @@index([userId])
+  @@unique([projectId, groupName, name])
+  @@index([projectId])
 }
 
 model LabourSubcategory {
@@ -290,8 +290,8 @@ model LabourSubcategory {
 
 model ServiceCategory {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name      String
   sortOrder Int      @default(0)
   isDefault Boolean  @default(false)
@@ -301,14 +301,14 @@ model ServiceCategory {
   expenses    Expense[]
   budgetItems BudgetCategory[]
 
-  @@unique([userId, name])
-  @@index([userId])
+  @@unique([projectId, name])
+  @@index([projectId])
 }
 
 model EquipmentCategory {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name      String
   sortOrder Int      @default(0)
   isDefault Boolean  @default(false)
@@ -317,14 +317,14 @@ model EquipmentCategory {
 
   expenses Expense[]
 
-  @@unique([userId, name])
-  @@index([userId])
+  @@unique([projectId, name])
+  @@index([projectId])
 }
 
 model ProfessionalCategory {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name      String
   sortOrder Int      @default(0)
   isDefault Boolean  @default(false)
@@ -334,8 +334,8 @@ model ProfessionalCategory {
   expenses    Expense[]
   budgetItems BudgetCategory[]
 
-  @@unique([userId, name])
-  @@index([userId])
+  @@unique([projectId, name])
+  @@index([projectId])
 }
 
 model Vendor {
@@ -374,8 +374,8 @@ model Worker {
 
 model WorkArea {
   id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   name      String
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
@@ -384,8 +384,8 @@ model WorkArea {
   materials WorkAreaMaterial[]
   labours   WorkAreaLabour[]
 
-  @@unique([userId, name])
-  @@index([userId])
+  @@unique([projectId, name])
+  @@index([projectId])
 }
 
 model WorkAreaMaterial {

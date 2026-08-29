@@ -17,6 +17,7 @@ export default async function PhoneDirectoryPage() {
     return (
       <div className="space-y-6 min-w-0 max-w-full">
         <MasterForms
+          projectId={projectId ?? undefined}
           materials={cached.materials}
           labours={cached.labours}
           vendors={cached.vendors}
@@ -29,11 +30,11 @@ export default async function PhoneDirectoryPage() {
   }
 
   const [materials, labours, vendors, workers, services] = await Promise.all([
-    prisma.materialCategory.findMany({ where: { userId: user.id }, orderBy: [{ groupName: "asc" }, { name: "asc" }] }),
-    prisma.labourCategory.findMany({ where: { userId: user.id }, orderBy: [{ groupName: "asc" }, { name: "asc" }] }),
+    projectId ? prisma.materialCategory.findMany({ where: { projectId }, orderBy: [{ groupName: "asc" }, { name: "asc" }] }) : [],
+    projectId ? prisma.labourCategory.findMany({ where: { projectId }, orderBy: [{ groupName: "asc" }, { name: "asc" }] }) : [],
     prisma.vendor.findMany({ where: { userId: user.id }, orderBy: { name: "asc" } }),
     prisma.worker.findMany({ where: { userId: user.id }, orderBy: { name: "asc" } }),
-    prisma.serviceCategory.findMany({ where: { userId: user.id }, orderBy: { name: "asc" } }),
+    projectId ? prisma.serviceCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }) : [],
   ]);
   const expenses = projectId ? await loadProjectExpenses(projectId) : [];
 
@@ -58,6 +59,7 @@ export default async function PhoneDirectoryPage() {
   return (
     <div className="space-y-6 min-w-0 max-w-full">
       <MasterForms
+        projectId={projectId ?? undefined}
         materials={payload.materials}
         labours={payload.labours}
         vendors={payload.vendors}

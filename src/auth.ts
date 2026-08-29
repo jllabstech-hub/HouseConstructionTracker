@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
 import { authConfig } from "@/auth.config";
-import { seedUserMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
+import { seedProjectMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { ensureDatabaseSchema } from "@/lib/db/init-db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -80,8 +80,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 passwordHash,
               },
             });
-            await seedUserMasters(user.id);
-
             // Ensure default project exists for admin
             let project = await prisma.project.findFirst({ where: { userId: user.id } });
             if (!project) {
@@ -99,6 +97,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               });
               await seedProjectStructure(project.id, { demoProgress: true });
             }
+            await seedProjectMasters(project.id);
           } catch (seedErr) {
             console.error("Auto-seed admin error:", seedErr);
           }
