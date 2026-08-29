@@ -259,7 +259,7 @@ export type WorkWiseCostItem = {
 /**
  * Optimized Work-Wise breakdown using category aggregations.
  */
-export async function getWorkWiseCostOptimized(projectId: string, _userId?: string): Promise<WorkWiseCostItem[]> {
+export async function getWorkWiseCostOptimized(projectId: string): Promise<WorkWiseCostItem[]> {
   const [workAreas, expenses] = await Promise.all([
     prisma.workArea.findMany({
       where: { projectId },

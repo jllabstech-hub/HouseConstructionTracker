@@ -385,8 +385,16 @@ export async function ensureDatabaseSchema() {
       BEGIN
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='MaterialCategory' AND column_name='userId') THEN
           ALTER TABLE "MaterialCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          UPDATE "MaterialCategory" mc SET "projectId" = p.id FROM "Project" p WHERE mc."userId" = p."userId" AND mc."projectId" IS NULL;
+          
+          UPDATE "MaterialCategory" mc
+          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = mc."userId" ORDER BY p."createdAt" ASC LIMIT 1)
+          WHERE mc."projectId" IS NULL;
+
           DELETE FROM "MaterialCategory" WHERE "projectId" IS NULL;
+
+          DELETE FROM "MaterialCategory" a USING "MaterialCategory" b
+          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a."groupName" = b."groupName" AND a.name = b.name;
+
           ALTER TABLE "MaterialCategory" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "MaterialCategory" DROP CONSTRAINT IF EXISTS "MaterialCategory_userId_groupName_name_key";
           ALTER TABLE "MaterialCategory" DROP COLUMN IF EXISTS "userId";
@@ -396,8 +404,16 @@ export async function ensureDatabaseSchema() {
 
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='LabourCategory' AND column_name='userId') THEN
           ALTER TABLE "LabourCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          UPDATE "LabourCategory" lc SET "projectId" = p.id FROM "Project" p WHERE lc."userId" = p."userId" AND lc."projectId" IS NULL;
+          
+          UPDATE "LabourCategory" lc
+          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = lc."userId" ORDER BY p."createdAt" ASC LIMIT 1)
+          WHERE lc."projectId" IS NULL;
+
           DELETE FROM "LabourCategory" WHERE "projectId" IS NULL;
+
+          DELETE FROM "LabourCategory" a USING "LabourCategory" b
+          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a."groupName" = b."groupName" AND a.name = b.name;
+
           ALTER TABLE "LabourCategory" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "LabourCategory" DROP CONSTRAINT IF EXISTS "LabourCategory_userId_groupName_name_key";
           ALTER TABLE "LabourCategory" DROP COLUMN IF EXISTS "userId";
@@ -407,8 +423,16 @@ export async function ensureDatabaseSchema() {
 
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='ServiceCategory' AND column_name='userId') THEN
           ALTER TABLE "ServiceCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          UPDATE "ServiceCategory" sc SET "projectId" = p.id FROM "Project" p WHERE sc."userId" = p."userId" AND sc."projectId" IS NULL;
+          
+          UPDATE "ServiceCategory" sc
+          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = sc."userId" ORDER BY p."createdAt" ASC LIMIT 1)
+          WHERE sc."projectId" IS NULL;
+
           DELETE FROM "ServiceCategory" WHERE "projectId" IS NULL;
+
+          DELETE FROM "ServiceCategory" a USING "ServiceCategory" b
+          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
+
           ALTER TABLE "ServiceCategory" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "ServiceCategory" DROP CONSTRAINT IF EXISTS "ServiceCategory_userId_name_key";
           ALTER TABLE "ServiceCategory" DROP COLUMN IF EXISTS "userId";
@@ -418,8 +442,16 @@ export async function ensureDatabaseSchema() {
 
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='EquipmentCategory' AND column_name='userId') THEN
           ALTER TABLE "EquipmentCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          UPDATE "EquipmentCategory" ec SET "projectId" = p.id FROM "Project" p WHERE ec."userId" = p."userId" AND ec."projectId" IS NULL;
+          
+          UPDATE "EquipmentCategory" ec
+          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = ec."userId" ORDER BY p."createdAt" ASC LIMIT 1)
+          WHERE ec."projectId" IS NULL;
+
           DELETE FROM "EquipmentCategory" WHERE "projectId" IS NULL;
+
+          DELETE FROM "EquipmentCategory" a USING "EquipmentCategory" b
+          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
+
           ALTER TABLE "EquipmentCategory" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "EquipmentCategory" DROP CONSTRAINT IF EXISTS "EquipmentCategory_userId_name_key";
           ALTER TABLE "EquipmentCategory" DROP COLUMN IF EXISTS "userId";
@@ -429,8 +461,16 @@ export async function ensureDatabaseSchema() {
 
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='ProfessionalCategory' AND column_name='userId') THEN
           ALTER TABLE "ProfessionalCategory" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          UPDATE "ProfessionalCategory" pc SET "projectId" = p.id FROM "Project" p WHERE pc."userId" = p."userId" AND pc."projectId" IS NULL;
+          
+          UPDATE "ProfessionalCategory" pc
+          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = pc."userId" ORDER BY p."createdAt" ASC LIMIT 1)
+          WHERE pc."projectId" IS NULL;
+
           DELETE FROM "ProfessionalCategory" WHERE "projectId" IS NULL;
+
+          DELETE FROM "ProfessionalCategory" a USING "ProfessionalCategory" b
+          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
+
           ALTER TABLE "ProfessionalCategory" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "ProfessionalCategory" DROP CONSTRAINT IF EXISTS "ProfessionalCategory_userId_name_key";
           ALTER TABLE "ProfessionalCategory" DROP COLUMN IF EXISTS "userId";
@@ -440,8 +480,16 @@ export async function ensureDatabaseSchema() {
 
         IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='WorkArea' AND column_name='userId') THEN
           ALTER TABLE "WorkArea" ADD COLUMN IF NOT EXISTS "projectId" TEXT REFERENCES "Project"("id") ON DELETE CASCADE;
-          UPDATE "WorkArea" wa SET "projectId" = p.id FROM "Project" p WHERE wa."userId" = p."userId" AND wa."projectId" IS NULL;
+          
+          UPDATE "WorkArea" wa
+          SET "projectId" = (SELECT p.id FROM "Project" p WHERE p."userId" = wa."userId" ORDER BY p."createdAt" ASC LIMIT 1)
+          WHERE wa."projectId" IS NULL;
+
           DELETE FROM "WorkArea" WHERE "projectId" IS NULL;
+
+          DELETE FROM "WorkArea" a USING "WorkArea" b
+          WHERE a.id > b.id AND a."projectId" = b."projectId" AND a.name = b.name;
+
           ALTER TABLE "WorkArea" ALTER COLUMN "projectId" SET NOT NULL;
           ALTER TABLE "WorkArea" DROP CONSTRAINT IF EXISTS "WorkArea_userId_name_key";
           ALTER TABLE "WorkArea" DROP COLUMN IF EXISTS "userId";
