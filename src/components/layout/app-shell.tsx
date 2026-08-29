@@ -94,7 +94,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-paper-50 flex flex-col text-ink-900">
       {/* Mobile Top Bar */}
-      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-paper-200 bg-white/95 px-4 py-2.5 backdrop-blur lg:hidden shadow-xs">
+      <header className="sticky top-0 z-30 flex items-center justify-between border-b border-paper-200 bg-white px-4 py-2.5 lg:hidden shadow-xs">
         <div className="flex items-center gap-2.5 min-w-0">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-clay-600 text-white">
             <Building2 className="h-4.5 w-4.5" />
@@ -320,7 +320,7 @@ export function AppShell({
 
       {/* Mobile Fixed 5-Item Bottom Bar: Home | Expenses | + | Reports | More */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-paper-300 bg-white/98 px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden shadow-lg"
+        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around border-t border-paper-200 bg-white px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] lg:hidden shadow-[0_-2px_10px_rgba(0,0,0,0.06)]"
         aria-label="Mobile Bottom Navigation"
       >
         {/* 1. Home */}
