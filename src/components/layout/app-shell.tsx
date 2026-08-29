@@ -19,7 +19,6 @@ import {
   Receipt,
   Search,
   Settings,
-  Sparkles,
   Users,
   Wallet,
   X,
@@ -78,7 +77,6 @@ export function AppShell({
     { href: "/phonedirectory", label: "Phone Directory", icon: Users, active: pathname === "/phonedirectory" || pathname === "/masters" },
     { href: "/documents", label: "Documents", icon: Files, active: pathname === "/documents" },
     { href: "/settings", label: "Settings", icon: Settings, active: pathname === "/settings" },
-    { href: "/leads", label: "Inquiries & Leads", icon: Sparkles, active: pathname === "/leads" },
   ];
 
   const activeProject = projects.find((p) => p.id === activeProjectId);

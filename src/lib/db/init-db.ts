@@ -47,10 +47,6 @@ export async function ensureDatabaseSchema() {
       DO $$ BEGIN
         CREATE TYPE "DocumentCategory" AS ENUM ('FLOOR_PLAN', 'STRUCTURAL', 'ELEVATION', 'MEP', 'APPROVAL', 'SITE_PHOTO', 'CONTRACT', 'OTHER');
       EXCEPTION WHEN duplicate_object THEN null; END $$;
-
-      DO $$ BEGIN
-        CREATE TYPE "LeadStatus" AS ENUM ('NEW', 'CONTACTED', 'SITE_VISIT', 'ESTIMATE_SENT', 'NEGOTIATION', 'WON', 'LOST');
-      EXCEPTION WHEN duplicate_object THEN null; END $$;
     `);
 
     // 2. Create Tables
@@ -378,23 +374,6 @@ export async function ensureDatabaseSchema() {
         "storagePath" TEXT NOT NULL,
         "version" TEXT,
         "isPinned" BOOLEAN NOT NULL DEFAULT false,
-        "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
-      );
-
-      CREATE TABLE IF NOT EXISTS "Lead" (
-        "id" TEXT NOT NULL PRIMARY KEY,
-        "name" TEXT NOT NULL,
-        "phone" TEXT NOT NULL,
-        "email" TEXT,
-        "location" TEXT NOT NULL,
-        "plotArea" TEXT,
-        "builtUpArea" TEXT,
-        "floors" TEXT,
-        "budget" TEXT,
-        "constructionStage" TEXT,
-        "requirements" TEXT,
-        "status" "LeadStatus" NOT NULL DEFAULT 'NEW',
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
         "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
       );

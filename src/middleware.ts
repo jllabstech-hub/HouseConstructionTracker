@@ -15,8 +15,7 @@ export default auth((req) => {
     pathname.startsWith("/login") ||
     pathname.startsWith("/register") ||
     pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/api/setup") ||
-    pathname.startsWith("/api/leads");
+    pathname.startsWith("/api/setup");
 
   // Dynamically resolve request host/origin from headers to avoid any proxy/localhost issues
   const forwardedHost = req.headers.get("x-forwarded-host");
