@@ -76,11 +76,11 @@ export function buildReportData(input: {
 
   let dynamicTitle = TITLES[input.kind];
   if (input.categoryName) {
-    dynamicTitle = `${input.categoryName} Purchases & Usage Report`;
+    dynamicTitle = `${input.categoryName} Material Purchases & Usage Statement`;
   } else if (input.vendorName) {
-    dynamicTitle = `${input.vendorName} - Vendor Purchases & Ledger`;
+    dynamicTitle = `${input.vendorName} - Vendor Purchase Ledger`;
   } else if (input.workerName) {
-    dynamicTitle = `${input.workerName} - Wages & Contractor Ledger`;
+    dynamicTitle = `${input.workerName} - Wages & Payment Statement`;
   } else if (input.stageName) {
     dynamicTitle = `${input.stageName} Construction Cost Report`;
   }
@@ -243,7 +243,7 @@ function buildTables(
     });
   }
 
-  if (kind === "vendor") {
+  if (kind === "vendor" && !input.vendorId) {
     const vendors = new Map<string, { name: string; amount: ReturnType<typeof toDecimal>; count: number }>();
     for (const expense of expenses) {
       if (!expense.vendorId) continue;
@@ -265,7 +265,7 @@ function buildTables(
     });
   }
 
-  if (kind === "worker") {
+  if (kind === "worker" && !input.workerId) {
     const workers = new Map<string, { name: string; amount: ReturnType<typeof toDecimal> }>();
     for (const expense of expenses) {
       if (!expense.workerId) continue;
@@ -306,7 +306,7 @@ function buildTables(
     });
   }
 
-  if (kind === "total" || kind === "material" || kind === "labour") {
+  if ((kind === "total" || kind === "material" || kind === "labour") && !input.categoryName && !input.vendorName && !input.workerName) {
     tables.push({
       title: "Top expenses",
       headers: ["Category", "Type", "Amount"],
@@ -314,14 +314,23 @@ function buildTables(
     });
   }
 
+  // Detailed Transaction Table with Contextual Columns
+  let detailedHeaders = ["Date", "Type", "Category", "Description", "Amount"];
+  if (input.categoryName) {
+    detailedHeaders = ["Date", "Description", "Qty & Rate", "Vendor / Source", "Amount"];
+  } else if (input.workerName) {
+    detailedHeaders = ["Date", "Stage / Work", "Description", "Payment Mode", "Amount"];
+  } else if (input.vendorName) {
+    detailedHeaders = ["Date", "Category", "Description", "Qty & Rate", "Amount"];
+  } else if (kind === "labour") {
+    detailedHeaders = ["Date", "Category", "Work Description", "Worker / Mistri", "Amount"];
+  } else if (kind === "material") {
+    detailedHeaders = ["Date", "Material Category", "Description", "Vendor / Store", "Amount"];
+  }
+
   tables.push({
     title: "Detailed transactions",
-    headers:
-      kind === "labour"
-        ? ["Date", "Category", "Work", "Worker", "Amount"]
-        : kind === "material"
-          ? ["Date", "Category", "Description", "Vendor", "Amount"]
-          : ["Date", "Type", "Category", "Description", "Amount"],
+    headers: detailedHeaders,
     rows: expenses.slice(0, 200).map((row) => {
       const category =
         row.materialCategoryName ??
@@ -331,11 +340,25 @@ function buildTables(
         row.professionalCategoryName ??
         row.expenseType;
       const date = format(row.date instanceof Date ? row.date : new Date(row.date), "dd-MMM-yyyy");
+      const qtyRate = [
+        row.quantity ? `${row.quantity} ${row.unit || ""}`.trim() : "",
+        row.rate ? `@ ₹${row.rate}` : "",
+      ].filter(Boolean).join(" ");
+
+      if (input.categoryName) {
+        return [date, row.description || category, qtyRate || "—", row.vendorName || "—", formatPdfINR(row.amount)];
+      }
+      if (input.workerName) {
+        return [date, row.stageName || "General", row.description || "Labour Wages", row.paymentMethod || "CASH", formatPdfINR(row.amount)];
+      }
+      if (input.vendorName) {
+        return [date, category, row.description || "Material Purchase", qtyRate || "—", formatPdfINR(row.amount)];
+      }
       if (kind === "labour") {
-        return [date, category, row.description ?? "", row.workerName ?? "", formatPdfINR(row.amount)];
+        return [date, category, row.description ?? "", row.workerName ?? "—", formatPdfINR(row.amount)];
       }
       if (kind === "material") {
-        return [date, category, row.description ?? "", row.vendorName ?? "", formatPdfINR(row.amount)];
+        return [date, category, row.description ?? "", row.vendorName ?? "—", formatPdfINR(row.amount)];
       }
       return [date, row.expenseType, category, row.description ?? "", formatPdfINR(row.amount)];
     }),
