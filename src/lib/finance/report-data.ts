@@ -43,7 +43,7 @@ const TITLES: Record<ReportKind, string> = {
 };
 
 export function periodLabel(from?: Date, to?: Date) {
-  if (from && to) return `${format(from, "dd-MMM-yyyy")} – ${format(to, "dd-MMM-yyyy")}`;
+  if (from && to) return `${format(from, "dd-MMM-yyyy")} - ${format(to, "dd-MMM-yyyy")}`;
   if (from) return `From ${format(from, "dd-MMM-yyyy")}`;
   if (to) return `Until ${format(to, "dd-MMM-yyyy")}`;
   return "All dates";
@@ -342,23 +342,23 @@ function buildTables(
       const date = format(row.date instanceof Date ? row.date : new Date(row.date), "dd-MMM-yyyy");
       const qtyRate = [
         row.quantity ? `${row.quantity} ${row.unit || ""}`.trim() : "",
-        row.rate ? `@ ₹${row.rate}` : "",
+        row.rate ? `@ Rs. ${row.rate}` : "",
       ].filter(Boolean).join(" ");
 
       if (input.categoryName) {
-        return [date, row.description || category, qtyRate || "—", row.vendorName || "—", formatPdfINR(row.amount)];
+        return [date, row.description || category, qtyRate || "-", row.vendorName || "-", formatPdfINR(row.amount)];
       }
       if (input.workerName) {
         return [date, row.stageName || "General", row.description || "Labour Wages", row.paymentMethod || "CASH", formatPdfINR(row.amount)];
       }
       if (input.vendorName) {
-        return [date, category, row.description || "Material Purchase", qtyRate || "—", formatPdfINR(row.amount)];
+        return [date, category, row.description || "Material Purchase", qtyRate || "-", formatPdfINR(row.amount)];
       }
       if (kind === "labour") {
-        return [date, category, row.description ?? "", row.workerName ?? "—", formatPdfINR(row.amount)];
+        return [date, category, row.description ?? "", row.workerName ?? "-", formatPdfINR(row.amount)];
       }
       if (kind === "material") {
-        return [date, category, row.description ?? "", row.vendorName ?? "—", formatPdfINR(row.amount)];
+        return [date, category, row.description ?? "", row.vendorName ?? "-", formatPdfINR(row.amount)];
       }
       return [date, row.expenseType, category, row.description ?? "", formatPdfINR(row.amount)];
     }),

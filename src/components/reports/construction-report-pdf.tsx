@@ -81,7 +81,7 @@ export function ConstructionReportPdf({ data }: { data: PdfReportData }) {
               <View key={`${table.title}-${index}`} style={styles.row}>
                 {row.map((cell, cellIndex) => (
                   <Text key={cellIndex} style={styles.cell}>
-                    {String(cell ?? "—")}
+                    {String(cell ?? "-")}
                   </Text>
                 ))}
               </View>
@@ -96,7 +96,7 @@ export function ConstructionReportPdf({ data }: { data: PdfReportData }) {
         </View>
 
         <View style={styles.footer} fixed>
-          <Text>House Construction Tracker · Material purchases are never mixed with labour payments</Text>
+          <Text>House Construction Tracker | Material purchases are never mixed with labour payments</Text>
           <Text render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages || 1}`} />
         </View>
       </Page>
