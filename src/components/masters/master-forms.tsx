@@ -146,6 +146,7 @@ export function MasterForms({
   const [editingWorker, setEditingWorker] = useState<WorkerItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "vendor" | "worker"; id: string; name: string } | null>(null);
   const [clearTarget, setClearTarget] = useState<"VENDORS" | "WORKERS" | "ALL" | null>(null);
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [payRecipient, setPayRecipient] = useState<PayRecipient | null>(null);
@@ -164,9 +165,18 @@ export function MasterForms({
     return `https://wa.me/${num}`;
   };
 
+  // Effective lists excluding optimistically/recently deleted items
+  const effectiveVendors = useMemo(() => {
+    return vendors.filter((v) => !deletedIds.has(v.id));
+  }, [vendors, deletedIds]);
+
+  const effectiveWorkers = useMemo(() => {
+    return workers.filter((w) => !deletedIds.has(w.id));
+  }, [workers, deletedIds]);
+
   // Filtered Vendors
   const filteredVendors = useMemo(() => {
-    return vendors
+    return effectiveVendors
       .filter((v) => {
         if (!search) return true;
         const q = search.toLowerCase();
@@ -177,11 +187,11 @@ export function MasterForms({
           (v.address && v.address.toLowerCase().includes(q))
         );
       });
-  }, [vendors, search]);
+  }, [effectiveVendors, search]);
 
   // Filtered Workers
   const filteredWorkers = useMemo(() => {
-    return workers
+    return effectiveWorkers
       .filter((w) => {
         if (selectedTrade !== "ALL" && w.type !== selectedTrade) return false;
         if (!search) return true;
@@ -193,7 +203,7 @@ export function MasterForms({
           (w.specialization && w.specialization.toLowerCase().includes(q))
         );
       });
-  }, [workers, search, selectedTrade]);
+  }, [effectiveWorkers, search, selectedTrade]);
 
   // Filtered Materials
   const filteredMaterials = useMemo(() => {
@@ -248,9 +258,9 @@ export function MasterForms({
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {((activeTab === "VENDORS" && vendors.length > 0) ||
-            (activeTab === "WORKERS" && workers.length > 0) ||
-            (vendors.length > 0 || workers.length > 0)) && (
+          {((activeTab === "VENDORS" && effectiveVendors.length > 0) ||
+            (activeTab === "WORKERS" && effectiveWorkers.length > 0) ||
+            (effectiveVendors.length > 0 || effectiveWorkers.length > 0)) && (
             <button
               type="button"
               onClick={() =>
@@ -265,12 +275,12 @@ export function MasterForms({
               <span>
                 {activeTab === "VENDORS"
                   ? language === "te"
-                    ? `షాపులన్నీ తొలగించండి (${vendors.length})`
-                    : `Clear All Shops (${vendors.length})`
+                    ? `షాపులన్నీ తొలగించండి (${effectiveVendors.length})`
+                    : `Clear All Shops (${effectiveVendors.length})`
                   : activeTab === "WORKERS"
                   ? language === "te"
-                    ? `వర్కర్లందరినీ తొలగించండి (${workers.length})`
-                    : `Clear All Workers (${workers.length})`
+                    ? `వర్కర్లందరినీ తొలగించండి (${effectiveWorkers.length})`
+                    : `Clear All Workers (${effectiveWorkers.length})`
                   : language === "te"
                   ? "అన్నీ తొలగించండి"
                   : "Clear All"}
@@ -314,8 +324,8 @@ export function MasterForms({
       {/* Directory Tab Navigation */}
       <div className="flex overflow-x-auto no-scrollbar gap-2 p-1.5 bg-paper-100/90 rounded-2xl border border-paper-200">
         {[
-          { id: "VENDORS", label: t.masters.tabShops, count: vendors.length },
-          { id: "WORKERS", label: t.masters.tabWorkers, count: workers.length },
+          { id: "VENDORS", label: t.masters.tabShops, count: effectiveVendors.length },
+          { id: "WORKERS", label: t.masters.tabWorkers, count: effectiveWorkers.length },
           { id: "MATERIALS", label: t.masters.tabMaterials, count: materials.length },
           { id: "LABOURS", label: t.masters.tabLabour, count: labours.length },
           { id: "SERVICES", label: t.masters.tabMachinery, count: services.length },
@@ -1308,8 +1318,10 @@ export function MasterForms({
               setIsDeleting(false);
               return;
             }
-            router.refresh();
+            // Immediately remove from local UI so it vanishes as soon as dialog closes
+            setDeletedIds((prev) => new Set(prev).add(target.id));
             setDeleteTarget(null);
+            router.refresh();
           } catch (err) {
             setDeleteError(err instanceof Error ? err.message : "Failed to delete entry");
           } finally {
@@ -1351,8 +1363,29 @@ export function MasterForms({
               setIsDeleting(false);
               return;
             }
-            router.refresh();
+            // Immediately filter all cleared items from local UI so they vanish instantly
+            if (target === "VENDORS") {
+              setDeletedIds((prev) => {
+                const next = new Set(prev);
+                vendors.forEach((v) => next.add(v.id));
+                return next;
+              });
+            } else if (target === "WORKERS") {
+              setDeletedIds((prev) => {
+                const next = new Set(prev);
+                workers.forEach((w) => next.add(w.id));
+                return next;
+              });
+            } else {
+              setDeletedIds((prev) => {
+                const next = new Set(prev);
+                vendors.forEach((v) => next.add(v.id));
+                workers.forEach((w) => next.add(w.id));
+                return next;
+              });
+            }
             setClearTarget(null);
+            router.refresh();
           } catch (err) {
             setDeleteError(err instanceof Error ? err.message : "Failed to clear entries");
           } finally {
@@ -1369,20 +1402,20 @@ export function MasterForms({
         description={
           clearTarget === "VENDORS"
             ? (language === "te"
-                ? `మీరు ఖచ్చితంగా మొత్తం ${vendors.length} షాపులు/వెండర్లను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
-                : `Are you sure you want to delete all ${vendors.length} shops & vendors in a single click? This action cannot be undone.`)
+                ? `మీరు ఖచ్చితంగా మొత్తం ${effectiveVendors.length} షాపులు/వెండర్లను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
+                : `Are you sure you want to delete all ${effectiveVendors.length} shops & vendors in a single click? This action cannot be undone.`)
             : clearTarget === "WORKERS"
             ? (language === "te"
-                ? `మీరు ఖచ్చితంగా మొత్తం ${workers.length} వర్కర్లను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
-                : `Are you sure you want to delete all ${workers.length} workers & contractors in a single click? This action cannot be undone.`)
+                ? `మీరు ఖచ్చితంగా మొత్తం ${effectiveWorkers.length} వర్కర్లను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
+                : `Are you sure you want to delete all ${effectiveWorkers.length} workers & contractors in a single click? This action cannot be undone.`)
             : (language === "te"
                 ? `మీరు ఖచ్చితంగా ఫోన్ డైరెక్టరీలోని అన్ని ఎంట్రీలను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
                 : `Are you sure you want to delete all phone directory entries in a single click? This action cannot be undone.`)
         }
         confirmText={
           language === "te"
-            ? `అన్నీ తొలగించు (${clearTarget === "VENDORS" ? vendors.length : clearTarget === "WORKERS" ? workers.length : vendors.length + workers.length})`
-            : `Clear All (${clearTarget === "VENDORS" ? vendors.length : clearTarget === "WORKERS" ? workers.length : vendors.length + workers.length})`
+            ? `అన్నీ తొలగించు (${clearTarget === "VENDORS" ? effectiveVendors.length : clearTarget === "WORKERS" ? effectiveWorkers.length : effectiveVendors.length + effectiveWorkers.length})`
+            : `Clear All (${clearTarget === "VENDORS" ? effectiveVendors.length : clearTarget === "WORKERS" ? effectiveWorkers.length : effectiveVendors.length + effectiveWorkers.length})`
         }
         loading={isDeleting}
       />
