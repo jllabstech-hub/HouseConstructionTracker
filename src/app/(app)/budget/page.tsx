@@ -53,152 +53,178 @@ export default async function BudgetPage() {
     );
   }
 
-  const [project, rawExpenses, typeBudgets, categoryBudgets, materials, labours] = await Promise.all([
-    prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
-    prisma.expense.findMany({
-      where: { projectId },
-      select: {
-        expenseType: true,
-        amount: true,
-        materialCategoryId: true,
-        labourCategoryId: true,
-        serviceCategoryId: true,
-        professionalCategoryId: true,
-      },
-    }),
-    prisma.budget.findMany({ where: { projectId } }),
-    prisma.budgetCategory.findMany({
-      where: { projectId },
-      include: { materialCategory: true, labourCategory: true, serviceCategory: true, professionalCategory: true },
-    }),
-    prisma.materialCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
-    prisma.labourCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
-  ]);
+  try {
+    const [project, rawExpenses, typeBudgets, categoryBudgets, materials, labours] = await Promise.all([
+      prisma.project.findFirst({ where: { id: projectId, userId: user.id } }),
+      prisma.expense.findMany({
+        where: { projectId },
+        select: {
+          expenseType: true,
+          amount: true,
+          materialCategoryId: true,
+          labourCategoryId: true,
+          serviceCategoryId: true,
+          professionalCategoryId: true,
+        },
+      }),
+      prisma.budget.findMany({ where: { projectId } }),
+      prisma.budgetCategory.findMany({
+        where: { projectId },
+        include: { materialCategory: true, labourCategory: true, serviceCategory: true, professionalCategory: true },
+      }),
+      prisma.materialCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+      prisma.labourCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+    ]);
 
-  if (!project) {
-    return <EmptyState title="No project found" body="Create or select a house project to set budgets." />;
-  }
-
-  const expenses = rawExpenses.map((r) => ({
-    date: new Date(),
-    expenseType: r.expenseType,
-    amount: r.amount,
-    materialCategoryId: r.materialCategoryId,
-    labourCategoryId: r.labourCategoryId,
-    serviceCategoryId: r.serviceCategoryId,
-    professionalCategoryId: r.professionalCategoryId,
-  }));
-
-  const totals = getTypeTotals(expenses);
-  const overall = getBudgetVariance(project.totalBudget, totals.total);
-
-  // Type-wise budgets (Material, Labour, Other)
-  const materialBudget = typeBudgets.find((b) => b.expenseType === "MATERIAL")?.amount ?? 0;
-  const labourBudget = typeBudgets.find((b) => b.expenseType === "LABOUR")?.amount ?? 0;
-  const otherBudget = typeBudgets.filter((b) => b.expenseType !== "MATERIAL" && b.expenseType !== "LABOUR").reduce((sum, b) => sum + Number(b.amount), 0);
-
-  const otherActual = Number(totals.SERVICE) + Number(totals.EQUIPMENT) + Number(totals.PROFESSIONAL) + Number(totals.OTHER);
-
-  const matVariance = getBudgetVariance(materialBudget, totals.MATERIAL);
-  const labVariance = getBudgetVariance(labourBudget, totals.LABOUR);
-  const othVariance = getBudgetVariance(otherBudget, otherActual);
-
-  const typeRows: TypeBudgetRow[] = [
-    {
-      type: "MATERIAL",
-      budget: Number(materialBudget),
-      actual: Number(totals.MATERIAL),
-      remaining: Number(matVariance.remaining),
-      variance: Number(matVariance.variance),
-      isOver: matVariance.isOver,
-    },
-    {
-      type: "LABOUR",
-      budget: Number(labourBudget),
-      actual: Number(totals.LABOUR),
-      remaining: Number(labVariance.remaining),
-      variance: Number(labVariance.variance),
-      isOver: labVariance.isOver,
-    },
-    {
-      type: "OTHER",
-      budget: Number(otherBudget),
-      actual: otherActual,
-      remaining: Number(othVariance.remaining),
-      variance: Number(othVariance.variance),
-      isOver: othVariance.isOver,
-    },
-  ];
-
-  // Identify categories at risk
-  const categoriesAtRisk: CategoryRiskItem[] = [];
-  for (const item of categoryBudgets) {
-    const name =
-      item.materialCategory?.name ??
-      item.labourCategory?.name ??
-      item.serviceCategory?.name ??
-      item.professionalCategory?.name ??
-      item.expenseType;
-    const categoryId = item.materialCategoryId ?? item.labourCategoryId ?? item.serviceCategoryId ?? item.professionalCategoryId ?? "";
-    const actual = getCategoryTotal(expenses, categoryId, item.expenseType);
-    const result = getBudgetVariance(item.amount, actual);
-    if (result.isOver || Number(result.usedPercent) > 85) {
-      categoriesAtRisk.push({
-        name,
-        type: item.expenseType,
-        budget: Number(item.amount),
-        spent: Number(actual),
-        variance: Number(result.variance),
-        isOver: result.isOver,
-      });
+    if (!project) {
+      return <EmptyState title="No project found" body="Create or select a house project to set budgets." />;
     }
-  }
 
-  const payload = {
-    totalBudget: project.totalBudget.toString(),
-    actualSpent: totals.total.toString(),
-    remainingCash: overall.remaining.toString(),
-    usedPercent: overall.usedPercent.toString(),
-    isOverallOver: overall.isOver,
-    typeRows,
-    categoriesAtRisk,
-    materials: materials.map((item) => ({ id: item.id, name: item.name, groupName: item.groupName })),
-    labours: labours.map((item) => ({ id: item.id, name: item.name, groupName: item.groupName })),
-    typeBudgets: typeBudgets.map((b) => ({ id: b.id, expenseType: b.expenseType, amount: Number(b.amount) })),
-    categoryBudgets: categoryBudgets.map((c) => ({
-      id: c.id,
-      expenseType: c.expenseType,
-      name:
-        c.materialCategory?.name ??
-        c.labourCategory?.name ??
-        c.serviceCategory?.name ??
-        c.professionalCategory?.name ??
-        c.expenseType,
-      amount: Number(c.amount),
-    })),
-  };
+    const expenses = rawExpenses.map((r) => ({
+      date: new Date(),
+      expenseType: r.expenseType,
+      amount: r.amount,
+      materialCategoryId: r.materialCategoryId,
+      labourCategoryId: r.labourCategoryId,
+      serviceCategoryId: r.serviceCategoryId,
+      professionalCategoryId: r.professionalCategoryId,
+    }));
 
-  setCached(cacheKey, payload);
+    const totals = getTypeTotals(expenses);
+    const overall = getBudgetVariance(project.totalBudget, totals.total);
 
-  return (
-    <BudgetOverview
-      totalBudget={payload.totalBudget}
-      actualSpent={payload.actualSpent}
-      remainingCash={payload.remainingCash}
-      usedPercent={payload.usedPercent}
-      isOverallOver={payload.isOverallOver}
-      typeRows={payload.typeRows}
-      categoriesAtRisk={payload.categoriesAtRisk}
-      projectId={projectId}
-    >
-      <BudgetEditor
+    // Type-wise budgets (Material, Labour, Other)
+    const materialBudget = typeBudgets.find((b) => b.expenseType === "MATERIAL")?.amount ?? 0;
+    const labourBudget = typeBudgets.find((b) => b.expenseType === "LABOUR")?.amount ?? 0;
+    const otherBudget = typeBudgets.filter((b) => b.expenseType !== "MATERIAL" && b.expenseType !== "LABOUR").reduce((sum, b) => sum + Number(b.amount), 0);
+
+    const otherActual = Number(totals.SERVICE) + Number(totals.EQUIPMENT) + Number(totals.PROFESSIONAL) + Number(totals.OTHER);
+
+    const matVariance = getBudgetVariance(materialBudget, totals.MATERIAL);
+    const labVariance = getBudgetVariance(labourBudget, totals.LABOUR);
+    const othVariance = getBudgetVariance(otherBudget, otherActual);
+
+    const typeRows: TypeBudgetRow[] = [
+      {
+        type: "MATERIAL",
+        budget: Number(materialBudget),
+        actual: Number(totals.MATERIAL),
+        remaining: Number(matVariance.remaining),
+        variance: Number(matVariance.variance),
+        isOver: matVariance.isOver,
+      },
+      {
+        type: "LABOUR",
+        budget: Number(labourBudget),
+        actual: Number(totals.LABOUR),
+        remaining: Number(labVariance.remaining),
+        variance: Number(labVariance.variance),
+        isOver: labVariance.isOver,
+      },
+      {
+        type: "OTHER",
+        budget: Number(otherBudget),
+        actual: otherActual,
+        remaining: Number(othVariance.remaining),
+        variance: Number(othVariance.variance),
+        isOver: othVariance.isOver,
+      },
+    ];
+
+    // Identify categories at risk
+    const categoriesAtRisk: CategoryRiskItem[] = [];
+    for (const item of categoryBudgets) {
+      const name =
+        item.materialCategory?.name ??
+        item.labourCategory?.name ??
+        item.serviceCategory?.name ??
+        item.professionalCategory?.name ??
+        item.expenseType;
+      const categoryId = item.materialCategoryId ?? item.labourCategoryId ?? item.serviceCategoryId ?? item.professionalCategoryId ?? "";
+      const actual = getCategoryTotal(expenses, categoryId, item.expenseType);
+      const result = getBudgetVariance(item.amount, actual);
+      if (result.isOver || Number(result.usedPercent) > 85) {
+        categoriesAtRisk.push({
+          name,
+          type: item.expenseType,
+          budget: Number(item.amount),
+          spent: Number(actual),
+          variance: Number(result.variance),
+          isOver: result.isOver,
+        });
+      }
+    }
+
+    const payload = {
+      totalBudget: project.totalBudget.toString(),
+      actualSpent: totals.total.toString(),
+      remainingCash: overall.remaining.toString(),
+      usedPercent: overall.usedPercent.toString(),
+      isOverallOver: overall.isOver,
+      typeRows,
+      categoriesAtRisk,
+      materials: materials.map((item) => ({ id: item.id, name: item.name, groupName: item.groupName })),
+      labours: labours.map((item) => ({ id: item.id, name: item.name, groupName: item.groupName })),
+      typeBudgets: typeBudgets.map((b) => ({ id: b.id, expenseType: b.expenseType, amount: Number(b.amount) })),
+      categoryBudgets: categoryBudgets.map((c) => ({
+        id: c.id,
+        expenseType: c.expenseType,
+        name:
+          c.materialCategory?.name ??
+          c.labourCategory?.name ??
+          c.serviceCategory?.name ??
+          c.professionalCategory?.name ??
+          c.expenseType,
+        amount: Number(c.amount),
+      })),
+    };
+
+    setCached(cacheKey, payload);
+
+    return (
+      <BudgetOverview
+        totalBudget={payload.totalBudget}
+        actualSpent={payload.actualSpent}
+        remainingCash={payload.remainingCash}
+        usedPercent={payload.usedPercent}
+        isOverallOver={payload.isOverallOver}
+        typeRows={payload.typeRows}
+        categoriesAtRisk={payload.categoriesAtRisk}
         projectId={projectId}
-        currentTotal={payload.totalBudget}
-        materials={payload.materials}
-        labours={payload.labours}
-        typeBudgets={payload.typeBudgets}
-        categoryBudgets={payload.categoryBudgets}
-      />
-    </BudgetOverview>
-  );
+      >
+        <BudgetEditor
+          projectId={projectId}
+          currentTotal={payload.totalBudget}
+          materials={payload.materials}
+          labours={payload.labours}
+          typeBudgets={payload.typeBudgets}
+          categoryBudgets={payload.categoryBudgets}
+        />
+      </BudgetOverview>
+    );
+  } catch (err) {
+    console.error("BudgetPage load error:", err);
+    return (
+      <BudgetOverview
+        totalBudget="0"
+        actualSpent="0"
+        remainingCash="0"
+        usedPercent="0"
+        isOverallOver={false}
+        typeRows={[]}
+        categoriesAtRisk={[]}
+        projectId={projectId}
+      >
+        <BudgetEditor
+          projectId={projectId}
+          currentTotal="0"
+          materials={[]}
+          labours={[]}
+          typeBudgets={[]}
+          categoryBudgets={[]}
+        />
+      </BudgetOverview>
+    );
+  }
 }
+
