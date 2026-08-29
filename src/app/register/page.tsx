@@ -12,8 +12,8 @@ export default function RegisterPage() {
   const [pending, start] = useTransition();
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-paper-50 px-4 py-8">
-      <div className="w-full max-w-md space-y-5 rounded-3xl bg-white p-6 sm:p-8 shadow-card border border-paper-200">
+    <main className="flex min-h-dvh items-center justify-center bg-paper-50 px-4 py-4 sm:py-8">
+      <div className="w-full max-w-md space-y-4 sm:space-y-5 rounded-3xl bg-white p-5 sm:p-8 shadow-card border border-paper-200">
         {/* Brand Header */}
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-clay-600 text-white shadow-xs">
