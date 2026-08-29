@@ -400,6 +400,24 @@ export async function getDashboardFullData(projectId: string) {
   return result;
 }
 
+/**
+ * Secondary dashboard data for Suspense streaming.
+ * Returns monthly, topCategories, budgetAlerts, progress, recentExpenses.
+ * Shares the same cache as getDashboardFullData.
+ */
+export async function getDashboardSecondaryData(projectId: string) {
+  const full = await getDashboardFullData(projectId);
+  if (!full) return null;
+
+  return {
+    monthly: full.monthly,
+    topCategories: full.topCategories,
+    budgetAlerts: full.budgetAlerts,
+    progress: full.progress,
+    recentExpenses: full.recentExpenses,
+  };
+}
+
 async function fetchDashboardFullDataUncached(projectId: string) {
   const [project, rawExpenses, stages, budgetCategories, materialCategories] = await Promise.all([
     prisma.project.findUnique({
