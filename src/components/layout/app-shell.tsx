@@ -74,10 +74,11 @@ export function AppShell({
   ];
 
   const moreNav = [
-    { href: "/leads", label: "Inquiries & Leads", icon: Sparkles, active: pathname === "/leads" },
+    { href: "/projects", label: "Manage Projects", icon: Building2, active: pathname.startsWith("/projects") },
     { href: "/phonedirectory", label: "Phone Directory", icon: Users, active: pathname === "/phonedirectory" || pathname === "/masters" },
     { href: "/documents", label: "Documents", icon: Files, active: pathname === "/documents" },
     { href: "/settings", label: "Settings", icon: Settings, active: pathname === "/settings" },
+    { href: "/leads", label: "Inquiries & Leads", icon: Sparkles, active: pathname === "/leads" },
   ];
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
@@ -511,6 +512,18 @@ export function AppShell({
 
             {/* Secondary Navigation Grid */}
             <div className="grid grid-cols-2 gap-2.5">
+              <Link
+                href="/projects"
+                onClick={() => setMobileDrawerOpen(false)}
+                className="flex items-center gap-2.5 rounded-xl border border-paper-200 bg-paper-50 p-3 hover:bg-paper-100 transition"
+              >
+                <Building2 className="h-4.5 w-4.5 text-clay-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-ink-900 truncate">Manage Houses</p>
+                  <p className="text-[10px] text-ink-500 truncate">All Projects</p>
+                </div>
+              </Link>
+
               <Link
                 href="/stages"
                 onClick={() => setMobileDrawerOpen(false)}
