@@ -176,7 +176,7 @@ export function DocumentsHub({
   const [lightboxDoc, setLightboxDoc] = useState<DocumentItem | null>(null);
   const [editingDoc, setEditingDoc] = useState<DocumentItem | null>(null);
   const [docToDelete, setDocToDelete] = useState<DocumentItem | null>(null);
-  const [deletedDocIds, setDeletedDocIds] = useState<Set<string>>(new Set());
+  const [isDeletingDoc, setIsDeletingDoc] = useState<boolean>(false);
   const [activeMenuDocId, setActiveMenuDocId] = useState<string | null>(null);
   const [copiedDocId, setCopiedDocId] = useState<string | null>(null);
   const [previewErrors, setPreviewErrors] = useState<Record<string, boolean>>({});
@@ -214,7 +214,6 @@ export function DocumentsHub({
     const effectiveCategory = drawerCategory !== "ALL" ? drawerCategory : selectedType;
 
     return documents
-      .filter((doc) => !deletedDocIds.has(doc.id))
       .sort((a, b) => {
         if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -257,7 +256,7 @@ export function DocumentsHub({
           doc.fileName.toLowerCase().includes(q)
         );
       });
-  }, [documents, selectedType, drawerCategory, drawerFloor, drawerStage, drawerPinned, drawerDate, search, deletedDocIds]);
+  }, [documents, selectedType, drawerCategory, drawerFloor, drawerStage, drawerPinned, drawerDate, search]);
 
   const formatFileSize = (bytes: number) => {
     if (bytes < 1024) return `${bytes} B`;
@@ -1300,41 +1299,34 @@ export function DocumentsHub({
       {/* 7. Delete Confirmation Dialog */}
       <ConfirmDialog
         open={!!docToDelete}
-        onClose={() => setDocToDelete(null)}
-        onConfirm={() => {
-          if (!docToDelete) return;
+        onClose={() => {
+          if (!isDeletingDoc) setDocToDelete(null);
+        }}
+        onConfirm={async () => {
+          if (!docToDelete || isDeletingDoc) return;
           const target = docToDelete;
-          // Optimistically remove from local view and close dialog
-          setDeletedDocIds((prev) => new Set(prev).add(target.id));
-          setDocToDelete(null);
+          setIsDeletingDoc(true);
 
-          start(async () => {
-            try {
-              const res = await deleteDocument(target.id);
-              if (res && "error" in res && res.error) {
-                setDeletedDocIds((prev) => {
-                  const next = new Set(prev);
-                  next.delete(target.id);
-                  return next;
-                });
-                alert(res.error);
-                return;
-              }
-              router.refresh();
-            } catch (err) {
-              setDeletedDocIds((prev) => {
-                const next = new Set(prev);
-                next.delete(target.id);
-                return next;
-              });
-              alert(err instanceof Error ? err.message : "Failed to delete document");
+          try {
+            const res = await deleteDocument(target.id);
+            if (res && "error" in res && res.error) {
+              alert(res.error);
+              setIsDeletingDoc(false);
+              return;
             }
-          });
+            router.refresh();
+            setDocToDelete(null);
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Failed to delete document");
+          } finally {
+            setIsDeletingDoc(false);
+          }
         }}
         title="Delete Document?"
-        description={`Are you sure you want to permanently delete "${docToDelete?.title}"?`}
+        description={`Are you sure you want to permanently delete "${docToDelete?.title}"? This action cannot be undone.`}
         confirmText="Delete Document"
         variant="danger"
+        loading={isDeletingDoc}
       />
     </div>
   );

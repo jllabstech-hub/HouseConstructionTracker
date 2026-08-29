@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { AlertTriangle, X } from "lucide-react";
+import { AlertTriangle, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function ConfirmDialog({
@@ -93,7 +93,7 @@ export function ConfirmDialog({
             onClick={onClose}
             disabled={loading}
             aria-label="Close dialog"
-            className="rounded-xl p-2 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="rounded-xl p-2 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500 min-h-[44px] min-w-[44px] flex items-center justify-center disabled:opacity-40"
           >
             <X className="h-4 w-4" />
           </button>
@@ -118,13 +118,20 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 disabled:opacity-50 min-h-[44px] ${
+            className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs font-bold text-white shadow-xs transition touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-95 disabled:opacity-75 min-h-[44px] ${
               variant === "danger"
                 ? "bg-danger hover:bg-red-700 focus-visible:ring-red-600"
                 : "bg-clay-600 hover:bg-clay-700 focus-visible:ring-clay-500"
             }`}
           >
-            {loading ? "Processing..." : confirmText}
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                <span>Deleting...</span>
+              </>
+            ) : (
+              confirmText
+            )}
           </button>
         </div>
       </div>

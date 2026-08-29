@@ -142,7 +142,7 @@ export function MasterForms({
   const [editingVendor, setEditingVendor] = useState<VendorItem | null>(null);
   const [editingWorker, setEditingWorker] = useState<WorkerItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "vendor" | "worker"; id: string; name: string } | null>(null);
-  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [payRecipient, setPayRecipient] = useState<PayRecipient | null>(null);
   const [showPayModal, setShowPayModal] = useState<boolean>(false);
@@ -163,7 +163,6 @@ export function MasterForms({
   // Filtered Vendors
   const filteredVendors = useMemo(() => {
     return vendors
-      .filter((v) => !deletedIds.has(v.id))
       .filter((v) => {
         if (!search) return true;
         const q = search.toLowerCase();
@@ -174,12 +173,11 @@ export function MasterForms({
           (v.address && v.address.toLowerCase().includes(q))
         );
       });
-  }, [vendors, search, deletedIds]);
+  }, [vendors, search]);
 
   // Filtered Workers
   const filteredWorkers = useMemo(() => {
     return workers
-      .filter((w) => !deletedIds.has(w.id))
       .filter((w) => {
         if (selectedTrade !== "ALL" && w.type !== selectedTrade) return false;
         if (!search) return true;
@@ -191,7 +189,7 @@ export function MasterForms({
           (w.specialization && w.specialization.toLowerCase().includes(q))
         );
       });
-  }, [workers, search, selectedTrade, deletedIds]);
+  }, [workers, search, selectedTrade]);
 
   // Filtered Materials
   const filteredMaterials = useMemo(() => {
@@ -476,9 +474,8 @@ export function MasterForms({
 
                         <button
                           type="button"
-                          disabled={pending || deletedIds.has(vendor.id)}
                           onClick={() => setDeleteTarget({ type: "vendor", id: vendor.id, name: vendor.name })}
-                          className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition"
                         >
                           <Trash2 className="h-3 w-3" />
                           <span>{t.masters.delete}</span>
@@ -847,9 +844,8 @@ export function MasterForms({
 
                         <button
                           type="button"
-                          disabled={pending || deletedIds.has(worker.id)}
                           onClick={() => setDeleteTarget({ type: "worker", id: worker.id, name: worker.name })}
-                          className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                          className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition"
                         >
                           <Trash2 className="h-3 w-3" />
                           <span>{t.masters.delete}</span>
@@ -1235,47 +1231,41 @@ export function MasterForms({
 
       <ConfirmDialog
         open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={() => {
-          if (!deleteTarget) return;
+        onClose={() => {
+          if (!isDeleting) setDeleteTarget(null);
+        }}
+        onConfirm={async () => {
+          if (!deleteTarget || isDeleting) return;
           const target = deleteTarget;
-          // Optimistically remove from UI and close dialog immediately
-          setDeletedIds((prev) => new Set(prev).add(target.id));
-          setDeleteTarget(null);
+          setIsDeleting(true);
           setDeleteError(null);
 
-          start(async () => {
-            try {
-              const res =
-                target.type === "vendor"
-                  ? await deleteVendor(target.id)
-                  : await deleteWorker(target.id);
-              if (res && "error" in res && res.error) {
-                // Revert optimistic removal on failure
-                setDeletedIds((prev) => {
-                  const next = new Set(prev);
-                  next.delete(target.id);
-                  return next;
-                });
-                setDeleteError(res.error);
-                return;
-              }
-              router.refresh();
-            } catch (err) {
-              // Revert optimistic removal on exception
-              setDeletedIds((prev) => {
-                const next = new Set(prev);
-                next.delete(target.id);
-                return next;
-              });
-              setDeleteError(err instanceof Error ? err.message : "Failed to delete entry");
+          try {
+            const res =
+              target.type === "vendor"
+                ? await deleteVendor(target.id)
+                : await deleteWorker(target.id);
+            if (res && "error" in res && res.error) {
+              setDeleteError(res.error);
+              setIsDeleting(false);
+              return;
             }
-          });
+            router.refresh();
+            setDeleteTarget(null);
+          } catch (err) {
+            setDeleteError(err instanceof Error ? err.message : "Failed to delete entry");
+          } finally {
+            setIsDeleting(false);
+          }
         }}
-        title={deleteTarget?.type === "vendor" ? "Delete Vendor / Store" : "Delete Construction Worker"}
-        description={`Are you sure you want to delete ${deleteTarget?.name ?? "this entry"}? This action cannot be undone.`}
-        confirmText="Delete"
-        loading={pending}
+        title={deleteTarget?.type === "vendor" ? (language === "te" ? "వెండర్ / షాప్‌ను తొలగించాలా?" : "Delete Vendor / Store") : (language === "te" ? "వర్కర్‌ను తొలగించాలా?" : "Delete Construction Worker")}
+        description={
+          language === "te"
+            ? `మీరు ఖచ్చితంగా "${deleteTarget?.name ?? "ఈ వివరాలను"}" తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
+            : `Are you sure you want to delete "${deleteTarget?.name ?? "this entry"}"? This action cannot be undone.`
+        }
+        confirmText={language === "te" ? "తొలగించు" : "Delete"}
+        loading={isDeleting}
       />
 
       <UpiPayModal
