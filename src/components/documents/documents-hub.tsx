@@ -1082,7 +1082,12 @@ export function DocumentsHub({
                     }
                     router.refresh();
                   } catch (err) {
-                    setUploadError(err instanceof Error ? err.message : "Failed to save document");
+                    const msg = err instanceof Error ? err.message : "Failed to save document";
+                    if (msg.includes("Server Components render") || msg.includes("digest")) {
+                      setUploadError("A server error occurred while processing the document. Please check file format, ensure the server storage directory is writable, and try again.");
+                    } else {
+                      setUploadError(msg);
+                    }
                   }
                 });
               }}
