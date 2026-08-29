@@ -21,7 +21,7 @@ import { createMaterialCategory, createLabourCategory } from "@/lib/actions/mast
 import { computeLabourAmount, computeMaterialAmount } from "@/lib/finance/aggregations";
 import { formatINR, parseMoneyInput } from "@/lib/money";
 import { getMaterialPreset } from "@/lib/catalog/expense-presets";
-import { QUICK_MATERIAL_PRESETS, QUICK_LABOUR_PRESETS } from "@/lib/catalog/category-constants";
+import { QUICK_MATERIAL_PRESETS, QUICK_LABOUR_PRESETS, getStageGroupOrder } from "@/lib/catalog/category-constants";
 import { FileDropzone } from "@/components/ui/file-dropzone";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
@@ -205,7 +205,7 @@ export function ExpenseForm({
     return null;
   }, [type, quantity, rate, unit, calcMode, numberOfWorkers, numberOfDays, dailyRate]);
 
-  // Group categories for structured dividers
+  // Group categories for structured dividers (sorted by construction stages: Structure & Civil first)
   const groupedMaterials = useMemo(() => {
     const groups: Record<string, Option[]> = {};
     for (const m of materialsList) {
@@ -213,7 +213,12 @@ export function ExpenseForm({
       if (!groups[g]) groups[g] = [];
       groups[g].push(m);
     }
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+    return Object.entries(groups).sort(([a], [b]) => {
+      const orderA = getStageGroupOrder(a);
+      const orderB = getStageGroupOrder(b);
+      if (orderA !== orderB) return orderA - orderB;
+      return a.localeCompare(b);
+    });
   }, [materialsList]);
 
   const groupedLabours = useMemo(() => {
@@ -223,7 +228,12 @@ export function ExpenseForm({
       if (!groups[g]) groups[g] = [];
       groups[g].push(l);
     }
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+    return Object.entries(groups).sort(([a], [b]) => {
+      const orderA = getStageGroupOrder(a);
+      const orderB = getStageGroupOrder(b);
+      if (orderA !== orderB) return orderA - orderB;
+      return a.localeCompare(b);
+    });
   }, [laboursList]);
 
   // Auto-set description and default unit when Material category changes

@@ -10,7 +10,7 @@ import {
 } from "@/lib/actions/budget";
 import { createMaterialCategory, createLabourCategory } from "@/lib/actions/masters";
 import { formatINR, formatINRCompact } from "@/lib/money";
-import { QUICK_MATERIAL_PRESETS, QUICK_LABOUR_PRESETS } from "@/lib/catalog/category-constants";
+import { QUICK_MATERIAL_PRESETS, QUICK_LABOUR_PRESETS, getStageGroupOrder } from "@/lib/catalog/category-constants";
 import { cn } from "@/lib/utils";
 import {
   Building2,
@@ -169,7 +169,12 @@ export function BudgetEditor({
       if (!groups[g]) groups[g] = [];
       groups[g].push(c);
     }
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+    return Object.entries(groups).sort(([a], [b]) => {
+      const orderA = getStageGroupOrder(a);
+      const orderB = getStageGroupOrder(b);
+      if (orderA !== orderB) return orderA - orderB;
+      return a.localeCompare(b);
+    });
   }, [activeCategories]);
 
   return (

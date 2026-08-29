@@ -258,10 +258,10 @@ export function ExpenseTable({
           </div>
         </div>
 
-        {/* Primary Action */}
+        {/* Primary Action (mobile/tablet only; desktop top nav has persistent Add Expense) */}
         <Link
           href="/expenses/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto whitespace-nowrap shrink-0"
+          className="lg:hidden inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto whitespace-nowrap shrink-0"
         >
           <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
           <span className="whitespace-nowrap">Add Expense</span>

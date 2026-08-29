@@ -1,4 +1,4 @@
-﻿export const MAJOR_MATERIAL_CATEGORIES = [
+export const MAJOR_MATERIAL_CATEGORIES = [
   "Cement",
   "Steel / TMT",
   "Sand / M-Sand / Aggregates",
@@ -47,3 +47,28 @@ export const QUICK_LABOUR_PRESETS = [
   "Painting Labour",
   "General Labour & Helpers",
 ] as const;
+
+export const STAGE_GROUP_ORDER: Record<string, number> = {
+  "Structure & Civil": 1,
+  "Structure": 1,
+  "Civil": 1,
+  "Piping & Wiring": 2,
+  "Services & MEP": 2,
+  "MEP": 2,
+  "Finishes & Carpentry": 3,
+  "Finishing Labour": 3,
+  "Finishing": 3,
+  "Specialized & Other": 4,
+  "General & Helpers": 5,
+  "Other Categories": 6,
+  "Custom": 7,
+};
+
+export function getStageGroupOrder(groupName: string): number {
+  for (const [key, rank] of Object.entries(STAGE_GROUP_ORDER)) {
+    if (groupName.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(groupName.toLowerCase())) {
+      return rank;
+    }
+  }
+  return 50;
+}
