@@ -24,7 +24,6 @@ import { ExpenseMobileCard, type ExpenseRowData } from "@/components/expenses/ex
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { deleteExpense } from "@/lib/actions/expenses";
-import { useLanguage } from "@/context/language-context";
 
 export function ExpenseTable({
   expenses,
@@ -45,7 +44,6 @@ export function ExpenseTable({
   projectId?: string;
 }) {
   const router = useRouter();
-  const { language, t } = useLanguage();
   const [pending, start] = useTransition();
 
   // Primary Quick Filter: All | Material | Labour | Other
@@ -244,19 +242,18 @@ export function ExpenseTable({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-paper-200/80 pb-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 leading-tight">
-            {language === "te" ? "ఖర్చులు" : "Expenses"}
+            Expenses
           </h1>
           <div className="flex items-center gap-2.5 text-xs text-ink-500 mt-1 flex-wrap font-medium">
             <span>
-              {language === "te" ? "మొత్తం ఖర్చు:" : "Total spent:"}{" "}
+              Total spent:{" "}
               <strong className="font-display text-sm font-bold text-ink-900">
                 {formatINR(currentTotal)}
               </strong>
             </span>
             <span>•</span>
             <span>
-              {filtered.length}{" "}
-              {language === "te" ? "లావాదేవీలు" : "transactions"}
+              {filtered.length} transactions
             </span>
           </div>
         </div>
@@ -267,7 +264,7 @@ export function ExpenseTable({
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto whitespace-nowrap shrink-0"
         >
           <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
-          <span className="whitespace-nowrap">{t.nav?.addExpense ?? "Add Expense"}</span>
+          <span className="whitespace-nowrap">Add Expense</span>
         </Link>
       </div>
 
@@ -282,20 +279,20 @@ export function ExpenseTable({
               setPage(1);
             }}
             options={[
-              { value: "ALL", label: language === "te" ? "అన్నీ (All)" : "All" },
+              { value: "ALL", label: "All" },
               {
                 value: "MATERIAL",
-                label: language === "te" ? "సామాగ్రి (Material)" : "Material",
+                label: "Material",
                 icon: Package,
               },
               {
                 value: "LABOUR",
-                label: language === "te" ? "కూలీలు (Labour)" : "Labour",
+                label: "Labour",
                 icon: HardHat,
               },
               {
                 value: "OTHER",
-                label: language === "te" ? "ఇతర ఖర్చులు (Other)" : "Other",
+                label: "Other",
                 icon: MoreHorizontal,
               },
             ]}
@@ -308,11 +305,7 @@ export function ExpenseTable({
             <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
             <input
               type="text"
-              placeholder={
-                language === "te"
-                  ? "ఖర్చులను వెతకండి (సిమెంట్, మేస్త్రీ, బిల్లు)..."
-                  : "Search expenses..."
-              }
+              placeholder="Search expenses..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -338,7 +331,7 @@ export function ExpenseTable({
             className="inline-flex items-center gap-2 rounded-xl border border-paper-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-ink-800 hover:bg-paper-50 active:scale-95 transition shrink-0 shadow-2xs"
           >
             <Filter className="h-4 w-4 text-ink-500" />
-            <span>{language === "te" ? "ఫిల్టర్లు" : "Filters"}</span>
+            <span>Filters</span>
             {activeFiltersCount > 0 && (
               <span className="rounded-full bg-clay-600 px-1.5 py-0.2 text-[10px] font-bold text-white">
                 {activeFiltersCount}
@@ -379,13 +372,13 @@ export function ExpenseTable({
             <table className="w-full text-left text-xs text-ink-700">
               <thead className="border-b border-paper-200 bg-paper-50/70 font-bold uppercase tracking-wider text-ink-500 text-[10px]">
                 <tr>
-                  <th className="py-3.5 px-4">{language === "te" ? "తేదీ" : "Date"}</th>
-                  <th className="py-3.5 px-4">{language === "te" ? "వివరాలు" : "Description"}</th>
-                  <th className="py-3.5 px-3">{language === "te" ? "రకం" : "Type"}</th>
-                  <th className="py-3.5 px-4">{language === "te" ? "వర్గం" : "Category"}</th>
-                  <th className="py-3.5 px-4">{language === "te" ? "దుకాణం / వర్కర్" : "Vendor / Worker"}</th>
-                  <th className="py-3.5 px-4 text-right">{language === "te" ? "మొత్తం" : "Amount"}</th>
-                  <th className="py-3.5 px-3 text-right">{language === "te" ? "చర్యలు" : "Actions"}</th>
+                  <th className="py-3.5 px-4">Date</th>
+                  <th className="py-3.5 px-4">Description</th>
+                  <th className="py-3.5 px-3">Type</th>
+                  <th className="py-3.5 px-4">Category</th>
+                  <th className="py-3.5 px-4">Vendor / Worker</th>
+                  <th className="py-3.5 px-4 text-right">Amount</th>
+                  <th className="py-3.5 px-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-paper-100">
@@ -462,12 +455,12 @@ export function ExpenseTable({
           <Receipt className="mx-auto h-12 w-12 text-ink-300" />
           <div className="space-y-1">
             <h3 className="font-display text-base sm:text-lg font-bold text-ink-900">
-              {language === "te" ? "ఖర్చులు ఏవీ కనుగొనబడలేదు" : "No expenses found"}
+              No expenses found
             </h3>
             <p className="text-xs text-ink-500 max-w-sm mx-auto">
               {search || activeFiltersCount > 0
-                ? (language === "te" ? "మీ ఫిల్టర్లకు సరిపోలే రికార్డులు ఏవీ లేవు. దయచేసి ఫిల్టర్లను రీసెట్ చేయండి." : "No records match your active filters. Try clearing search or filters.")
-                : (language === "te" ? "మీ ఇంటి నిర్మాణ ఖర్చులను ట్రాక్ చేయడానికి మొదటి బిల్లు లేదా కూలీని నమోదు చేయండి." : "Start tracking your construction spending by recording your first expense.")}
+                ? "No records match your active filters. Try clearing search or filters."
+                : "Start tracking your construction spending by recording your first expense."}
             </p>
           </div>
 
@@ -478,7 +471,7 @@ export function ExpenseTable({
               className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2.5 text-xs font-bold text-ink-800 hover:bg-paper-100 transition shadow-2xs"
             >
               <RotateCcw className="h-3.5 w-3.5" />
-              <span>{language === "te" ? "ఫిల్టర్లు క్లియర్ చేయండి" : "Clear Filters"}</span>
+              <span>Clear Filters</span>
             </button>
           ) : (
             <Link
@@ -486,7 +479,7 @@ export function ExpenseTable({
               className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-clay-700 transition shadow-xs"
             >
               <Plus className="h-4 w-4" />
-              <span>{language === "te" ? "మొదటి ఖర్చు నమోదు" : "Add First Expense"}</span>
+              <span>Add First Expense</span>
             </Link>
           )}
         </div>
@@ -511,13 +504,9 @@ export function ExpenseTable({
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDeleteConfirm}
-        title={language === "te" ? "ఈ ఖర్చును తొలగించాలా?" : "Delete Expense Record?"}
-        description={
-          language === "te"
-            ? `మీరు ఖచ్చితంగా "${deleteTarget?.description || deleteTarget?.category.name || "ఈ ఖర్చు"}" ను శాశ్వతంగా తొలగించాలనుకుంటున్నారా?`
-            : `Are you sure you want to permanently delete "${deleteTarget?.description || deleteTarget?.category.name || "this expense"}"?`
-        }
-        confirmText={pending ? "Deleting..." : (language === "te" ? "శాశ్వతంగా తొలగించు" : "Delete Expense")}
+        title="Delete Expense Record?"
+        description={`Are you sure you want to permanently delete "${deleteTarget?.description || deleteTarget?.category.name || "this expense"}"?`}
+        confirmText={pending ? "Deleting..." : "Delete Expense"}
         variant="danger"
       />
     </div>

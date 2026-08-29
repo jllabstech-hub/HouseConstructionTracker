@@ -20,7 +20,6 @@ import { uploadReceipt } from "@/lib/actions/receipts";
 import { computeLabourAmount, computeMaterialAmount } from "@/lib/finance/aggregations";
 import { formatINR, parseMoneyInput } from "@/lib/money";
 import { getMaterialPreset } from "@/lib/catalog/expense-presets";
-import { useLanguage } from "@/context/language-context";
 import { FileDropzone } from "@/components/ui/file-dropzone";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
@@ -29,27 +28,27 @@ type Option = { id: string; name: string; groupName?: string; type?: string; pho
 type ExpenseKind = "MATERIAL" | "LABOUR" | "OTHER";
 
 const UNITS = [
-  { value: "bags", labelEn: "Bags", labelTe: "బస్తాలు (Bags)" },
-  { value: "kg", labelEn: "Kg", labelTe: "కిలోలు (Kg)" },
-  { value: "tons", labelEn: "Tons", labelTe: "టన్నులు (Tons)" },
-  { value: "loads", labelEn: "Loads (Tractor/Tipper)", labelTe: "లోడ్లు (Loads)" },
-  { value: "sqft", labelEn: "Sqft", labelTe: "చ.అడుగులు (Sqft)" },
-  { value: "cum", labelEn: "Cum (Cubic Meter)", labelTe: "ఘన మీటర్లు (Cum)" },
-  { value: "nos", labelEn: "Nos / Pieces", labelTe: "సంఖ్య / పీసులు (Nos)" },
-  { value: "litres", labelEn: "Litres", labelTe: "లీటర్లు (Litres)" },
-  { value: "coils", labelEn: "Coils", labelTe: "కాయిల్స్ (Coils)" },
-  { value: "brass", labelEn: "Brass (100 cu ft)", labelTe: "బ్రాస్ (Brass)" },
-  { value: "units", labelEn: "Units", labelTe: "యూనిట్లు" },
+  { value: "bags", label: "Bags" },
+  { value: "kg", label: "Kg" },
+  { value: "tons", label: "Tons" },
+  { value: "loads", label: "Loads (Tractor/Tipper)" },
+  { value: "sqft", label: "Sqft" },
+  { value: "cum", label: "Cum (Cubic Meter)" },
+  { value: "nos", label: "Nos / Pieces" },
+  { value: "litres", label: "Litres" },
+  { value: "coils", label: "Coils" },
+  { value: "brass", label: "Brass (100 cu ft)" },
+  { value: "units", label: "Units" },
 ] as const;
 
 const PAYMENT_METHODS = [
-  { value: "UPI", labelEn: "UPI (GPay / PhonePe / Paytm)" },
-  { value: "CASH", labelEn: "Cash / నగదు" },
-  { value: "BANK_TRANSFER", labelEn: "Bank Transfer / NEFT / IMPS" },
-  { value: "CHEQUE", labelEn: "Cheque" },
-  { value: "CARD", labelEn: "Credit / Debit Card" },
-  { value: "CREDIT", labelEn: "Store Credit / Khata (ఉద్దెర)" },
-  { value: "OTHER", labelEn: "Other" },
+  { value: "UPI", label: "UPI (GPay / PhonePe / Paytm)" },
+  { value: "CASH", label: "Cash" },
+  { value: "BANK_TRANSFER", label: "Bank Transfer / NEFT / IMPS" },
+  { value: "CHEQUE", label: "Cheque" },
+  { value: "CARD", label: "Credit / Debit Card" },
+  { value: "CREDIT", label: "Store Credit / Khata" },
+  { value: "OTHER", label: "Other" },
 ] as const;
 
 export function ExpenseForm({
@@ -80,7 +79,6 @@ export function ExpenseForm({
   floors: Option[];
 }) {
   const router = useRouter();
-  const { language, getStageName } = useLanguage();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -235,7 +233,7 @@ export function ExpenseForm({
     setError(null);
 
     if (computedTotal <= 0) {
-      setError(language === "te" ? "దయచేసి సరైన మొత్తం లేదా పరిమాణం మరియు రేటు నమోదు చేయండి" : "Please enter a valid amount or quantity and rate");
+      setError("Please enter a valid amount or quantity and rate");
       return;
     }
 
@@ -330,7 +328,7 @@ export function ExpenseForm({
 
           <div className="space-y-1">
             <h2 className="font-display text-lg sm:text-2xl font-bold text-ink-900">
-              {language === "te" ? "ఖర్చు విజయవంతంగా నమోదైంది!" : "Expense Recorded Successfully!"}
+              Expense Recorded Successfully!
             </h2>
             <p className="font-display text-xl sm:text-2xl font-bold text-clay-700">
               {formatINR(savedSuccess.amount)}
@@ -347,14 +345,14 @@ export function ExpenseForm({
               onClick={handleAddAnother}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 sm:py-3 text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition"
             >
-              <span>{language === "te" ? "ఇంకో ఖర్చు నమోదు" : "Add Another Expense"}</span>
+              <span>Add Another Expense</span>
             </button>
 
             <Link
               href={`/expenses/${savedSuccess.id}`}
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-paper-300 bg-white px-5 py-2.5 sm:py-3 text-sm font-bold text-ink-800 hover:bg-paper-50 active:scale-95 transition shadow-2xs"
             >
-              <span>{language === "te" ? "ఖర్చు వివరాలు" : "View Expense"}</span>
+              <span>View Expense</span>
               <ArrowRight className="h-4 w-4" />
             </Link>
 
@@ -362,7 +360,7 @@ export function ExpenseForm({
               href="/expenses"
               className="w-full inline-flex items-center justify-center gap-2 rounded-xl border border-transparent px-4 py-2 text-xs font-semibold text-ink-600 hover:text-ink-900 transition"
             >
-              <span>{language === "te" ? "అన్ని ఖర్చులు" : "All Expenses"}</span>
+              <span>All Expenses</span>
             </Link>
           </div>
         </div>
@@ -383,14 +381,10 @@ export function ExpenseForm({
           </Link>
           <div>
             <h1 className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">
-              {expenseId
-                ? (language === "te" ? "ఖర్చు సవరణ" : "Edit Expense")
-                : (language === "te" ? "ఖర్చు నమోదు" : "Add Expense")}
+              {expenseId ? "Edit Expense" : "Add Expense"}
             </h1>
             <p className="text-xs text-ink-500 mt-0.5">
-              {language === "te"
-                ? "15 సెకన్లలో మీ నిర్మాణ ఖర్చులను సులభంగా నమోదు చేయండి"
-                : "Record your construction spending in seconds"}
+              Record your construction spending in seconds
             </p>
           </div>
         </div>
@@ -402,7 +396,7 @@ export function ExpenseForm({
             className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/60 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100 transition"
           >
             <Trash2 className="h-3.5 w-3.5" />
-            <span>{language === "te" ? "తొలగించు" : "Delete"}</span>
+            <span>Delete</span>
           </button>
         )}
       </div>
@@ -419,7 +413,7 @@ export function ExpenseForm({
         {/* Step 1: "What are you recording?" */}
         <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-3">
           <label className="text-xs font-bold uppercase tracking-wider text-ink-500 block" id="expense-type-group-label">
-            {language === "te" ? "మీరు ఏమి నమోదు చేస్తున్నారు?" : "What are you recording?"}
+            What are you recording?
           </label>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5" role="radiogroup" aria-labelledby="expense-type-group-label">
@@ -440,7 +434,7 @@ export function ExpenseForm({
               )}
             >
               <Package className={cn("h-4 w-4", type === "MATERIAL" ? "text-clay-600" : "text-ink-400")} aria-hidden="true" />
-              <span>{language === "te" ? "సామాగ్రి (Material)" : "Material"}</span>
+              <span>Material</span>
             </button>
 
             {/* Labour Button */}
@@ -460,7 +454,7 @@ export function ExpenseForm({
               )}
             >
               <HardHat className={cn("h-4 w-4", type === "LABOUR" ? "text-emerald-700" : "text-ink-400")} aria-hidden="true" />
-              <span>{language === "te" ? "కూలీలు (Labour)" : "Labour"}</span>
+              <span>Labour</span>
             </button>
 
             {/* Other Button */}
@@ -480,7 +474,7 @@ export function ExpenseForm({
               )}
             >
               <MoreHorizontal className={cn("h-4 w-4", type === "OTHER" ? "text-ink-800" : "text-ink-400")} aria-hidden="true" />
-              <span>{language === "te" ? "ఇతర (Other)" : "Other"}</span>
+              <span>Other</span>
             </button>
           </div>
         </div>
@@ -490,7 +484,7 @@ export function ExpenseForm({
           {/* Date Picker */}
           <div>
             <label htmlFor="expense-date" className="text-xs font-bold text-ink-700 block mb-1.5">
-              {language === "te" ? "తేదీ" : "Date"}
+              Date
             </label>
             <input
               id="expense-date"
@@ -508,7 +502,7 @@ export function ExpenseForm({
               {/* Material Category Select */}
               <div>
                 <label htmlFor="material-category-select" className="text-xs font-bold text-ink-700 block mb-1.5">
-                  {language === "te" ? "సామాగ్రి రకం" : "Material Category"}
+                  Material Category
                 </label>
                 <select
                   id="material-category-select"
@@ -528,12 +522,12 @@ export function ExpenseForm({
               {/* Description / Item Name */}
               <div>
                 <label htmlFor="material-description" className="text-xs font-bold text-ink-700 block mb-1.5">
-                  {language === "te" ? "వివరణ / వస్తువు పేరు" : "Description / Item Name"}
+                  Description / Item Name
                 </label>
                 <input
                   id="material-description"
                   type="text"
-                  placeholder={language === "te" ? "ఉదా: అల్ట్రాటెక్ 53 గ్రేడ్ సిమెంట్" : "e.g. UltraTech 53 Grade Cement, 16mm Fe550D Steel"}
+                  placeholder="e.g. UltraTech 53 Grade Cement, 16mm Fe550D Steel"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
@@ -545,7 +539,7 @@ export function ExpenseForm({
                 {/* Quantity */}
                 <div>
                   <label htmlFor="material-quantity" className="text-xs font-bold text-ink-700 block mb-1.5">
-                    {language === "te" ? "పరిమాణం" : "Quantity"}
+                    Quantity
                   </label>
                   <input
                     id="material-quantity"
@@ -562,7 +556,7 @@ export function ExpenseForm({
                 {/* Unit */}
                 <div>
                   <label htmlFor="material-unit" className="text-xs font-bold text-ink-700 block mb-1.5">
-                    {language === "te" ? "యూనిట్" : "Unit"}
+                    Unit
                   </label>
                   <select
                     id="material-unit"
@@ -572,7 +566,7 @@ export function ExpenseForm({
                   >
                     {UNITS.map((u) => (
                       <option key={u.value} value={u.value}>
-                        {language === "te" ? u.labelTe : u.labelEn}
+                        {u.label}
                       </option>
                     ))}
                   </select>
@@ -581,7 +575,7 @@ export function ExpenseForm({
                 {/* Rate (₹) */}
                 <div>
                   <label htmlFor="material-rate" className="text-xs font-bold text-ink-700 block mb-1.5">
-                    {language === "te" ? "ధర (₹ / యూనిట్)" : "Rate (₹ / Unit)"}
+                    Rate (₹ / Unit)
                   </label>
                   <input
                     id="material-rate"
@@ -600,7 +594,7 @@ export function ExpenseForm({
               {(!quantity || !rate) && (
                 <div>
                   <label htmlFor="material-direct-amount" className="text-xs font-bold text-ink-700 block mb-1.5">
-                    {language === "te" ? "లేదా నేరుగా మొత్తం (₹)" : "Or Direct Total Amount (₹)"}
+                    Or Direct Total Amount (₹)
                   </label>
                   <input
                     id="material-direct-amount"
@@ -623,7 +617,7 @@ export function ExpenseForm({
               {/* Labour Category Select */}
               <div>
                 <label htmlFor="labour-category-select" className="text-xs font-bold text-ink-700 block mb-1.5">
-                  {language === "te" ? "కూలీల విభాగం" : "Labour Category"}
+                  Labour Category
                 </label>
                 <select
                   id="labour-category-select"
@@ -643,12 +637,12 @@ export function ExpenseForm({
               {/* Work Description */}
               <div>
                 <label htmlFor="labour-description" className="text-xs font-bold text-ink-700 block mb-1.5">
-                  {language === "te" ? "పని వివరాలు" : "Work Description"}
+                  Work Description
                 </label>
                 <input
                   id="labour-description"
                   type="text"
-                  placeholder={language === "te" ? "ఉదా: పునాది కాంక్రీట్ పని లేదా స్లాబ్ షట్టరింగ్" : "e.g. Plinth beam shuttering & concrete work"}
+                  placeholder="e.g. Plinth beam shuttering & concrete work"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
@@ -658,7 +652,7 @@ export function ExpenseForm({
               {/* Worker / Contractor */}
               <div>
                 <label htmlFor="labour-worker-select" className="text-xs font-bold text-ink-700 block mb-1.5">
-                  {language === "te" ? "మేస్త్రీ / వర్కర్" : "Worker / Contractor"}
+                  Worker / Contractor
                 </label>
                 <select
                   id="labour-worker-select"
@@ -666,7 +660,7 @@ export function ExpenseForm({
                   onChange={(e) => setWorkerId(e.target.value)}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                 >
-                  <option value="">{language === "te" ? "ఎంచుకోండి (ఐచ్ఛికం)" : "Select Worker (Optional)"}</option>
+                  <option value="">Select Worker (Optional)</option>
                   {workers.map((w) => (
                     <option key={w.id} value={w.id}>
                       {w.name}
@@ -678,7 +672,7 @@ export function ExpenseForm({
               {/* Calculation Method Toggle */}
               <div className="space-y-2 pt-1">
                 <label className="text-xs font-bold text-ink-700 block">
-                  {language === "te" ? "చెల్లింపు లెక్క విధానం" : "Calculation Method"}
+                  Calculation Method
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -691,7 +685,7 @@ export function ExpenseForm({
                         : "border-paper-200 bg-paper-50 text-ink-600 hover:bg-paper-100"
                     )}
                   >
-                    {language === "te" ? "రోజువారీ కూలీ (Daily Wage)" : "Daily Wage"}
+                    Daily Wage
                   </button>
                   <button
                     type="button"
@@ -703,7 +697,7 @@ export function ExpenseForm({
                         : "border-paper-200 bg-paper-50 text-ink-600 hover:bg-paper-100"
                     )}
                   >
-                    {language === "te" ? "కాంట్రాక్ట్ / మొత్తం (Fixed Contract)" : "Fixed Contract"}
+                    Fixed Contract
                   </button>
                 </div>
               </div>
@@ -713,7 +707,7 @@ export function ExpenseForm({
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label htmlFor="labour-workers-count" className="text-xs font-bold text-ink-700 block mb-1.5">
-                      {language === "te" ? "వర్కర్ల సంఖ్య" : "Workers"}
+                      Workers
                     </label>
                     <input
                       id="labour-workers-count"
@@ -729,7 +723,7 @@ export function ExpenseForm({
 
                   <div>
                     <label htmlFor="labour-days-count" className="text-xs font-bold text-ink-700 block mb-1.5">
-                      {language === "te" ? "రోజులు" : "Days"}
+                      Days
                     </label>
                     <input
                       id="labour-days-count"
@@ -746,7 +740,7 @@ export function ExpenseForm({
 
                   <div>
                     <label htmlFor="labour-daily-rate" className="text-xs font-bold text-ink-700 block mb-1.5">
-                      {language === "te" ? "రోజు కూలీ (₹)" : "Daily Rate (₹)"}
+                      Daily Rate (₹)
                     </label>
                     <input
                       id="labour-daily-rate"
@@ -764,7 +758,7 @@ export function ExpenseForm({
                 /* Fixed Contract Field */
                 <div>
                   <label htmlFor="labour-contract-amount" className="text-xs font-bold text-ink-700 block mb-1.5">
-                    {language === "te" ? "కాంట్రాక్ట్ మొత్తం (₹)" : "Contract Amount (₹)"}
+                    Contract Amount (₹)
                   </label>
                   <input
                     id="labour-contract-amount"
@@ -786,7 +780,7 @@ export function ExpenseForm({
             <>
               <div>
                 <label className="text-xs font-bold text-ink-700 block mb-1.5">
-                  {language === "te" ? "వర్గం" : "Category"}
+                  Category
                 </label>
                 <select
                   value={otherCategory}
@@ -813,7 +807,7 @@ export function ExpenseForm({
 
               <div>
                 <label className="text-xs font-bold text-ink-700 block mb-1.5">
-                  {language === "te" ? "వివరణ" : "Description"}
+                  Description
                 </label>
                 <input
                   type="text"
@@ -826,7 +820,7 @@ export function ExpenseForm({
 
               <div>
                 <label className="text-xs font-bold text-ink-700 block mb-1.5">
-                  {language === "te" ? "మొత్తం (₹)" : "Total Amount (₹)"}
+                  Total Amount (₹)
                 </label>
                 <input
                   type="number"
@@ -846,7 +840,7 @@ export function ExpenseForm({
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[11px] font-bold uppercase tracking-wider text-clay-800">
-                  {language === "te" ? "మొత్తం ఖర్చు" : "Calculated Total"}
+                  Calculated Total
                 </span>
                 {formulaLabel && (
                   <p className="text-xs font-semibold text-ink-600 mt-0.5 animate-fadeIn">
@@ -873,12 +867,10 @@ export function ExpenseForm({
           >
             <div>
               <span className="text-xs sm:text-sm font-bold text-ink-900 block">
-                {language === "te" ? "మరిన్ని వివరాలు (ఐచ్ఛికం)" : "More Details (Optional)"}
+                More Details (Optional)
               </span>
               <p className="text-[11px] text-ink-500 mt-0.5">
-                {language === "te"
-                  ? "దుకాణం, దశ, అంతస్తు, చెల్లింపు విధానం, రసీదు ఫోటో"
-                  : "Vendor, stage, floor, payment method, bill photo & notes"}
+                Vendor, stage, floor, payment method, bill photo & notes
               </p>
             </div>
 
@@ -893,14 +885,14 @@ export function ExpenseForm({
               {type !== "LABOUR" && (
                 <div>
                   <label className="font-bold text-ink-700 block mb-1.5">
-                    {language === "te" ? "దుకాణం / వెండర్" : "Vendor / Supplier"}
+                    Vendor / Supplier
                   </label>
                   <select
                     value={vendorId}
                     onChange={(e) => setVendorId(e.target.value)}
                     className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
                   >
-                    <option value="">{language === "te" ? "ఎంచుకోండి (ఐచ్ఛికం)" : "Select Vendor (Optional)"}</option>
+                    <option value="">Select Vendor (Optional)</option>
                     {vendors.map((v) => (
                       <option key={v.id} value={v.id}>
                         {v.name}
@@ -915,17 +907,17 @@ export function ExpenseForm({
                 {/* Stage */}
                 <div>
                   <label className="font-bold text-ink-700 block mb-1.5">
-                    {language === "te" ? "నిర్మాణ దశ" : "Construction Stage"}
+                    Construction Stage
                   </label>
                   <select
                     value={stageId}
                     onChange={(e) => setStageId(e.target.value)}
                     className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
                   >
-                    <option value="">{language === "te" ? "ఎంచుకోండి (ఐచ్ఛికం)" : "Select Stage (Optional)"}</option>
+                    <option value="">Select Stage (Optional)</option>
                     {stages.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {getStageName(s.name)}
+                        {s.name}
                       </option>
                     ))}
                   </select>
@@ -934,14 +926,14 @@ export function ExpenseForm({
                 {/* Floor */}
                 <div>
                   <label className="font-bold text-ink-700 block mb-1.5">
-                    {language === "te" ? "అంతస్తు" : "Floor"}
+                    Floor
                   </label>
                   <select
                     value={floorId}
                     onChange={(e) => setFloorId(e.target.value)}
                     className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
                   >
-                    <option value="">{language === "te" ? "ఎంచుకోండి (ఐచ్ఛికం)" : "Select Floor (Optional)"}</option>
+                    <option value="">Select Floor (Optional)</option>
                     {floors.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.name}
@@ -956,7 +948,7 @@ export function ExpenseForm({
                 {/* Payment Method */}
                 <div>
                   <label className="font-bold text-ink-700 block mb-1.5">
-                    {language === "te" ? "చెల్లింపు విధానం" : "Payment Method"}
+                    Payment Method
                   </label>
                   <select
                     value={paymentMethod}
@@ -965,7 +957,7 @@ export function ExpenseForm({
                   >
                     {PAYMENT_METHODS.map((pm) => (
                       <option key={pm.value} value={pm.value}>
-                        {pm.labelEn}
+                        {pm.label}
                       </option>
                     ))}
                   </select>
@@ -974,7 +966,7 @@ export function ExpenseForm({
                 {/* Invoice Number */}
                 <div>
                   <label className="font-bold text-ink-700 block mb-1.5">
-                    {language === "te" ? "ఇన్‌వాయిస్ / బిల్లు సంఖ్య" : "Invoice / Bill Number"}
+                    Invoice / Bill Number
                   </label>
                   <input
                     type="text"
@@ -989,7 +981,7 @@ export function ExpenseForm({
               {/* Bill Receipt Upload */}
               <div>
                 <label className="font-bold text-ink-700 block mb-1.5">
-                  {language === "te" ? "బిల్లు లేదా రసీదు ఫోటో" : "Bill / Receipt Attachment"}
+                  Bill / Receipt Attachment
                 </label>
                 <FileDropzone
                   name="receiptFile"
@@ -1001,11 +993,11 @@ export function ExpenseForm({
               {/* Notes */}
               <div>
                 <label className="font-bold text-ink-700 block mb-1.5">
-                  {language === "te" ? "గమనికలు" : "Notes"}
+                  Notes
                 </label>
                 <textarea
                   rows={2}
-                  placeholder={language === "te" ? "అదనపు వివరాలు..." : "Additional notes or remarks..."}
+                  placeholder="Additional notes or remarks..."
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
@@ -1025,10 +1017,10 @@ export function ExpenseForm({
             <Plus className="h-5 w-5 stroke-[2.5]" />
             <span>
               {pending
-                ? (language === "te" ? "నమోదు అవుతోంది..." : "Saving Expense...")
+                ? "Saving Expense..."
                 : expenseId
-                ? (language === "te" ? "ఖర్చును నవీకరించు" : "Update Expense")
-                : (language === "te" ? "ఖర్చును నమోదు చేయి" : "Save Expense")}
+                ? "Update Expense"
+                : "Save Expense"}
             </span>
           </button>
         </div>
@@ -1039,13 +1031,9 @@ export function ExpenseForm({
         open={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDelete}
-        title={language === "te" ? "ఈ ఖర్చును తొలగించాలా?" : "Delete Expense Record?"}
-        description={
-          language === "te"
-            ? "మీరు ఖచ్చితంగా ఈ ఖర్చును శాశ్వతంగా తొలగించాలనుకుంటున్నారా?"
-            : "Are you sure you want to permanently delete this expense record?"
-        }
-        confirmText={pending ? "Deleting..." : (language === "te" ? "శాశ్వతంగా తొలగించు" : "Delete Expense")}
+        title="Delete Expense Record?"
+        description="Are you sure you want to permanently delete this expense record?"
+        confirmText={pending ? "Deleting..." : "Delete Expense"}
         variant="danger"
       />
     </div>

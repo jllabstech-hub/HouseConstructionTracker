@@ -13,7 +13,6 @@ import { LeadStatus } from "@prisma/client";
 import { updateLeadStatus, deleteLead } from "@/lib/actions/leads";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useLanguage } from "@/context/language-context";
 
 export type SerializedLead = {
   id: string;
@@ -37,16 +36,15 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
   const [search, setSearch] = useState("");
   const [pending, start] = useTransition();
   const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
-  const { t } = useLanguage();
 
   const statusTone: Record<LeadStatus, { label: string; bg: string; text: string; border: string }> = {
-    NEW: { label: t.leads.statusNew, bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
-    CONTACTED: { label: t.leads.statusContacted, bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
-    SITE_VISIT: { label: t.leads.statusSiteVisit, bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
-    ESTIMATE_SENT: { label: t.leads.statusEstimateSent, bg: "bg-clay-50", text: "text-clay-800", border: "border-clay-200" },
-    NEGOTIATION: { label: t.leads.statusNegotiation, bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
-    WON: { label: t.leads.statusWon, bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-    LOST: { label: t.leads.statusLost, bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200" },
+    NEW: { label: "New", bg: "bg-blue-50", text: "text-blue-700", border: "border-blue-200" },
+    CONTACTED: { label: "Contacted", bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
+    SITE_VISIT: { label: "Site Visit", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
+    ESTIMATE_SENT: { label: "Estimate Sent", bg: "bg-clay-50", text: "text-clay-800", border: "border-clay-200" },
+    NEGOTIATION: { label: "Negotiation", bg: "bg-indigo-50", text: "text-indigo-700", border: "border-indigo-200" },
+    WON: { label: "Won", bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+    LOST: { label: "Lost", bg: "bg-gray-100", text: "text-gray-600", border: "border-gray-200" },
   };
 
   const filtered = leads.filter((lead) => {
@@ -91,18 +89,18 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
       <div className="border-b border-paper-200/80 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-clay-700 block">
-            {t.leads.headerTag}
+            Client Inquiries & Pipeline
           </span>
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 mt-1">
-            {t.leads.title}
+            Construction Leads
           </h1>
           <p className="text-xs sm:text-sm text-ink-500 mt-0.5">
-            {t.leads.subtitle}
+            Manage inquiries, site visits, estimates, and project conversions
           </p>
         </div>
 
         <div className="text-xs font-bold text-ink-600 bg-white border border-paper-200 rounded-xl px-3.5 py-2 shadow-2xs">
-          {t.leads.totalInquiries}: <strong className="text-ink-900">{leads.length}</strong>
+          Total Inquiries: <strong className="text-ink-900">{leads.length}</strong>
         </div>
       </div>
 
@@ -113,12 +111,12 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
             value={selectedStatus}
             onChange={setSelectedStatus}
             options={[
-              { value: "ALL", label: t.leads.tabAll, count: counts.ALL },
-              { value: "NEW", label: t.leads.tabNew, count: counts.NEW },
-              { value: "CONTACTED", label: t.leads.tabContacted, count: counts.CONTACTED },
-              { value: "SITE_VISIT", label: t.leads.tabSiteVisit, count: counts.SITE_VISIT },
-              { value: "ESTIMATE_SENT", label: t.leads.tabEstimateSent, count: counts.ESTIMATE_SENT },
-              { value: "WON", label: t.leads.tabWon, count: counts.WON },
+              { value: "ALL", label: "All Leads", count: counts.ALL },
+              { value: "NEW", label: "New", count: counts.NEW },
+              { value: "CONTACTED", label: "Contacted", count: counts.CONTACTED },
+              { value: "SITE_VISIT", label: "Site Visit", count: counts.SITE_VISIT },
+              { value: "ESTIMATE_SENT", label: "Estimate Sent", count: counts.ESTIMATE_SENT },
+              { value: "WON", label: "Won", count: counts.WON },
             ]}
           />
         </div>
@@ -130,7 +128,7 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={t.leads.searchPlaceholder}
+            placeholder="Search leads..."
             className="w-full rounded-xl border border-paper-300 bg-white pl-9 pr-3 py-2 text-xs text-ink-900 placeholder:text-ink-400 focus:border-clay-600 focus:outline-hidden transition"
           />
         </div>
@@ -171,7 +169,7 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
                       type="button"
                       onClick={() => handleDelete(lead.id)}
                       className="text-[10px] text-ink-400 hover:text-red-600 transition mt-1"
-                      title={t.leads.deleteConfirm}
+                      title="Delete lead"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -181,25 +179,25 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
                 {/* Project Specs Matrix */}
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div className="rounded-lg bg-paper-50 p-2">
-                    <span className="text-[10px] font-bold text-ink-400 uppercase block">{t.leads.budget}</span>
-                    <span className="font-bold text-ink-900">{lead.budget || t.leads.notSpecified}</span>
+                    <span className="text-[10px] font-bold text-ink-400 uppercase block">Budget</span>
+                    <span className="font-bold text-ink-900">{lead.budget || "Not specified"}</span>
                   </div>
 
                   <div className="rounded-lg bg-paper-50 p-2">
-                    <span className="text-[10px] font-bold text-ink-400 uppercase block">{t.leads.floors}</span>
+                    <span className="text-[10px] font-bold text-ink-400 uppercase block">Floors</span>
                     <span className="font-bold text-ink-900">{lead.floors || "G+1"}</span>
                   </div>
 
                   <div className="rounded-lg bg-paper-50 p-2">
-                    <span className="text-[10px] font-bold text-ink-400 uppercase block">{t.leads.plotBuiltUp}</span>
+                    <span className="text-[10px] font-bold text-ink-400 uppercase block">Plot / Built-up</span>
                     <span className="font-bold text-ink-900">
                       {lead.plotArea ? `${lead.plotArea} sq.ft` : "—"} / {lead.builtUpArea ? `${lead.builtUpArea} sq.ft` : "—"}
                     </span>
                   </div>
 
                   <div className="rounded-lg bg-paper-50 p-2">
-                    <span className="text-[10px] font-bold text-ink-400 uppercase block">{t.leads.stage}</span>
-                    <span className="font-bold text-ink-900 truncate block">{lead.constructionStage || t.leads.planning}</span>
+                    <span className="text-[10px] font-bold text-ink-400 uppercase block">Stage</span>
+                    <span className="font-bold text-ink-900 truncate block">{lead.constructionStage || "Planning"}</span>
                   </div>
                 </div>
 
@@ -227,34 +225,34 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
                         className="inline-flex items-center gap-1 rounded-lg bg-paper-100 px-2 py-1.5 text-xs font-bold text-ink-700 hover:bg-paper-200 transition"
                       >
                         <Mail className="h-3 w-3" />
-                        <span className="hidden sm:inline">{t.leads.email}</span>
+                        <span className="hidden sm:inline">Email</span>
                       </a>
                     )}
                   </div>
 
                   {/* Status Dropdown */}
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-bold text-ink-400">{t.leads.statusLabel}</span>
+                    <span className="text-[10px] font-bold text-ink-400">Status</span>
                     <select
                       value={lead.status}
                       disabled={pending}
                       onChange={(e) => handleStatusChange(lead.id, e.target.value as LeadStatus)}
                       className="rounded-lg border border-paper-300 bg-white px-2 py-1 text-xs font-bold text-ink-800 focus:border-clay-600 focus:outline-hidden transition"
                     >
-                      <option value="NEW">{t.leads.statusNew}</option>
-                      <option value="CONTACTED">{t.leads.statusContacted}</option>
-                      <option value="SITE_VISIT">{t.leads.statusSiteVisit}</option>
-                      <option value="ESTIMATE_SENT">{t.leads.statusEstimateSent}</option>
-                      <option value="NEGOTIATION">{t.leads.statusNegotiation}</option>
-                      <option value="WON">{t.leads.statusWon}</option>
-                      <option value="LOST">{t.leads.statusLost}</option>
+                      <option value="NEW">New</option>
+                      <option value="CONTACTED">Contacted</option>
+                      <option value="SITE_VISIT">Site Visit</option>
+                      <option value="ESTIMATE_SENT">Estimate Sent</option>
+                      <option value="NEGOTIATION">Negotiation</option>
+                      <option value="WON">Won</option>
+                      <option value="LOST">Lost</option>
                     </select>
 
                     <button
                       type="button"
                       onClick={() => handleDelete(lead.id)}
                       className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
-                      title={t.leads.deleteConfirm}
+                      title="Delete lead"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -267,9 +265,9 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
       ) : (
         <div className="rounded-2xl border border-dashed border-paper-300 bg-white p-12 text-center space-y-3">
           <Building2 className="mx-auto h-10 w-10 text-ink-300" />
-          <h3 className="font-display text-base font-bold text-ink-800">{t.leads.emptyTitle}</h3>
+          <h3 className="font-display text-base font-bold text-ink-800">No leads found</h3>
           <p className="text-xs text-ink-500 max-w-sm mx-auto">
-            {t.leads.emptySub}
+            New construction inquiries from your contact form will appear here.
           </p>
         </div>
       )}
@@ -285,9 +283,9 @@ export function LeadsManagement({ initialLeads }: { initialLeads: SerializedLead
             setLeadToDelete(null);
           });
         }}
-        title={t.leads.deleteTitle}
-        description={t.leads.deleteDesc}
-        confirmText={t.leads.deleteConfirm}
+        title="Delete Lead"
+        description="Are you sure you want to delete this lead? This action cannot be undone."
+        confirmText="Delete"
         loading={pending}
       />
     </div>

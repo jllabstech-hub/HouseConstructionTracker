@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { formatINR } from "@/lib/money";
 import { cn } from "@/lib/utils";
-import { useLanguage } from "@/context/language-context";
 
 export type WorkWiseRow = {
   id: string;
@@ -69,15 +68,15 @@ export type EntityOption = {
 };
 
 const REPORT_TYPES = [
-  { value: "total", labelEn: "Total expenditure", labelTe: "మొత్తం ఖర్చులు" },
-  { value: "material", labelEn: "Material", labelTe: "సామాగ్రి ఖర్చులు" },
-  { value: "labour", labelEn: "Labour", labelTe: "కూలీల చెల్లింపులు" },
-  { value: "budget", labelEn: "Budget vs Actual", labelTe: "బడ్జెట్ vs వాస్తవ ఖర్చు" },
-  { value: "work-wise", labelEn: "Work-wise cost", labelTe: "పని వారీగా ఖర్చులు" },
-  { value: "stage", labelEn: "Construction Stage", labelTe: "నిర్మాణ దశల ఖర్చు" },
-  { value: "vendor", labelEn: "Vendor purchases", labelTe: "వెండర్ కొనుగోళ్లు" },
-  { value: "worker", labelEn: "Worker payments", labelTe: "వర్కర్ల వేతనాలు" },
-  { value: "floor", labelEn: "Floor-wise", labelTe: "అంతస్తు వారీగా" },
+  { value: "total", label: "Total expenditure" },
+  { value: "material", label: "Material" },
+  { value: "labour", label: "Labour" },
+  { value: "budget", label: "Budget vs Actual" },
+  { value: "work-wise", label: "Work-wise cost" },
+  { value: "stage", label: "Construction Stage" },
+  { value: "vendor", label: "Vendor purchases" },
+  { value: "worker", label: "Worker payments" },
+  { value: "floor", label: "Floor-wise" },
 ] as const;
 
 export function ReportsTabs({
@@ -100,8 +99,6 @@ export function ReportsTabs({
   floors?: { id: string; name: string }[];
   workWise?: WorkWiseRow[];
 }) {
-  const { language, getStageName } = useLanguage();
-
   // 1. Report Selector: total | material | labour | budget | work-wise | stage | vendor | worker | floor
   const [selectedReport, setSelectedReport] = useState<string>("total");
 
@@ -308,14 +305,14 @@ export function ReportsTabs({
       window.URL.revokeObjectURL(blobUrl);
 
       setStatusMessage({
-        text: language === "te" ? "PDF విజయవంతంగా డౌన్‌లోడ్ అయింది!" : "PDF downloaded successfully!",
+        text: "PDF downloaded successfully!",
         type: "success",
       });
       setTimeout(() => setStatusMessage(null), 3500);
     } catch (err) {
       console.error("PDF Download error:", err);
       setStatusMessage({
-        text: err instanceof Error ? err.message : (language === "te" ? "PDF డౌన్‌లోడ్ చేయడంలో లోపం సంభవించింది." : "Failed to download PDF. Please try again."),
+        text: err instanceof Error ? err.message : "Failed to download PDF. Please try again.",
         type: "error",
       });
     } finally {
@@ -357,7 +354,7 @@ export function ReportsTabs({
       URL.revokeObjectURL(url);
 
       setStatusMessage({
-        text: language === "te" ? "CSV / Excel ఫైల్ విజయవంతంగా డౌన్‌లోడ్ అయింది!" : "CSV / Excel file downloaded successfully!",
+        text: "CSV / Excel file downloaded successfully!",
         type: "success",
       });
       setTimeout(() => setStatusMessage(null), 3500);
@@ -397,7 +394,7 @@ export function ReportsTabs({
             text: `House Construction Expenditure Report (${periodDescription})`,
           });
           setStatusMessage({
-            text: language === "te" ? "రిపోర్ట్ షేర్ చేయబడింది!" : "Report shared successfully!",
+            text: "Report shared successfully!",
             type: "success",
           });
           setTimeout(() => setStatusMessage(null), 3000);
@@ -421,7 +418,7 @@ export function ReportsTabs({
 
       setShareSuccess(true);
       setStatusMessage({
-        text: language === "te" ? "PDF డౌన్‌లోడ్ అయింది! మీరు వాట్సాప్ లేదా ఇమెయిల్‌లో అటాచ్ చేసి పంపవచ్చు." : "PDF downloaded! You can now attach and send it on WhatsApp or email.",
+        text: "PDF downloaded! You can now attach and send it on WhatsApp or email.",
         type: "success",
       });
       setTimeout(() => {
@@ -431,7 +428,7 @@ export function ReportsTabs({
     } catch (err) {
       console.error("PDF Share error:", err);
       setStatusMessage({
-        text: err instanceof Error ? err.message : (language === "te" ? "PDF షేర్ చేయడంలో లోపం సంభవించింది." : "Failed to share PDF. Please use Download button."),
+        text: err instanceof Error ? err.message : "Failed to share PDF. Please use Download button.",
         type: "error",
       });
     } finally {
@@ -456,19 +453,17 @@ export function ReportsTabs({
       {/* 1. Header Section */}
       <div className="border-b border-paper-200/80 pb-4">
         <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 leading-tight">
-          {language === "te" ? "నివేదికలు & డౌన్‌లోడ్స్" : "Reports & Downloads"}
+          Reports & Downloads
         </h1>
         <p className="text-xs sm:text-sm text-ink-500 mt-1">
-          {language === "te"
-            ? "సామాగ్రి (సిమెంట్, స్టీల్, పెయింట్స్, టైల్స్) లేదా వ్యక్తుల (మేస్త్రీ, ప్లంబర్, ఎలక్ట్రీషియన్, వెండర్లు) వారీగా నివేదికలను ఎంచుకోండి మరియు PDF / Excel డౌన్‌లోడ్ చేయండి."
-            : "Generate, preview and download material-wise (Cement, Steel, Paints, Tiles, Plumbing) or person-wise (Workers, Contractors, Vendors) reports in PDF and Excel."}
+          Generate, preview and download material-wise (Cement, Steel, Paints, Tiles, Plumbing) or person-wise (Workers, Contractors, Vendors) reports in PDF and Excel.
         </p>
       </div>
 
       {/* 2. Quick Reports 1-Tap Bar */}
       <div className="space-y-2">
         <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400 block">
-          {language === "te" ? "నివేదిక రకం ఎంచుకోండి" : "Choose Report Mode"}
+          Choose Report Mode
         </span>
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           {[
@@ -515,7 +510,7 @@ export function ReportsTabs({
           {/* Report Dropdown */}
           <div>
             <label className="text-xs font-bold text-ink-700 block mb-1.5">
-              {language === "te" ? "నివేదిక విభాగం" : "Report Category"}
+              Report Category
             </label>
             <select
               value={selectedReport}
@@ -531,7 +526,7 @@ export function ReportsTabs({
             >
               {REPORT_TYPES.map((r) => (
                 <option key={r.value} value={r.value}>
-                  {language === "te" ? r.labelTe : r.labelEn}
+                  {r.label}
                 </option>
               ))}
             </select>
@@ -540,18 +535,18 @@ export function ReportsTabs({
           {/* Date Dropdown */}
           <div>
             <label className="text-xs font-bold text-ink-700 block mb-1.5">
-              {language === "te" ? "తేదీ పరిధి" : "Date Period"}
+              Date Period
             </label>
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
               className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
             >
-              <option value="all">{language === "te" ? "మొత్తం కాలం (All time)" : "All time"}</option>
-              <option value="thisMonth">{language === "te" ? "ఈ నెల (This month)" : "This month"}</option>
-              <option value="lastMonth">{language === "te" ? "గత నెల (Last month)" : "Last month"}</option>
-              <option value="last3Months">{language === "te" ? "గత 3 నెలలు (Last 3 months)" : "Last 3 months"}</option>
-              <option value="custom">{language === "te" ? "ప్రత్యేక తేదీలు (Custom range)" : "Custom range"}</option>
+              <option value="all">All time</option>
+              <option value="thisMonth">This month</option>
+              <option value="lastMonth">Last month</option>
+              <option value="last3Months">Last 3 months</option>
+              <option value="custom">Custom range</option>
             </select>
           </div>
         </div>
@@ -740,7 +735,7 @@ export function ReportsTabs({
             <div className="flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4 text-clay-600" />
               <span className="text-xs sm:text-sm font-bold text-ink-900">
-                {language === "te" ? "మరిన్ని ఫిల్టర్లు (More Filters)" : "More Filters (Stage, Floor, Type)"}
+                More Filters (Stage, Floor, Type)
               </span>
               {activeOptionalFilterCount > 0 && (
                 <span className="rounded-full bg-clay-600 px-2 py-0.5 text-[10px] font-bold text-white leading-none">
@@ -779,7 +774,7 @@ export function ReportsTabs({
                   <option value="ALL">All Stages</option>
                   {stages.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {getStageName(s.name)}
+                      {s.name}
                     </option>
                   ))}
                 </select>
@@ -873,7 +868,7 @@ export function ReportsTabs({
             className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 rounded-2xl border border-paper-300 bg-white px-4 py-3 text-xs sm:text-sm font-bold text-ink-900 hover:bg-paper-50 active:scale-95 transition shadow-2xs whitespace-nowrap cursor-pointer"
           >
             <Eye className="h-4 w-4 text-clay-600 shrink-0" />
-            <span className="whitespace-nowrap">{language === "te" ? "ప్రివ్యూ చూడండి" : "Preview Statement"}</span>
+            <span className="whitespace-nowrap">Preview Statement</span>
           </button>
 
           {/* Download PDF Button */}
@@ -886,12 +881,12 @@ export function ReportsTabs({
             {downloading ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                <span className="whitespace-nowrap">{language === "te" ? "డౌన్‌లోడ్ అవుతోంది..." : "Downloading PDF..."}</span>
+                <span className="whitespace-nowrap">Downloading PDF...</span>
               </>
             ) : (
               <>
                 <Download className="h-4 w-4 stroke-[2.5] shrink-0" />
-                <span className="whitespace-nowrap">{language === "te" ? "PDF డౌన్‌లోడ్" : "Download PDF"}</span>
+                <span className="whitespace-nowrap">Download PDF</span>
               </>
             )}
           </button>
@@ -917,17 +912,17 @@ export function ReportsTabs({
             {sharing ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin text-clay-600 shrink-0" />
-                <span className="whitespace-nowrap">{language === "te" ? "సిద్ధమవుతోంది..." : "Preparing..."}</span>
+                <span className="whitespace-nowrap">Preparing...</span>
               </>
             ) : shareSuccess ? (
               <>
                 <Check className="h-4 w-4 text-emerald-600 shrink-0" />
-                <span className="text-emerald-700 whitespace-nowrap">{language === "te" ? "కాపీ అయింది!" : "Link Copied!"}</span>
+                <span className="text-emerald-700 whitespace-nowrap">Link Copied!</span>
               </>
             ) : (
               <>
                 <Share2 className="h-4 w-4 text-ink-600 shrink-0" />
-                <span className="whitespace-nowrap">{language === "te" ? "వాట్సాప్ / షేర్" : "Share / WhatsApp"}</span>
+                <span className="whitespace-nowrap">Share / WhatsApp</span>
               </>
             )}
           </button>
@@ -959,7 +954,7 @@ export function ReportsTabs({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-paper-100 pb-4">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-ink-400">
-              {language === "te" ? "నివేదిక మొత్తం ఖర్చు" : "Report Total Expenditure"}
+              Report Total Expenditure
             </span>
             <p className="font-display text-2xl sm:text-3xl font-bold text-ink-900 mt-0.5">
               {formatINR(aggregates.total)}
@@ -968,7 +963,7 @@ export function ReportsTabs({
 
           <div className="flex items-center gap-3 text-xs font-medium text-ink-600 flex-wrap">
             <span className="rounded-lg bg-paper-100 px-2.5 py-1 text-ink-800 font-bold">
-              {aggregates.count} {language === "te" ? "లావాదేవీలు" : "transactions"}
+              {aggregates.count} transactions
             </span>
             <span>•</span>
             <span>Material: <strong className="font-bold text-ink-900">{formatINR(aggregates.material)}</strong></span>
@@ -1073,7 +1068,7 @@ export function ReportsTabs({
                   title="Open PDF in new tab"
                 >
                   <ExternalLink className="h-3.5 w-3.5 text-ink-500" />
-                  <span className="hidden sm:inline">{language === "te" ? "కొత్త ట్యాబ్" : "New Tab"}</span>
+                  <span className="hidden sm:inline">New Tab</span>
                 </a>
                 <button
                   type="button"

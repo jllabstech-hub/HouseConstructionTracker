@@ -26,12 +26,10 @@ export function UpiPayModal({
   isOpen,
   onClose,
   recipient,
-  language = "en",
 }: {
   isOpen: boolean;
   onClose: () => void;
   recipient: PayRecipient | null;
-  language?: string;
 }) {
   const [amount, setAmount] = useState<string>("");
   const [note, setNote] = useState<string>("");
@@ -137,7 +135,7 @@ export function UpiPayModal({
             </div>
             <div>
               <h3 id="upi-modal-title" className="font-display text-base sm:text-lg font-bold text-ink-900 leading-tight">
-                {language === "te" ? `${recipient.name} కి UPI చెల్లింపు` : `Pay ${recipient.name}`}
+                Pay {recipient.name}
               </h3>
               <p className="text-xs text-ink-500 mt-0.5">
                 {recipient.type === "VENDOR" ? "Hardware / Vendor Shop" : "Worker / Contractor"}
@@ -160,7 +158,7 @@ export function UpiPayModal({
           {/* Amount Input */}
           <div>
             <label className="block text-xs font-bold text-ink-800 mb-1.5">
-              {language === "te" ? "చెల్లించాల్సిన మొత్తం (Amount)" : "Payment Amount (₹)"}
+              Payment Amount (₹)
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-2.5 text-sm font-bold text-ink-500">₹</span>
@@ -200,7 +198,7 @@ export function UpiPayModal({
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="text-xs font-bold text-ink-800">
-                {language === "te" ? "గ్రహీత UPI ID / మొబైల్ నంబర్" : "Recipient UPI ID / VPA"}
+                Recipient UPI ID / VPA
               </label>
               {activeUpiId && (
                 <button
@@ -209,7 +207,7 @@ export function UpiPayModal({
                   className="text-[11px] font-bold text-purple-700 hover:underline inline-flex items-center gap-1"
                 >
                   {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
-                  {copied ? (language === "te" ? "కాపీ అయింది!" : "Copied!") : (language === "te" ? "ID కాపీ చేయండి" : "Copy ID")}
+                  {copied ? "Copied!" : "Copy ID"}
                 </button>
               )}
             </div>
@@ -225,7 +223,7 @@ export function UpiPayModal({
           {/* Note / Purpose */}
           <div>
             <label className="block text-xs font-bold text-ink-800 mb-1">
-              {language === "te" ? "వివరణ (Payment Note)" : "Payment Note / Remark"}
+              Payment Note / Remark
             </label>
             <input
               type="text"
@@ -240,7 +238,7 @@ export function UpiPayModal({
           <div className="pt-2 border-t border-paper-100 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-ink-700">
-                {language === "te" ? "చెల్లింపు పద్ధతి ఎంచుకోండి:" : "Choose Payment Option:"}
+                Choose Payment Option:
               </span>
               <div className="flex items-center gap-1 bg-paper-100 p-0.5 rounded-lg text-[11px] font-bold">
                 <button
@@ -276,9 +274,7 @@ export function UpiPayModal({
                 >
                   <Smartphone className="h-4 w-4" />
                   <span>
-                    {language === "te"
-                      ? "మొబైల్‌లో UPI యాప్‌లను తెరవండి (Pay via UPI)"
-                      : "Launch Installed UPI App"}
+                    Launch Installed UPI App
                   </span>
                 </a>
 
@@ -335,7 +331,7 @@ export function UpiPayModal({
 
                 <div>
                   <p className="text-xs font-bold text-ink-900">
-                    {language === "te" ? "మీ మొబైల్ UPI యాప్ ద్వారా ఈ QR కోడ్‌ను స్కాన్ చేయండి" : "Scan this QR code with GPay, PhonePe, or Paytm"}
+                    Scan this QR code with GPay, PhonePe, or Paytm
                   </p>
                   <p className="text-[11px] text-ink-500 mt-0.5">
                     {amount && Number(amount) > 0 ? (
@@ -377,7 +373,7 @@ export function UpiPayModal({
             className="inline-flex items-center gap-1.5 text-xs font-bold text-clay-700 hover:text-clay-900 transition hover:underline"
           >
             <PlusCircle className="h-3.5 w-3.5" />
-            <span>{language === "te" ? "ఈ చెల్లింపును ఖర్చులలో నమోదు చేయండి" : "Record as Expense in Project"}</span>
+            <span>Record as Expense in Project</span>
           </Link>
 
           <button

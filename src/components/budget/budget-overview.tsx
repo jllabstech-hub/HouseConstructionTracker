@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { formatINR } from "@/lib/money";
 import { cn } from "@/lib/utils";
-import { useLanguage } from "@/context/language-context";
 import { Drawer } from "@/components/ui/drawer";
 
 export type TypeBudgetRow = {
@@ -72,7 +71,6 @@ export function BudgetOverview({
   projectId?: string;
   children?: React.ReactNode;
 }) {
-  const { language } = useLanguage();
   const [editorOpen, setEditorOpen] = useState(false);
 
   const numBudget = Number(totalBudget) || 0;
@@ -91,12 +89,10 @@ export function BudgetOverview({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-paper-200/80 pb-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 leading-tight">
-            {language === "te" ? "బడ్జెట్ & ప్రణాళిక" : "Budget & Allocations"}
+            Budget & Allocations
           </h1>
           <p className="text-xs sm:text-sm text-ink-500 mt-1">
-            {language === "te"
-              ? "నిర్మాణ వ్యయ ప్రణాళిక, వాస్తవ ఖర్చులు మరియు మిగిలిన బడ్జెట్"
-              : "Track planned cost limits against actual construction expenditure."}
+            Track planned cost limits against actual construction expenditure.
           </p>
         </div>
 
@@ -108,7 +104,7 @@ export function BudgetOverview({
             className="inline-flex items-center gap-2 rounded-xl border border-paper-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-ink-800 hover:bg-paper-50 active:scale-95 transition shadow-2xs self-start sm:self-auto whitespace-nowrap shrink-0"
           >
             <Sliders className="h-4 w-4 text-ink-600 shrink-0" />
-            <span className="whitespace-nowrap">{language === "te" ? "బడ్జెట్ నిర్వహణ" : "Manage Budget"}</span>
+            <span className="whitespace-nowrap">Manage Budget</span>
           </button>
         )}
       </div>
@@ -119,7 +115,7 @@ export function BudgetOverview({
           {/* Budget */}
           <div className="space-y-1">
             <span className="text-xs font-bold uppercase tracking-wider text-ink-500 block">
-              {language === "te" ? "ప్లాన్ చేసిన బడ్జెట్" : "Budget (Planned)"}
+              Budget (Planned)
             </span>
             <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">
               {formatLakhsShort(numBudget)}
@@ -132,7 +128,7 @@ export function BudgetOverview({
           {/* Spent */}
           <div className="space-y-1">
             <span className="text-xs font-bold uppercase tracking-wider text-ink-500 block">
-              {language === "te" ? "వాస్తవ ఖర్చు" : "Spent (Actual)"}
+              Spent (Actual)
             </span>
             <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">
               {formatLakhsShort(numSpent)}
@@ -145,7 +141,7 @@ export function BudgetOverview({
           {/* Remaining */}
           <div className="space-y-1">
             <span className="text-xs font-bold uppercase tracking-wider text-ink-500 block">
-              {language === "te" ? "మిగిలిన నగదు" : "Remaining"}
+              Remaining
             </span>
             <p
               className={cn(
@@ -157,7 +153,7 @@ export function BudgetOverview({
             </p>
             <p className="text-[11px] text-ink-400 font-medium">
               {isOver
-                ? (language === "te" ? "బడ్జెట్ దాటింది" : "Over budget")
+                ? "Over budget"
                 : `${formatINR(numRemaining)} left`}
             </p>
           </div>
@@ -165,7 +161,7 @@ export function BudgetOverview({
           {/* Used % */}
           <div className="space-y-1">
             <span className="text-xs font-bold uppercase tracking-wider text-ink-500 block">
-              {language === "te" ? "వినియోగ శాతం" : "Used %"}
+              Used %
             </span>
             <p
               className={cn(
@@ -203,12 +199,10 @@ export function BudgetOverview({
       <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
         <div>
           <h2 className="font-display text-base sm:text-lg font-bold text-ink-900">
-            {language === "te" ? "రకం వారీగా బడ్జెట్" : "Material, Labour & Other Allocations"}
+            Material, Labour & Other Allocations
           </h2>
           <p className="text-xs text-ink-500 mt-0.5">
-            {language === "te"
-              ? "సామాగ్రి కొనుగోళ్లు మరియు కూలీల చెల్లింపుల పరిమితులు"
-              : "Direct comparison between planned targets and actual spending by category type."}
+            Direct comparison between planned targets and actual spending by category type.
           </p>
         </div>
 
@@ -223,10 +217,10 @@ export function BudgetOverview({
 
             const label =
               row.type === "MATERIAL"
-                ? (language === "te" ? "సామాగ్రి (Material)" : "Material")
+                ? "Material"
                 : row.type === "LABOUR"
-                ? (language === "te" ? "కూలీలు (Labour)" : "Labour")
-                : (language === "te" ? "ఇతర ఖర్చులు (Other)" : "Other Services");
+                ? "Labour"
+                : "Other Services";
 
             const numB = Number(row.budget);
             const numA = Number(row.actual);
@@ -269,15 +263,15 @@ export function BudgetOverview({
                 {/* Numbers */}
                 <div className="space-y-1 text-xs">
                   <div className="flex items-center justify-between text-ink-600">
-                    <span>{language === "te" ? "బడ్జెట్:" : "Budget:"}</span>
+                    <span>Budget:</span>
                     <strong className="text-ink-900 font-display">{formatLakhsShort(numB)}</strong>
                   </div>
                   <div className="flex items-center justify-between text-ink-600">
-                    <span>{language === "te" ? "ఖర్చు:" : "Spent:"}</span>
+                    <span>Spent:</span>
                     <strong className="text-ink-900 font-display">{formatLakhsShort(numA)}</strong>
                   </div>
                   <div className="flex items-center justify-between text-ink-600 border-t border-paper-200/60 pt-1">
-                    <span>{language === "te" ? "మిగిలినది:" : "Remaining:"}</span>
+                    <span>Remaining:</span>
                     <strong
                       className={cn(
                         "font-display font-bold",
@@ -309,12 +303,10 @@ export function BudgetOverview({
       <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
         <div>
           <h2 className="font-display text-base sm:text-lg font-bold text-ink-900">
-            {language === "te" ? "పరిశీలించాల్సిన వర్గాలు (Where am I over budget?)" : "Categories at Risk & Over Budget"}
+            Categories at Risk & Over Budget
           </h2>
           <p className="text-xs text-ink-500 mt-0.5">
-            {language === "te"
-              ? "బడ్జెట్ పరిమితి దాటిన లేదా 85% పైగా ఖర్చు చేసిన వర్గాలు"
-              : "Specific trades and materials that have exceeded or are nearing their target allocations."}
+            Specific trades and materials that have exceeded or are nearing their target allocations.
           </p>
         </div>
 
@@ -398,12 +390,10 @@ export function BudgetOverview({
             <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
             <div className="text-xs">
               <p className="font-bold text-emerald-900">
-                {language === "te" ? "అన్ని వర్గాలు బడ్జెట్ పరిమితిలోనే ఉన్నాయి" : "All tracked categories are within budget"}
+                All tracked categories are within budget
               </p>
               <p className="text-emerald-700 mt-0.5">
-                {language === "te"
-                  ? "ఏ వర్గంలోనూ బడ్జెట్ దాటలేదు లేదా ప్రమాదకర స్థితిలో లేదు."
-                  : "No category has exceeded 85% of its allocated limit."}
+                No category has exceeded 85% of its allocated limit.
               </p>
             </div>
           </div>
@@ -415,8 +405,8 @@ export function BudgetOverview({
         <Drawer
           open={editorOpen}
           onClose={() => setEditorOpen(false)}
-          title={language === "te" ? "బడ్జెట్ పరిమితులు సవరించండి" : "Manage Budget Allocations"}
-          subtitle={language === "te" ? "మొత్తం బడ్జెట్ మరియు వర్గాల వారీ పరిమితులను సర్దుబాటు చేయండి" : "Set planned allocation targets for materials, labour and specific categories"}
+          title="Manage Budget Allocations"
+          subtitle="Set planned allocation targets for materials, labour and specific categories"
           className="max-w-lg sm:max-w-xl"
         >
           {children}

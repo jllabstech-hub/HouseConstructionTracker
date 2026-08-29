@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
-import { LanguageProvider } from "@/context/language-context";
 import { TopProgressBar } from "@/components/ui/top-progress-bar";
 
 const plusJakarta = Plus_Jakarta_Sans({
@@ -37,7 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={`${plusJakarta.variable} ${sourceSerif.variable} font-sans antialiased`}>
         <TopProgressBar />
-        <LanguageProvider>{children}</LanguageProvider>
+        {children}
       </body>
     </html>
   );

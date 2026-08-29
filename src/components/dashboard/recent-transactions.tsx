@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ArrowRight, Package, HardHat, MoreHorizontal } from "lucide-react";
 import { formatINR } from "@/lib/money";
-import { useLanguage } from "@/context/language-context";
 
 export type RecentExpenseItem = {
   id: string;
@@ -20,8 +19,6 @@ export function RecentTransactions({
 }: {
   expenses: RecentExpenseItem[];
 }) {
-  const { language } = useLanguage();
-
   if (expenses.length === 0) return null;
 
   return (
@@ -29,10 +26,10 @@ export function RecentTransactions({
       <div className="flex items-center justify-between pb-3 border-b border-paper-100">
         <div>
           <h2 className="font-display text-base sm:text-lg font-bold text-ink-900 leading-tight">
-            {language === "te" ? "ఇటీవలి ఖర్చులు" : "Recent Expenses"}
+            Recent Expenses
           </h2>
           <p className="text-xs text-ink-500 mt-0.5">
-            {language === "te" ? "చివరిగా నమోదు చేసిన 5 లావాదేవీలు" : "Latest 5 recorded transactions"}
+            Latest 5 recorded transactions
           </p>
         </div>
 
@@ -40,7 +37,7 @@ export function RecentTransactions({
           href="/expenses"
           className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition"
         >
-          <span>{language === "te" ? "అన్ని ఖర్చులు" : "View all expenses"}</span>
+          <span>View all expenses</span>
           <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
@@ -82,7 +79,7 @@ export function RecentTransactions({
                 href={`/expenses/${exp.id}`}
                 className="text-[11px] font-semibold text-clay-600 hover:text-clay-800 transition"
               >
-                {language === "te" ? "సవరించు" : "Edit"}
+                Edit
               </Link>
             </div>
           </div>

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { ArrowRight, Package, HardHat, MoreHorizontal } from "lucide-react";
-import { useLanguage } from "@/context/language-context";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 
 export function FinancialSplit({
@@ -16,8 +15,6 @@ export function FinancialSplit({
   otherTotal: number;
   grandTotal: number;
 }) {
-  const { language } = useLanguage();
-
   const total = grandTotal > 0 ? grandTotal : 1;
   const matPercent = Math.round((materialTotal / total) * 100);
   const labPercent = Math.round((labourTotal / total) * 100);
@@ -29,12 +26,10 @@ export function FinancialSplit({
       <div className="flex items-center justify-between border-b border-paper-100 pb-3">
         <div>
           <h2 className="font-display text-base sm:text-lg font-bold text-ink-900 leading-tight">
-            {language === "te" ? "డబ్బు ఎక్కడికి వెళ్తోంది?" : "Where is the Money Going?"}
+            Where is the Money Going?
           </h2>
           <p className="text-xs text-ink-500 mt-0.5">
-            {language === "te"
-              ? "సామాగ్రి కొనుగోళ్లు మరియు కూలీల చెల్లింపుల స్పష్టమైన విభజన"
-              : "Material purchases vs worker wages breakdown"}
+            Material purchases vs worker wages breakdown
           </p>
         </div>
       </div>
@@ -79,7 +74,7 @@ export function FinancialSplit({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink-600">
                 <Package className="h-4 w-4 text-clay-600" />
-                <span>{language === "te" ? "సామాగ్రి" : "Material"}</span>
+                <span>Material</span>
               </div>
               <span className="rounded-md bg-clay-100 px-2 py-0.5 text-xs font-bold text-clay-800">
                 {matPercent}%
@@ -90,7 +85,7 @@ export function FinancialSplit({
               <AnimatedNumber value={materialTotal} />
             </p>
             <p className="text-[11px] text-ink-500 mt-0.5">
-              {language === "te" ? "సిమెంట్, స్టీల్, ఇసుక, ఇటుకలు..." : "Cement, steel, sand, tiles, bricks..."}
+              Cement, steel, sand, tiles, bricks...
             </p>
           </div>
 
@@ -98,7 +93,7 @@ export function FinancialSplit({
             href="/expenses?type=MATERIAL"
             className="mt-3.5 inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 pt-2.5 border-t border-paper-200/80 transition"
           >
-            <span>{language === "te" ? "సామాగ్రి బిల్లులు" : "View Materials"}</span>
+            <span>View Materials</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -109,7 +104,7 @@ export function FinancialSplit({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink-600">
                 <HardHat className="h-4 w-4 text-emerald-700" />
-                <span>{language === "te" ? "కూలీలు" : "Labour"}</span>
+                <span>Labour</span>
               </div>
               <span className="rounded-md bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-800">
                 {labPercent}%
@@ -120,7 +115,7 @@ export function FinancialSplit({
               <AnimatedNumber value={labourTotal} />
             </p>
             <p className="text-[11px] text-ink-500 mt-0.5">
-              {language === "te" ? "మేస్త్రీ, కూలీలు, కార్పెంటర్..." : "Masonry, bar bending, carpentry..."}
+              Masonry, bar bending, carpentry...
             </p>
           </div>
 
@@ -128,7 +123,7 @@ export function FinancialSplit({
             href="/expenses?type=LABOUR"
             className="mt-3.5 inline-flex items-center gap-1 text-xs font-bold text-emerald-700 hover:text-emerald-900 pt-2.5 border-t border-paper-200/80 transition"
           >
-            <span>{language === "te" ? "కూలీల చెల్లింపులు" : "View Labour"}</span>
+            <span>View Labour</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -139,7 +134,7 @@ export function FinancialSplit({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink-600">
                 <MoreHorizontal className="h-4 w-4 text-ink-600" />
-                <span>{language === "te" ? "ఇతర ఖర్చులు" : "Other"}</span>
+                <span>Other</span>
               </div>
               <span className="rounded-md bg-paper-200 px-2 py-0.5 text-xs font-bold text-ink-700">
                 {othPercent}%
@@ -150,7 +145,7 @@ export function FinancialSplit({
               <AnimatedNumber value={otherTotal} />
             </p>
             <p className="text-[11px] text-ink-500 mt-0.5">
-              {language === "te" ? "JCB, రవాణా, అనుమతులు..." : "Machinery, transport, permits, fees..."}
+              Machinery, transport, permits, fees...
             </p>
           </div>
 
@@ -158,7 +153,7 @@ export function FinancialSplit({
             href="/expenses?type=OTHER"
             className="mt-3.5 inline-flex items-center gap-1 text-xs font-bold text-ink-700 hover:text-ink-900 pt-2.5 border-t border-paper-200/80 transition"
           >
-            <span>{language === "te" ? "ఇతర బిల్లులు" : "View Other"}</span>
+            <span>View Other</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
-import { useLanguage } from "@/context/language-context";
 import {
   Search,
   Phone,
@@ -91,16 +90,16 @@ const STAGE_GROUP_ORDER: Record<string, number> = {
 };
 
 const WORKER_TYPES = [
-  { value: "MASON", labelEn: "Mason (Mistri)", labelTe: "మేస్త్రీ (Mason)" },
-  { value: "GENERAL_LABOUR", labelEn: "General Labour (Mazdoor)", labelTe: "రోజువారీ కూలీ (Mazdoor)" },
-  { value: "CARPENTER", labelEn: "Carpenter / Woodworker", labelTe: "వడ్రంగి (Carpenter)" },
-  { value: "PLUMBER", labelEn: "Plumber & Sanitary", labelTe: "ప్లంబర్ (Plumber)" },
-  { value: "ELECTRICIAN", labelEn: "Electrician & Wiring", labelTe: "ఎలక్ట్రీషియన్ (Electrician)" },
-  { value: "TILE_WORKER", labelEn: "Tile & Marble Mason", labelTe: "టైల్స్ & మార్బుల్ మేస్త్రీ" },
-  { value: "PAINTER", labelEn: "Painter & Putty", labelTe: "పెయింటర్ & పుట్టీ" },
-  { value: "FABRICATOR", labelEn: "Welder / SS Fabricator", labelTe: "వెల్డర్ / గ్రిల్స్ ఫ్యాబ్రికేటర్" },
-  { value: "CONTRACTOR", labelEn: "Labour Contractor", labelTe: "కాంట్రాక్టర్ (Contractor)" },
-  { value: "OTHER", labelEn: "Other Worker", labelTe: "ఇతర వర్కర్" },
+  { value: "MASON", label: "Mason (Mistri)" },
+  { value: "GENERAL_LABOUR", label: "General Labour (Mazdoor)" },
+  { value: "CARPENTER", label: "Carpenter / Woodworker" },
+  { value: "PLUMBER", label: "Plumber & Sanitary" },
+  { value: "ELECTRICIAN", label: "Electrician & Wiring" },
+  { value: "TILE_WORKER", label: "Tile & Marble Mason" },
+  { value: "PAINTER", label: "Painter & Putty" },
+  { value: "FABRICATOR", label: "Welder / SS Fabricator" },
+  { value: "CONTRACTOR", label: "Labour Contractor" },
+  { value: "OTHER", label: "Other Worker" },
 ];
 
 const SHOP_CATEGORY_PRESETS = [
@@ -132,7 +131,6 @@ export function MasterForms({
   expenses?: ExpenseRecord[];
 }) {
   const router = useRouter();
-  const { language, t } = useLanguage();
   const [pending, start] = useTransition();
 
   const [activeTab, setActiveTab] = useState<"VENDORS" | "WORKERS" | "MATERIALS" | "LABOURS" | "SERVICES">("VENDORS");
@@ -250,10 +248,10 @@ export function MasterForms({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-paper-200/80 pb-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 tracking-tight">
-            {t.masters.title}
+            Phone Directory & Master Catalog
           </h1>
           <p className="text-xs sm:text-sm text-ink-500 mt-0.5">
-            {t.masters.subtitle}
+            Store and call material vendors, shopkeepers, daily workers, masons, and standard site categories.
           </p>
         </div>
 
@@ -274,15 +272,9 @@ export function MasterForms({
               <Trash2 className="h-3.5 w-3.5 text-red-600" />
               <span>
                 {activeTab === "VENDORS"
-                  ? language === "te"
-                    ? `షాపులన్నీ తొలగించండి (${effectiveVendors.length})`
-                    : `Clear All Shops (${effectiveVendors.length})`
+                  ? `Clear All Shops (${effectiveVendors.length})`
                   : activeTab === "WORKERS"
-                  ? language === "te"
-                    ? `వర్కర్లందరినీ తొలగించండి (${effectiveWorkers.length})`
-                    : `Clear All Workers (${effectiveWorkers.length})`
-                  : language === "te"
-                  ? "అన్నీ తొలగించండి"
+                  ? `Clear All Workers (${effectiveWorkers.length})`
                   : "Clear All"}
               </span>
             </button>
@@ -294,7 +286,7 @@ export function MasterForms({
             className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-clay-700 transition"
           >
             <Plus className="h-4 w-4" />
-            <span>{t.masters.addNewShop}</span>
+            <span>Add New Shop</span>
           </button>
 
           <button
@@ -303,7 +295,7 @@ export function MasterForms({
             className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white px-3.5 py-2 text-xs font-bold text-ink-800 shadow-2xs hover:bg-paper-50 transition"
           >
             <Plus className="h-4 w-4" />
-            <span>{t.masters.addNewWorker}</span>
+            <span>Add New Worker</span>
           </button>
         </div>
       </div>
@@ -324,11 +316,11 @@ export function MasterForms({
       {/* Directory Tab Navigation */}
       <div className="flex overflow-x-auto no-scrollbar gap-2 p-1.5 bg-paper-100/90 rounded-2xl border border-paper-200">
         {[
-          { id: "VENDORS", label: t.masters.tabShops, count: effectiveVendors.length },
-          { id: "WORKERS", label: t.masters.tabWorkers, count: effectiveWorkers.length },
-          { id: "MATERIALS", label: t.masters.tabMaterials, count: materials.length },
-          { id: "LABOURS", label: t.masters.tabLabour, count: labours.length },
-          { id: "SERVICES", label: t.masters.tabMachinery, count: services.length },
+          { id: "VENDORS", label: "Shops & Vendors", count: effectiveVendors.length },
+          { id: "WORKERS", label: "Workers & Masons", count: effectiveWorkers.length },
+          { id: "MATERIALS", label: "Materials Catalog", count: materials.length },
+          { id: "LABOURS", label: "Labour Rates", count: labours.length },
+          { id: "SERVICES", label: "Machinery & Services", count: services.length },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -368,7 +360,7 @@ export function MasterForms({
                 <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
                 <input
                   type="text"
-                  placeholder={t.masters.searchShops}
+                  placeholder="Search shops by name, material, or mobile..."
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -379,7 +371,7 @@ export function MasterForms({
               </div>
               <div className="flex items-center gap-2">
                 <p className="text-xs text-ink-500 font-medium whitespace-nowrap">
-                  {language === "te" ? `మొత్తం ${filteredVendors.length} షాపులు` : `Showing ${filteredVendors.length} shops`}
+                  Showing {filteredVendors.length} shops
                 </p>
                 {vendors.length > 0 && (
                   <button
@@ -388,7 +380,7 @@ export function MasterForms({
                     className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-800 hover:underline bg-red-50/80 border border-red-200 rounded-lg px-2 py-0.5 transition cursor-pointer"
                   >
                     <Trash2 className="h-3 w-3 text-red-600" />
-                    <span>{language === "te" ? "షాపులన్నీ తొలగించు" : "Clear All"}</span>
+                    <span>Clear All</span>
                   </button>
                 )}
               </div>
@@ -398,12 +390,10 @@ export function MasterForms({
               <div className="rounded-3xl border border-dashed border-paper-300 bg-white p-10 text-center space-y-3">
                 <Store className="h-10 w-10 text-ink-300 mx-auto" />
                 <h3 className="font-bold text-ink-900 text-sm sm:text-base">
-                  {language === "te" ? "షాపులు ఏవీ కనుగొనబడలేదు" : "No shops found"}
+                  No shops found
                 </h3>
                 <p className="text-xs text-ink-500 max-w-sm mx-auto">
-                  {language === "te"
-                    ? "కుడివైపు ఉన్న ఫారం ద్వారా కొత్త హార్డ్‌వేర్ షాప్ లేదా మెటీరియల్ డీలర్ వివరాలను నమోదు చేయండి."
-                    : "Add your first hardware store or material dealer using the form on the right."}
+                  Add your first hardware store or material dealer using the form on the right.
                 </p>
               </div>
             ) : (
@@ -437,7 +427,7 @@ export function MasterForms({
 
                           <div className="text-right shrink-0">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-ink-400 block">
-                              {t.masters.totalPaid}
+                              Total Paid
                             </span>
                             <span className="rounded-lg bg-clay-50 px-2 py-0.5 text-xs font-extrabold text-clay-800">
                               {formatINR(total)}
@@ -450,7 +440,7 @@ export function MasterForms({
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-ink-800">
                               <Phone className="h-3.5 w-3.5 text-clay-600" />
-                              <span>{vendor.phone || <span className="text-ink-400 font-normal italic">{t.masters.noPhone}</span>}</span>
+                              <span>{vendor.phone || <span className="text-ink-400 font-normal italic">No Phone</span>}</span>
                             </div>
 
                             <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
@@ -459,10 +449,10 @@ export function MasterForms({
                                   <a
                                     href={`tel:${telPhone}`}
                                     className="inline-flex items-center gap-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-2.5 py-1 text-[11px] font-bold text-white transition active:scale-95 shadow-xs whitespace-nowrap shrink-0"
-                                    title="Call directly"
+                                    title="Call shop directly"
                                   >
                                     <PhoneCall className="h-3 w-3 shrink-0" />
-                                    <span className="whitespace-nowrap">{t.masters.call}</span>
+                                    <span className="whitespace-nowrap">Call</span>
                                   </a>
 
                                   {waLink && (
@@ -496,7 +486,7 @@ export function MasterForms({
                                 title="Pay via UPI"
                               >
                                 <IndianRupee className="h-3 w-3 stroke-[2.5] shrink-0" />
-                                <span className="whitespace-nowrap">{language === "te" ? "పే" : "Pay"}</span>
+                                <span className="whitespace-nowrap">Pay</span>
                               </button>
                             </div>
                           </div>
@@ -525,7 +515,7 @@ export function MasterForms({
                           className="inline-flex items-center gap-1 font-semibold text-clay-700 hover:text-clay-900 transition"
                         >
                           <Edit3 className="h-3 w-3" />
-                          <span>{t.masters.edit}</span>
+                          <span>Edit</span>
                         </button>
 
                         <button
@@ -534,7 +524,7 @@ export function MasterForms({
                           className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition"
                         >
                           <Trash2 className="h-3 w-3" />
-                          <span>{t.masters.delete}</span>
+                          <span>Delete</span>
                         </button>
                       </div>
                     </div>
@@ -561,7 +551,7 @@ export function MasterForms({
               <div className="flex items-center gap-2">
                 <Store className="h-5 w-5 text-clay-600" />
                 <h3 className="font-display font-bold text-ink-900 text-base">
-                  {editingVendor ? (language === "te" ? "షాప్ వివరాలు సవరించండి" : "Edit Shop Details") : t.masters.addNewShop}
+                  {editingVendor ? "Edit Shop Details" : "Add New Shop"}
                 </h3>
               </div>
               {editingVendor && (
@@ -598,40 +588,40 @@ export function MasterForms({
             >
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.shopName} <span className="text-red-500">*</span>
+                  Shop Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="name"
                   required
                   defaultValue={editingVendor?.name ?? ""}
-                  placeholder={language === "te" ? "ఉదా: శ్రీ బాలాజీ సిమెంట్ & స్టీల్" : "e.g. Sri Balaji Cement & Hardware"}
+                  placeholder="e.g. Sri Balaji Cement & Hardware"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.mobileNumber}
+                  Mobile Number
                 </label>
                 <input
                   type="tel"
                   name="phone"
                   defaultValue={editingVendor?.phone ?? ""}
-                  placeholder={language === "te" ? "ఉదా: 9876543210" : "e.g. 9876543210"}
+                  placeholder="e.g. 9876543210"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.businessType}
+                  Business Type
                 </label>
                 <input
                   type="text"
                   name="company"
                   defaultValue={editingVendor?.company ?? ""}
-                  placeholder={language === "te" ? "ఉదా: సిమెంట్, ఇనుము, ఇసుక డీలర్" : "e.g. Cement & Steel Dealer"}
+                  placeholder="e.g. Cement & Steel Dealer"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
                 {/* Category Preset chips */}
@@ -654,26 +644,26 @@ export function MasterForms({
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.shopAddress}
+                  Shop Address
                 </label>
                 <input
                   type="text"
                   name="address"
                   defaultValue={editingVendor?.address ?? ""}
-                  placeholder={language === "te" ? "ఉదా: మెయిన్ రోడ్డు, సైట్ ఎదురుగా" : "e.g. Main Road, Near Site Junction"}
+                  placeholder="e.g. Main Road, Near Site Junction"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.notes}
+                  Notes / Payment Details
                 </label>
                 <textarea
                   name="notes"
                   rows={2}
                   defaultValue={editingVendor?.notes ?? ""}
-                  placeholder={language === "te" ? "ఉదా: Google Pay: 9876543210@upi, 30 రోజుల క్రెడిట్" : "e.g. UPI ID, Bank account, 30-day payment credit"}
+                  placeholder="e.g. UPI ID, Bank account, 30-day payment credit"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
@@ -694,7 +684,7 @@ export function MasterForms({
                   disabled={pending}
                   className="flex-1 bg-clay-600 hover:bg-clay-700 font-bold text-white text-xs py-2.5 rounded-xl shadow-sm"
                 >
-                  {pending ? t.masters.saving : editingVendor ? "Update Shop" : t.masters.saveShop}
+                  {pending ? "Saving..." : editingVendor ? "Update Shop" : "Save Shop Details"}
                 </Button>
               </div>
             </form>
@@ -712,7 +702,7 @@ export function MasterForms({
                 <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
                 <input
                   type="text"
-                  placeholder={t.masters.searchWorkers}
+                  placeholder="Search workers by name, trade, or mobile..."
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -723,7 +713,7 @@ export function MasterForms({
               </div>
               <div className="flex items-center gap-2">
                 <p className="text-xs text-ink-500 font-medium whitespace-nowrap">
-                  {language === "te" ? `మొత్తం ${filteredWorkers.length} మంది వర్కర్లు` : `Showing ${filteredWorkers.length} workers`}
+                  Showing {filteredWorkers.length} workers
                 </p>
                 {workers.length > 0 && (
                   <button
@@ -732,7 +722,7 @@ export function MasterForms({
                     className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-800 hover:underline bg-red-50/80 border border-red-200 rounded-lg px-2 py-0.5 transition cursor-pointer"
                   >
                     <Trash2 className="h-3 w-3 text-red-600" />
-                    <span>{language === "te" ? "వర్కర్లందరినీ తొలగించు" : "Clear All"}</span>
+                    <span>Clear All</span>
                   </button>
                 )}
               </div>
@@ -753,7 +743,7 @@ export function MasterForms({
                     : "bg-white border border-paper-200 text-ink-700 hover:bg-paper-50"
                 )}
               >
-                {language === "te" ? "అన్ని రకాలు" : "All Trades"}
+                All Trades
               </button>
               {WORKER_TYPES.map((wt) => (
                 <button
@@ -770,7 +760,7 @@ export function MasterForms({
                       : "bg-white border border-paper-200 text-ink-700 hover:bg-paper-50"
                   )}
                 >
-                  {language === "te" ? wt.labelTe : wt.labelEn}
+                  {wt.label}
                 </button>
               ))}
             </div>
@@ -779,12 +769,10 @@ export function MasterForms({
               <div className="rounded-3xl border border-dashed border-paper-300 bg-white p-10 text-center space-y-3">
                 <HardHat className="h-10 w-10 text-ink-300 mx-auto" />
                 <h3 className="font-bold text-ink-900 text-sm sm:text-base">
-                  {language === "te" ? "వర్కర్లు ఏవీ కనుగొనబడలేదు" : "No workers found"}
+                  No workers found
                 </h3>
                 <p className="text-xs text-ink-500 max-w-sm mx-auto">
-                  {language === "te"
-                    ? "కుడివైపు ఉన్న ఫారం ద్వారా కొత్త మేస్త్రీ లేదా కూలీ వివరాలను నమోదు చేయండి."
-                    : "Add your first mason, plumber, electrician or labourer using the form on the right."}
+                  Add your first mason, plumber, electrician or labourer using the form on the right.
                 </p>
               </div>
             ) : (
@@ -795,7 +783,7 @@ export function MasterForms({
                   const telPhone = cleanPhone(worker.phone);
 
                   const workerTypeObj = WORKER_TYPES.find((wt) => wt.value === worker.type);
-                  const typeDisplay = language === "te" && workerTypeObj ? workerTypeObj.labelTe : workerTypeObj?.labelEn ?? worker.type;
+                  const typeDisplay = workerTypeObj?.label ?? worker.type;
 
                   return (
                     <div
@@ -819,7 +807,7 @@ export function MasterForms({
 
                           <div className="text-right shrink-0">
                             <span className="text-[10px] font-bold uppercase tracking-wider text-ink-400 block">
-                              {t.masters.totalPaid}
+                              Total Paid
                             </span>
                             <span className="rounded-lg bg-amber-50/80 px-2 py-0.5 text-xs font-extrabold text-amber-900">
                               {formatINR(total)}
@@ -832,7 +820,7 @@ export function MasterForms({
                           <div className="flex items-center justify-between gap-2">
                             <div className="flex items-center gap-1.5 text-xs font-bold text-ink-800">
                               <Phone className="h-3.5 w-3.5 text-amber-600" />
-                              <span>{worker.phone || <span className="text-ink-400 font-normal italic">{t.masters.noPhone}</span>}</span>
+                              <span>{worker.phone || <span className="text-ink-400 font-normal italic">No Phone</span>}</span>
                             </div>
 
                             <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
@@ -844,7 +832,7 @@ export function MasterForms({
                                     title="Call worker directly"
                                   >
                                     <PhoneCall className="h-3 w-3 shrink-0" />
-                                    <span className="whitespace-nowrap">{t.masters.call}</span>
+                                    <span className="whitespace-nowrap">Call</span>
                                   </a>
 
                                   {waLink && (
@@ -878,7 +866,7 @@ export function MasterForms({
                                 title="Pay via UPI"
                               >
                                 <IndianRupee className="h-3 w-3 stroke-[2.5] shrink-0" />
-                                <span className="whitespace-nowrap">{language === "te" ? "పే" : "Pay"}</span>
+                                <span className="whitespace-nowrap">Pay</span>
                               </button>
                             </div>
                           </div>
@@ -907,7 +895,7 @@ export function MasterForms({
                           className="inline-flex items-center gap-1 font-semibold text-clay-700 hover:text-clay-900 transition"
                         >
                           <Edit3 className="h-3 w-3" />
-                          <span>{t.masters.edit}</span>
+                          <span>Edit</span>
                         </button>
 
                         <button
@@ -916,7 +904,7 @@ export function MasterForms({
                           className="inline-flex items-center gap-1 font-semibold text-red-600 hover:text-red-800 transition"
                         >
                           <Trash2 className="h-3 w-3" />
-                          <span>{t.masters.delete}</span>
+                          <span>Delete</span>
                         </button>
                       </div>
                     </div>
@@ -943,7 +931,7 @@ export function MasterForms({
               <div className="flex items-center gap-2">
                 <HardHat className="h-5 w-5 text-clay-600" />
                 <h3 className="font-display font-bold text-ink-900 text-base">
-                  {editingWorker ? (language === "te" ? "వర్కర్ వివరాలు సవరించండి" : "Edit Worker Details") : t.masters.addNewWorker}
+                  {editingWorker ? "Edit Worker Details" : "Add New Worker"}
                 </h3>
               </div>
               {editingWorker && (
@@ -980,21 +968,21 @@ export function MasterForms({
             >
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.workerName} <span className="text-red-500">*</span>
+                  Worker Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="name"
                   required
                   defaultValue={editingWorker?.name ?? ""}
-                  placeholder={language === "te" ? "ఉదా: రమణ మేస్త్రీ / శేఖర్ ప్లంబర్" : "e.g. Ramana Mason / Sekhar Plumber"}
+                  placeholder="e.g. Ramana Mason / Sekhar Plumber"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.tradeRole} <span className="text-red-500">*</span>
+                  Trade / Skill Role <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="type"
@@ -1004,7 +992,7 @@ export function MasterForms({
                 >
                   {WORKER_TYPES.map((wt) => (
                     <option key={wt.value} value={wt.value}>
-                      {language === "te" ? wt.labelTe : wt.labelEn}
+                      {wt.label}
                     </option>
                   ))}
                 </select>
@@ -1012,39 +1000,39 @@ export function MasterForms({
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.mobileNumber}
+                  Mobile Number
                 </label>
                 <input
                   type="tel"
                   name="phone"
                   defaultValue={editingWorker?.phone ?? ""}
-                  placeholder={language === "te" ? "ఉదా: 9876543210" : "e.g. 9876543210"}
+                  placeholder="e.g. 9876543210"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.specialization}
+                  Specialization
                 </label>
                 <input
                   type="text"
                   name="specialization"
                   defaultValue={editingWorker?.specialization ?? ""}
-                  placeholder={language === "te" ? "ఉదా: స్లాబ్ కాంక్రీట్, గ్రౌండ్ ఫ్లోర్ టైల్స్, పుట్టీ" : "e.g. Slab Concreting, Italian Marble, False Ceiling"}
+                  placeholder="e.g. Slab Concreting, Italian Marble, False Ceiling"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  {t.masters.notes}
+                  Notes / Daily Wage Rate
                 </label>
                 <textarea
                   name="notes"
                   rows={2}
                   defaultValue={editingWorker?.notes ?? ""}
-                  placeholder={language === "te" ? "ఉదా: రోజు కూలీ ₹850, PhonePe: 9876543210" : "e.g. Daily wage ₹850/day, PhonePe: 9876543210"}
+                  placeholder="e.g. Daily wage ₹850/day, PhonePe: 9876543210"
                   className="w-full rounded-xl border border-paper-300 bg-paper-50 px-3 py-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 />
               </div>
@@ -1065,7 +1053,7 @@ export function MasterForms({
                   disabled={pending}
                   className="flex-1 bg-clay-600 hover:bg-clay-700 font-bold text-white text-xs py-2.5 rounded-xl shadow-sm"
                 >
-                  {pending ? t.masters.saving : editingWorker ? "Update Worker" : t.masters.saveWorker}
+                  {pending ? "Saving..." : editingWorker ? "Update Worker" : "Save Worker Details"}
                 </Button>
               </div>
             </form>
@@ -1328,13 +1316,9 @@ export function MasterForms({
             setIsDeleting(false);
           }
         }}
-        title={deleteTarget?.type === "vendor" ? (language === "te" ? "వెండర్ / షాప్‌ను తొలగించాలా?" : "Delete Vendor / Store") : (language === "te" ? "వర్కర్‌ను తొలగించాలా?" : "Delete Construction Worker")}
-        description={
-          language === "te"
-            ? `మీరు ఖచ్చితంగా "${deleteTarget?.name ?? "ఈ వివరాలను"}" తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
-            : `Are you sure you want to delete "${deleteTarget?.name ?? "this entry"}"? This action cannot be undone.`
-        }
-        confirmText={language === "te" ? "తొలగించు" : "Delete"}
+        title={deleteTarget?.type === "vendor" ? "Delete Vendor / Store" : "Delete Construction Worker"}
+        description={`Are you sure you want to delete "${deleteTarget?.name ?? "this entry"}"? This action cannot be undone.`}
+        confirmText="Delete"
         loading={isDeleting}
       />
 
@@ -1394,29 +1378,19 @@ export function MasterForms({
         }}
         title={
           clearTarget === "VENDORS"
-            ? (language === "te" ? "షాపులన్నీ ఒకేసారి తొలగించాలా?" : "Clear All Shops & Vendors?")
+            ? "Clear All Shops & Vendors?"
             : clearTarget === "WORKERS"
-            ? (language === "te" ? "వర్కర్లందరినీ ఒకేసారి తొలగించాలా?" : "Clear All Workers & Contractors?")
-            : (language === "te" ? "కాంటాక్ట్‌లన్నీ ఒకేసారి తొలగించాలా?" : "Clear All Phone Directory Entries?")
+            ? "Clear All Workers & Contractors?"
+            : "Clear All Phone Directory Entries?"
         }
         description={
           clearTarget === "VENDORS"
-            ? (language === "te"
-                ? `మీరు ఖచ్చితంగా మొత్తం ${effectiveVendors.length} షాపులు/వెండర్లను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
-                : `Are you sure you want to delete all ${effectiveVendors.length} shops & vendors in a single click? This action cannot be undone.`)
+            ? `Are you sure you want to delete all ${effectiveVendors.length} shops & vendors in a single click? This action cannot be undone.`
             : clearTarget === "WORKERS"
-            ? (language === "te"
-                ? `మీరు ఖచ్చితంగా మొత్తం ${effectiveWorkers.length} వర్కర్లను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
-                : `Are you sure you want to delete all ${effectiveWorkers.length} workers & contractors in a single click? This action cannot be undone.`)
-            : (language === "te"
-                ? `మీరు ఖచ్చితంగా ఫోన్ డైరెక్టరీలోని అన్ని ఎంట్రీలను ఒకే క్లిక్‌తో శాశ్వతంగా తొలగించాలనుకుంటున్నారా? ఈ చర్యను రద్దు చేయలేము.`
-                : `Are you sure you want to delete all phone directory entries in a single click? This action cannot be undone.`)
+            ? `Are you sure you want to delete all ${effectiveWorkers.length} workers & contractors in a single click? This action cannot be undone.`
+            : `Are you sure you want to delete all phone directory entries in a single click? This action cannot be undone.`
         }
-        confirmText={
-          language === "te"
-            ? `అన్నీ తొలగించు (${clearTarget === "VENDORS" ? effectiveVendors.length : clearTarget === "WORKERS" ? effectiveWorkers.length : effectiveVendors.length + effectiveWorkers.length})`
-            : `Clear All (${clearTarget === "VENDORS" ? effectiveVendors.length : clearTarget === "WORKERS" ? effectiveWorkers.length : effectiveVendors.length + effectiveWorkers.length})`
-        }
+        confirmText={`Clear All (${clearTarget === "VENDORS" ? effectiveVendors.length : clearTarget === "WORKERS" ? effectiveWorkers.length : effectiveVendors.length + effectiveWorkers.length})`}
         loading={isDeleting}
       />
 
@@ -1424,7 +1398,6 @@ export function MasterForms({
         isOpen={showPayModal}
         onClose={() => setShowPayModal(false)}
         recipient={payRecipient}
-        language={language}
       />
     </div>
   );

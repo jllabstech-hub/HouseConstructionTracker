@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, TrendingUp, ShieldCheck } from "lucide-react";
 import { formatINR } from "@/lib/money";
-import { useLanguage } from "@/context/language-context";
 
 export type TopCategoryItem = {
   name: string;
@@ -22,8 +21,6 @@ export function TopExpensesAndAlerts({
   topCategories: TopCategoryItem[];
   budgetAlerts: BudgetAlertItem[];
 }) {
-  const { language } = useLanguage();
-
   const maxAmount = topCategories.length > 0 ? Math.max(...topCategories.map((c) => c.amount)) : 1;
 
   return (
@@ -35,14 +32,14 @@ export function TopExpensesAndAlerts({
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-clay-600" />
               <h2 className="font-display text-base font-bold text-ink-900 leading-tight">
-                {language === "te" ? "అత్యధిక ఖర్చుల విభాగాలు" : "Top Expense Categories"}
+                Top Expense Categories
               </h2>
             </div>
             <Link
               href="/expenses"
               className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition"
             >
-              <span>{language === "te" ? "అన్నీ చూడండి" : "View all"}</span>
+              <span>View all</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -50,7 +47,7 @@ export function TopExpensesAndAlerts({
           <div className="space-y-3 mt-3">
             {topCategories.length === 0 ? (
               <p className="text-xs text-ink-400 italic py-4 text-center">
-                {language === "te" ? "ఖర్చులు ఇంకా నమోదు కాలేదు" : "No expense categories recorded yet"}
+                No expense categories recorded yet
               </p>
             ) : (
               topCategories.slice(0, 5).map((cat, idx) => {
@@ -84,14 +81,14 @@ export function TopExpensesAndAlerts({
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-600" />
               <h2 className="font-display text-base font-bold text-ink-900 leading-tight">
-                {language === "te" ? "బడ్జెట్ హెచ్చరికలు" : "Budget Alerts"}
+                Budget Alerts
               </h2>
             </div>
             <Link
               href="/budget"
               className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition"
             >
-              <span>{language === "te" ? "బడ్జెట్ ప్లాన్" : "Budget plan"}</span>
+              <span>Budget plan</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </div>
@@ -109,7 +106,7 @@ export function TopExpensesAndAlerts({
                       <span className="font-bold text-amber-900">{item.name}</span>
                     </div>
                     <span className="font-bold text-red-600">
-                      +{formatINR(item.variance)} {language === "te" ? "దాటింది" : "over"}
+                      +{formatINR(item.variance)} over
                     </span>
                   </div>
                 ))}
@@ -120,12 +117,10 @@ export function TopExpensesAndAlerts({
                   <ShieldCheck className="h-6 w-6 text-emerald-600" />
                 </div>
                 <p className="font-bold text-emerald-800 text-sm">
-                  {language === "te" ? "అన్నీ బడ్జెట్ పరిధిలోనే ఉన్నాయి" : "All Categories On Track"}
+                  All Categories On Track
                 </p>
                 <p className="text-emerald-700 text-xs">
-                  {language === "te"
-                    ? "ప్రస్తుతం ఏ ఖర్చు కూడా బడ్జెట్ పరిమితిని దాటలేదు"
-                    : "No budget overruns detected. Spending is healthy."}
+                  No budget overruns detected. Spending is healthy.
                 </p>
               </div>
             )}

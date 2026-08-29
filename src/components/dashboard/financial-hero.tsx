@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Plus, Building2, Wallet, PiggyBank, Landmark } from "lucide-react";
-import { useLanguage } from "@/context/language-context";
 import { AnimatedNumber } from "@/components/ui/animated-number";
 
 export function FinancialHero({
@@ -24,7 +23,6 @@ export function FinancialHero({
   usedPercent: number;
   billsCount: number;
 }) {
-  const { language, getStageName } = useLanguage();
   const isOverBudget = remainingBudget < 0;
   const clampedPercent = Math.min(100, Math.max(0, usedPercent));
 
@@ -47,17 +45,11 @@ export function FinancialHero({
               </span>
             )}
             <span className="rounded-md bg-clay-50 border border-clay-200/60 px-2.5 py-0.5 text-xs font-semibold text-clay-800">
-              {currentStageName
-                ? getStageName(currentStageName)
-                : language === "te"
-                ? "పునాది & నిర్మాణం"
-                : "Foundation & Structure"}
+              {currentStageName || "Foundation & Structure"}
             </span>
           </div>
           <p className="text-xs text-ink-500 mt-1">
-            {language === "te"
-              ? "ఇంటి నిర్మాణ ఖర్చుల సమగ్ర నివేదిక"
-              : "Live home construction financial dashboard"}
+            Live home construction financial dashboard
           </p>
         </div>
 
@@ -89,7 +81,7 @@ export function FinancialHero({
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-clay-800">
-                {language === "te" ? "మొత్తం ఖర్చు" : "Total Spent"}
+                Total Spent
               </span>
               <Wallet className="h-4 w-4 text-clay-600" />
             </div>
@@ -99,10 +91,10 @@ export function FinancialHero({
           </div>
           <div className="mt-4 flex items-center justify-between text-xs text-ink-500 font-medium pt-2.5 border-t border-clay-100">
             <span>
-              {billsCount} {language === "te" ? "లావాదేవీలు" : "transactions"}
+              {billsCount} transactions
             </span>
             <span className="font-semibold text-clay-700">
-              {clampedPercent.toFixed(1)}% {language === "te" ? "వాడారు" : "used"}
+              {clampedPercent.toFixed(1)}% used
             </span>
           </div>
         </div>
@@ -112,7 +104,7 @@ export function FinancialHero({
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-ink-500">
-                {language === "te" ? "మొత్తం బడ్జెట్" : "Total Budget"}
+                Total Budget
               </span>
               <PiggyBank className="h-4 w-4 text-ink-400" />
             </div>
@@ -121,7 +113,7 @@ export function FinancialHero({
             </p>
           </div>
           <div className="mt-4 text-xs text-ink-400 font-medium pt-2.5 border-t border-paper-100">
-            {language === "te" ? "ప్రణాళికాబద్ధ అంచనా" : "Planned budget target"}
+            Planned budget target
           </div>
         </div>
 
@@ -130,7 +122,7 @@ export function FinancialHero({
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-ink-500">
-                {language === "te" ? "మిగిలిన బడ్జెట్" : "Budget Remaining"}
+                Budget Remaining
               </span>
               <Landmark className={`h-4 w-4 ${isOverBudget ? "text-red-500" : "text-emerald-600"}`} />
             </div>
@@ -144,16 +136,10 @@ export function FinancialHero({
           </div>
           <div className="mt-4 flex items-center justify-between text-xs pt-2.5 border-t border-paper-100">
             <span className={isOverBudget ? "font-semibold text-red-600" : "text-ink-500"}>
-              {isOverBudget
-                ? language === "te"
-                  ? "బడ్జెట్ దాటింది"
-                  : "Over budget"
-                : language === "te"
-                ? "పరిధిలో ఉంది"
-                : "Available cash"}
+              {isOverBudget ? "Over budget" : "Available cash"}
             </span>
             <span className="font-semibold text-ink-700">
-              {(100 - clampedPercent).toFixed(1)}% {language === "te" ? "మిగిలింది" : "left"}
+              {(100 - clampedPercent).toFixed(1)}% left
             </span>
           </div>
         </div>
@@ -162,7 +148,7 @@ export function FinancialHero({
       {/* Budget Pacing Progress Bar */}
       <div className="rounded-xl border border-paper-200 bg-white p-3.5 shadow-xs">
         <div className="flex items-center justify-between text-xs font-medium text-ink-600 mb-1.5">
-          <span>{language === "te" ? "బడ్జెట్ వినియోగ శాతం" : "Budget Consumed"}</span>
+          <span>Budget Consumed</span>
           <span className="font-bold text-ink-900">{clampedPercent.toFixed(1)}%</span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-paper-100">

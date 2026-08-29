@@ -19,7 +19,6 @@ import {
   Loader2,
   CornerDownLeft,
 } from "lucide-react";
-import { useLanguage } from "@/context/language-context";
 
 type SearchResultData = {
   query: string;
@@ -93,7 +92,6 @@ export function GlobalSearchModal({
   projectId: string | null;
 }) {
   const router = useRouter();
-  const { language } = useLanguage();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
@@ -109,72 +107,76 @@ export function GlobalSearchModal({
       const contentDisposition = response.headers.get("content-disposition");
       let filename = defaultName;
       if (contentDisposition) {
-        const match = /filename="([^"]+)"/.exec(contentDisposition);
-        if (match?.[1]) filename = match[1];
+        const match = contentDisposition.match(/filename="?([^";]+)"?/i);
+        if (match && match[1]) filename = match[1];
       }
-      const blobUrl = window.URL.createObjectURL(new Blob([blob], { type: "application/pdf" }));
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = blobUrl;
+      a.href = url;
       a.download = filename;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (err) {
-      console.error("Smart report download error:", err);
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      window.open(downloadUrl, "_blank");
     } finally {
       setDownloadingPdf(false);
     }
   };
 
-  const fetchResults = useCallback(async (q: string) => {
-    if (!projectId) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/search?projectId=${projectId}&q=${encodeURIComponent(q)}`);
-      if (res.ok) {
-        const json = await res.json();
-        setData(json);
-      }
-    } catch {
-      // Ignore network errors
-    } finally {
-      setLoading(false);
-    }
-  }, [projectId]);
+  const fetchSearchResults = useCallback(
+    async (searchTerm: string) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        if (searchTerm.trim()) params.set("q", searchTerm.trim());
+        if (projectId) params.set("projectId", projectId);
 
-  // Focus input when modal opens
+        const res = await fetch(`/api/search?${params.toString()}`);
+        if (res.ok) {
+          const json = await res.json();
+          setData(json);
+        }
+      } catch (err) {
+        console.error("Search fetch failed", err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [projectId]
+  );
+
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-      fetchResults("");
-    } else {
+    if (!isOpen) {
       setQuery("");
       setData(null);
+      return;
     }
-  }, [isOpen, projectId, fetchResults]);
 
-  // Handle hotkeys (Escape to close)
+    const timer = setTimeout(() => {
+      inputRef.current?.focus();
+    }, 50);
+
+    const debounceTimer = setTimeout(() => {
+      fetchSearchResults(query);
+    }, 180);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(debounceTimer);
+    };
+  }, [isOpen, query, fetchSearchResults]);
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") {
+      if (e.key === "Escape" && isOpen) {
         onClose();
       }
     }
-    if (isOpen) {
-      window.addEventListener("keydown", onKeyDown);
-      return () => window.removeEventListener("keydown", onKeyDown);
-    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [isOpen, onClose]);
-
-  // Debounced search query
-  useEffect(() => {
-    if (!isOpen || !projectId) return;
-    const timer = setTimeout(() => {
-      fetchResults(query);
-    }, 180);
-    return () => clearTimeout(timer);
-  }, [query, projectId, isOpen, fetchResults]);
 
   const handleNavigate = (url: string) => {
     onClose();
@@ -185,7 +187,7 @@ export function GlobalSearchModal({
 
   const smartReport = data?.smartReport;
   const hasResults =
-    smartReport != null ||
+    smartReport ||
     (data?.expenses && data.expenses.length > 0) ||
     (data?.contacts && data.contacts.length > 0) ||
     (data?.stages && data.stages.length > 0) ||
@@ -194,7 +196,7 @@ export function GlobalSearchModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 md:pt-14 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-start justify-center p-3 sm:p-6 sm:pt-16 bg-black/60 backdrop-blur-xs animate-in fade-in duration-150"
       role="dialog"
       aria-modal="true"
       aria-label="Global Project Search"
@@ -204,7 +206,6 @@ export function GlobalSearchModal({
         className="relative w-full max-w-2xl rounded-3xl bg-white shadow-2xl border border-paper-200 overflow-hidden flex flex-col max-h-[88vh]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* 1. Search Input Bar */}
         <div className="flex items-center gap-2.5 border-b border-paper-200 bg-white px-3.5 py-3 sm:px-5">
           <Search className="h-5 w-5 text-clay-600 shrink-0" aria-hidden="true" />
           <input
@@ -213,11 +214,7 @@ export function GlobalSearchModal({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             aria-label="Search expenses, workers, materials, and reports"
-            placeholder={
-              language === "te"
-                ? "ఏదైనా అడగండి... ఉదా: painter, cement, ramesh, stage 3..."
-                : "Ask anything... e.g. painter bills, cement, ramesh, stage 3..."
-            }
+            placeholder="Ask anything... e.g. painter bills, cement, ramesh, stage 3..."
             className="flex-1 bg-transparent text-sm sm:text-base font-semibold text-ink-900 placeholder:text-ink-400 focus:outline-none min-w-0"
           />
 
@@ -238,14 +235,13 @@ export function GlobalSearchModal({
             </button>
           )}
 
-          {/* Close button on mobile */}
           <button
             type="button"
             onClick={onClose}
             aria-label="Close search"
             className="rounded-xl px-2.5 py-1 text-xs font-bold text-ink-600 hover:text-ink-900 hover:bg-paper-100 transition sm:hidden"
           >
-            {language === "te" ? "రద్దు" : "Cancel"}
+            Cancel
           </button>
 
           <kbd
@@ -257,9 +253,7 @@ export function GlobalSearchModal({
           </kbd>
         </div>
 
-        {/* 2. Scrollable Search Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
-          {/* A. SMART REPORT INSTANT CARD (User query matches report intent) */}
           {smartReport && (
             <div className="rounded-2xl border-2 border-clay-500/80 bg-gradient-to-br from-clay-50/90 via-white to-amber-50/40 p-4 sm:p-5 shadow-sm space-y-3.5 animate-in fade-in zoom-in-95 duration-150">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -280,21 +274,19 @@ export function GlobalSearchModal({
                   </div>
                 </div>
 
-                {/* Total Metric */}
                 <div className="text-left sm:text-right shrink-0 bg-white sm:bg-transparent p-2.5 sm:p-0 rounded-xl border sm:border-0 border-paper-200">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500 block">
-                    {language === "te" ? "మొత్తం చెల్లింపు" : "Total Amount"}
+                    Total Amount
                   </span>
                   <p className="font-display text-lg sm:text-xl font-bold text-clay-800">
                     {smartReport.totalFormatted}
                   </p>
                   <p className="text-[11px] text-ink-500 font-semibold">
-                    {smartReport.count} {language === "te" ? "లావాదేవీలు" : "bills found"}
+                    {smartReport.count} bills found
                   </p>
                 </div>
               </div>
 
-              {/* Action Buttons: PDF Download, View, WhatsApp, Full Report */}
               <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-clay-200/60">
                 <button
                   type="button"
@@ -307,7 +299,7 @@ export function GlobalSearchModal({
                   ) : (
                     <Download className="h-3.5 w-3.5" />
                   )}
-                  <span>{downloadingPdf ? (language === "te" ? "డౌన్‌లోడ్ అవుతోంది..." : "Downloading...") : (language === "te" ? "PDF డౌన్‌లోడ్" : "Download PDF Report")}</span>
+                  <span>{downloadingPdf ? "Downloading..." : "Download PDF Report"}</span>
                 </button>
 
                 <a
@@ -317,7 +309,7 @@ export function GlobalSearchModal({
                   className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white hover:bg-paper-50 px-3 py-1.5 text-xs font-bold text-ink-800 shadow-2xs transition active:scale-95"
                 >
                   <Eye className="h-3.5 w-3.5 text-ink-500" />
-                  <span>{language === "te" ? "ప్రివ్యూ" : "Preview Statement"}</span>
+                  <span>Preview Statement</span>
                 </a>
 
                 <button
@@ -326,11 +318,10 @@ export function GlobalSearchModal({
                   className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white hover:bg-paper-50 px-3 py-1.5 text-xs font-bold text-ink-800 shadow-2xs transition active:scale-95"
                 >
                   <Sparkles className="h-3.5 w-3.5 text-amber-600" />
-                  <span>{language === "te" ? "రిపోర్ట్స్ హబ్‌లో చూడండి" : "Open in Reports Hub"}</span>
+                  <span>Open in Reports Hub</span>
                 </button>
               </div>
 
-              {/* Mini Itemized Breakdown Table */}
               {smartReport.recentTransactions.length > 0 && (
                 <div className="mt-2 rounded-xl border border-paper-200 bg-white overflow-hidden">
                   <table className="w-full text-left text-xs text-ink-700">
@@ -360,20 +351,19 @@ export function GlobalSearchModal({
             </div>
           )}
 
-          {/* B. MATCHING EXPENSES & TRANSACTIONS */}
           {data?.expenses && data.expenses.length > 0 && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500 flex items-center gap-1.5">
                   <Receipt className="h-3.5 w-3.5 text-clay-600" />
-                  {language === "te" ? "సంబంధిత ఖర్చులు" : "Matching Expenses & Bills"}
+                  Matching Expenses & Bills
                 </span>
                 <button
                   type="button"
                   onClick={() => handleNavigate("/expenses")}
                   className="text-xs font-semibold text-clay-700 hover:underline flex items-center gap-1"
                 >
-                  <span>{language === "te" ? "అన్నీ చూడండి" : "View all expenses"}</span>
+                  <span>View all expenses</span>
                   <ArrowRight className="h-3 w-3 inline" />
                 </button>
               </div>
@@ -412,12 +402,11 @@ export function GlobalSearchModal({
             </div>
           )}
 
-          {/* C. PHONE DIRECTORY CONTACTS (Shops & Workers) */}
           {data?.contacts && data.contacts.length > 0 && (
             <div className="space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500 flex items-center gap-1.5">
                 <Store className="h-3.5 w-3.5 text-amber-600" />
-                {language === "te" ? "ఫోన్ డైరెక్టరీ (షాపులు & వర్కర్లు)" : "Phone Directory Contacts"}
+                Phone Directory Contacts
               </span>
 
               <div className="grid gap-2 sm:grid-cols-2">
@@ -456,12 +445,11 @@ export function GlobalSearchModal({
             </div>
           )}
 
-          {/* D. CONSTRUCTION STAGES */}
           {data?.stages && data.stages.length > 0 && (
             <div className="space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500 flex items-center gap-1.5">
                 <Milestone className="h-3.5 w-3.5 text-blue-600" />
-                {language === "te" ? "నిర్మాణ దశలు" : "Construction Stages"}
+                Construction Stages
               </span>
 
               <div className="grid gap-2 sm:grid-cols-2">
@@ -485,12 +473,11 @@ export function GlobalSearchModal({
             </div>
           )}
 
-          {/* E. DOCUMENTS */}
           {data?.documents && data.documents.length > 0 && (
             <div className="space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500 flex items-center gap-1.5">
                 <Files className="h-3.5 w-3.5 text-indigo-600" />
-                {language === "te" ? "డాక్యుమెంట్లు & ప్లాన్స్" : "Documents & Blueprints"}
+                Documents & Blueprints
               </span>
 
               <div className="divide-y divide-paper-100 rounded-2xl border border-paper-200 bg-white overflow-hidden">
@@ -511,11 +498,10 @@ export function GlobalSearchModal({
             </div>
           )}
 
-          {/* F. QUICK NAVIGATION SHORTCUTS */}
           {data?.navigation && data.navigation.length > 0 && !query && (
             <div className="space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-                {language === "te" ? "త్వరిత నావిగేషన్" : "Quick Suggestions"}
+                Quick Suggestions
               </span>
 
               <div className="grid gap-2 sm:grid-cols-2">
@@ -537,22 +523,18 @@ export function GlobalSearchModal({
             </div>
           )}
 
-          {/* NO RESULTS STATE */}
           {!loading && query && !hasResults && (
             <div className="p-8 text-center rounded-2xl border border-dashed border-paper-300 bg-paper-50/50">
               <p className="font-bold text-sm text-ink-700">
-                {language === "te" ? `"${query}" కి ఎటువంటి ఫలితాలు దొరకలేదు` : `No results found for "${query}"`}
+                No results found for &quot;{query}&quot;
               </p>
               <p className="text-xs text-ink-500 mt-1">
-                {language === "te"
-                  ? "ఉదాహరణలు: painter, cement bills, ramesh mason, foundation, reports..."
-                  : "Try asking for: 'painter bill report', 'cement', 'ramesh mason', 'stage 3', 'reports'..."}
+                Try asking for: &apos;painter bill report&apos;, &apos;cement&apos;, &apos;ramesh mason&apos;, &apos;stage 3&apos;, &apos;reports&apos;...
               </p>
             </div>
           )}
         </div>
 
-        {/* 3. Modal Footer Help */}
         <div className="border-t border-paper-200 bg-paper-50 px-4 py-2.5 flex items-center justify-between text-[11px] text-ink-500">
           <span className="flex items-center gap-1.5">
             <Sparkles className="h-3.5 w-3.5 text-amber-600" />

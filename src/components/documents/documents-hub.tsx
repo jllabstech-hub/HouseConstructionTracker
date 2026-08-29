@@ -3,7 +3,6 @@
 import { useState, useTransition, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useLanguage } from "@/context/language-context";
 import {
   uploadDocument,
   updateDocument,
@@ -65,56 +64,48 @@ const CATEGORIES = [
   {
     value: "FLOOR_PLAN",
     labelEn: "Floor Plan",
-    labelTe: "ఫ్లోర్ ప్లాన్",
     icon: Compass,
     badgeColor: "bg-blue-100 text-blue-800 border-blue-200",
   },
   {
     value: "ELEVATION",
     labelEn: "3D Elevation",
-    labelTe: "3D ఎలివేషన్",
     icon: Sparkles,
     badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
   },
   {
     value: "STRUCTURAL",
     labelEn: "Structural Drawing",
-    labelTe: "స్ట్రక్చరల్ డ్రాయింగ్",
     icon: Layers,
     badgeColor: "bg-amber-100 text-amber-900 border-amber-200",
   },
   {
     value: "MEP",
     labelEn: "Electrical & Plumbing",
-    labelTe: "ఎలక్ట్రికల్ & ప్లంబింగ్",
     icon: Zap,
     badgeColor: "bg-purple-100 text-purple-800 border-purple-200",
   },
   {
     value: "APPROVAL",
     labelEn: "Permit & Approval",
-    labelTe: "ప్రభుత్వ అనుమతి",
     icon: ShieldCheck,
     badgeColor: "bg-rose-100 text-rose-800 border-rose-200",
   },
   {
     value: "SITE_PHOTO",
     labelEn: "Site Photo",
-    labelTe: "సైట్ ఫోటో",
     icon: Camera,
     badgeColor: "bg-cyan-100 text-cyan-800 border-cyan-200",
   },
   {
     value: "CONTRACT",
     labelEn: "Contract & Agreement",
-    labelTe: "అగ్రిమెంట్",
     icon: FileCheck,
     badgeColor: "bg-stone-200 text-stone-800 border-stone-300",
   },
   {
     value: "OTHER",
     labelEn: "Other Document",
-    labelTe: "ఇతర ఫైల్",
     icon: FileText,
     badgeColor: "bg-gray-100 text-gray-800 border-gray-200",
   },
@@ -143,7 +134,6 @@ export function DocumentsHub({
   stages?: { id: string; name: string }[];
 }) {
   const router = useRouter();
-  const { language } = useLanguage();
   const [pending, start] = useTransition();
 
   // Primary Controls
@@ -306,12 +296,10 @@ export function DocumentsHub({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-paper-200/80 pb-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 leading-tight">
-            {language === "te" ? "పత్రాలు & ప్లాన్లు" : "Documents"}
+            Documents
           </h1>
           <p className="text-xs sm:text-sm text-ink-500 mt-1 max-w-xl">
-            {language === "te"
-              ? "మీ ఇంటి బ్లూప్రింట్లు, 3D ఎలివేషన్లు, అగ్రిమెంట్లు మరియు ప్రభుత్వ అనుమతులను సురక్షితంగా నిర్వహించండి."
-              : "Store and access blueprints, 3D elevations, structural drawings, MEP layouts, and permits in one place."}
+            Store and access blueprints, 3D elevations, structural drawings, MEP layouts, and permits in one place.
           </p>
         </div>
 
@@ -354,11 +342,7 @@ export function DocumentsHub({
           <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
           <input
             type="text"
-            placeholder={
-              language === "te"
-                ? "పత్రాలను వెతకండి (ప్లాన్, ఎలివేషన్, అనుమతి)..."
-                : "Search documents..."
-            }
+            placeholder="Search documents..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full rounded-xl border border-paper-200 bg-paper-50/70 py-2.5 pl-10 pr-8 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:bg-white focus:outline-none transition"
@@ -388,7 +372,7 @@ export function DocumentsHub({
             <option value="ALL">All Types ({documents.length})</option>
             {CATEGORIES.map((cat) => (
               <option key={cat.value} value={cat.value}>
-                {language === "te" ? cat.labelTe : cat.labelEn}
+                {cat.labelEn}
               </option>
             ))}
           </select>
@@ -405,7 +389,7 @@ export function DocumentsHub({
             )}
           >
             <SlidersHorizontal className="h-4 w-4 text-ink-500" />
-            <span>{language === "te" ? "ఫిల్టర్లు" : "Filters"}</span>
+            <span>Filters</span>
             {activeFiltersCount > 0 && (
               <span className="rounded-full bg-clay-600 px-1.5 py-0.2 text-[10px] font-bold text-white leading-none">
                 {activeFiltersCount}
@@ -445,7 +429,7 @@ export function DocumentsHub({
       {(selectedType !== "ALL" || drawerCategory !== "ALL" || drawerFloor !== "ALL" || drawerStage !== "ALL" || drawerPinned !== "ALL" || drawerDate !== "ALL" || search) && (
         <div className="flex flex-wrap items-center gap-1.5 text-xs text-ink-600 bg-paper-100/70 p-2.5 rounded-xl border border-paper-200">
           <span className="font-semibold text-ink-500 pl-1">
-            {language === "te" ? "ఫిల్టర్లు:" : "Filtered by:"}
+            Filtered by:
           </span>
           {(selectedType !== "ALL" || drawerCategory !== "ALL") && (
             <span className="inline-flex items-center gap-1 rounded-lg bg-white border border-paper-200 px-2.5 py-1 text-xs font-bold text-ink-800 shadow-2xs">
@@ -501,7 +485,7 @@ export function DocumentsHub({
             className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 underline ml-auto pr-1"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            <span>{language === "te" ? "అన్నీ క్లియర్ చేయండి" : "Clear all"}</span>
+            <span>Clear all</span>
           </button>
         </div>
       )}
@@ -638,7 +622,7 @@ export function DocumentsHub({
                     {/* Category Pill Over Image */}
                     <div className="absolute top-2.5 right-2.5">
                       <span className={cn("rounded-lg border px-2 py-0.5 text-[10px] font-bold shadow-2xs backdrop-blur-xs", catObj.badgeColor)}>
-                        {language === "te" ? catObj.labelTe : catObj.labelEn}
+                        {catObj.labelEn}
                       </span>
                     </div>
 

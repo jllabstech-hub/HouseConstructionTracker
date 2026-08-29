@@ -9,7 +9,6 @@ import {
   deleteCategoryBudget,
 } from "@/lib/actions/budget";
 import { formatINR, formatINRCompact } from "@/lib/money";
-import { useLanguage } from "@/context/language-context";
 import { cn } from "@/lib/utils";
 import {
   Building2,
@@ -30,12 +29,12 @@ type TypeBudgetItem = { id: string; expenseType: string; amount: number };
 type CategoryBudgetItem = { id: string; expenseType: string; name: string; amount: number };
 
 const EXPENSE_TYPES = [
-  { value: "MATERIAL", labelEn: "Material", labelTe: "సామాగ్రి (Material)", icon: Layers, color: "text-blue-700 bg-blue-50 border-blue-200" },
-  { value: "LABOUR", labelEn: "Labour", labelTe: "కూలీలు (Labour)", icon: HardHat, color: "text-amber-800 bg-amber-50 border-amber-200" },
-  { value: "SERVICE", labelEn: "Service & Transport", labelTe: "సర్వీస్ & రవాణా", icon: Truck, color: "text-purple-700 bg-purple-50 border-purple-200" },
-  { value: "EQUIPMENT", labelEn: "Machinery / Equipment", labelTe: "మిషనరీ & టూల్స్", icon: Wrench, color: "text-cyan-700 bg-cyan-50 border-cyan-200" },
-  { value: "PROFESSIONAL", labelEn: "Professional / Architect", labelTe: "ఆర్కిటెక్ట్ & ఇంజనీర్", icon: UserCheck, color: "text-indigo-700 bg-indigo-50 border-indigo-200" },
-  { value: "OTHER", labelEn: "Other / Misc", labelTe: "ఇతర ఖర్చులు", icon: MoreHorizontal, color: "text-stone-700 bg-stone-100 border-stone-200" },
+  { value: "MATERIAL", label: "Material", icon: Layers, color: "text-blue-700 bg-blue-50 border-blue-200" },
+  { value: "LABOUR", label: "Labour", icon: HardHat, color: "text-amber-800 bg-amber-50 border-amber-200" },
+  { value: "SERVICE", label: "Service & Transport", icon: Truck, color: "text-purple-700 bg-purple-50 border-purple-200" },
+  { value: "EQUIPMENT", label: "Machinery / Equipment", icon: Wrench, color: "text-cyan-700 bg-cyan-50 border-cyan-200" },
+  { value: "PROFESSIONAL", label: "Professional / Architect", icon: UserCheck, color: "text-indigo-700 bg-indigo-50 border-indigo-200" },
+  { value: "OTHER", label: "Other / Misc", icon: MoreHorizontal, color: "text-stone-700 bg-stone-100 border-stone-200" },
 ] as const;
 
 export function BudgetEditor({
@@ -54,7 +53,6 @@ export function BudgetEditor({
   categoryBudgets?: CategoryBudgetItem[];
 }) {
   const router = useRouter();
-  const { language } = useLanguage();
   const [pending, start] = useTransition();
 
   const [activeTab, setActiveTab] = useState<"TOTAL" | "TYPE" | "CATEGORY">("TOTAL");
@@ -75,7 +73,7 @@ export function BudgetEditor({
     e.preventDefault();
     start(async () => {
       await updateProjectBudget(projectId, totalAmount);
-      showSuccess(language === "te" ? "మొత్తం బడ్జెట్ నవీకరించబడింది!" : "Total project budget updated!");
+      showSuccess("Total project budget updated!");
       router.refresh();
     });
   };
@@ -88,7 +86,7 @@ export function BudgetEditor({
         amount: typeAmount,
       });
       setTypeAmount("");
-      showSuccess(language === "te" ? `${selectedType} బడ్జెట్ సేవ్ అయింది!` : `${selectedType} allocation saved!`);
+      showSuccess(`${selectedType} allocation saved!`);
       router.refresh();
     });
   };
@@ -103,7 +101,7 @@ export function BudgetEditor({
         amount: categoryAmount,
       });
       setCategoryAmount("");
-      showSuccess(language === "te" ? "వర్గం బడ్జెట్ పరిమితి సేవ్ అయింది!" : "Category budget limit saved!");
+      showSuccess("Category budget limit saved!");
       router.refresh();
     });
   };
@@ -125,7 +123,7 @@ export function BudgetEditor({
           )}
         >
           <Building2 className="h-3.5 w-3.5 text-clay-600" />
-          <span>{language === "te" ? "మొత్తం బడ్జెట్" : "1. Total Budget"}</span>
+          <span>1. Total Budget</span>
         </button>
 
         <button
@@ -139,7 +137,7 @@ export function BudgetEditor({
           )}
         >
           <Layers className="h-3.5 w-3.5 text-clay-600" />
-          <span>{language === "te" ? "రకం వారీగా" : "2. By Expense Type"}</span>
+          <span>2. By Expense Type</span>
         </button>
 
         <button
@@ -153,7 +151,7 @@ export function BudgetEditor({
           )}
         >
           <Tag className="h-3.5 w-3.5 text-clay-600" />
-          <span>{language === "te" ? "వర్గం పరిమితి" : "3. By Category"}</span>
+          <span>3. By Category</span>
         </button>
       </div>
 
@@ -175,12 +173,10 @@ export function BudgetEditor({
               </div>
               <div>
                 <h3 className="font-serif text-base font-bold text-stone-900">
-                  {language === "te" ? "మొత్తం ప్రాజెక్ట్ బడ్జెట్" : "Overall Project Budget"}
+                  Overall Project Budget
                 </h3>
                 <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
-                  {language === "te"
-                    ? "ఇంటి నిర్మాణానికి మీరు కేటాయించిన మొత్తం బడ్జెట్ లక్ష్యం. ఇది మొత్తం ఖర్చులను పర్యవేక్షించడానికి ప్రామాణికంగా పనిచేస్తుంది."
-                    : "The master planned ceiling for your entire house construction. This benchmarks all your material and labour spending."}
+                  The master planned ceiling for your entire house construction. This benchmarks all your material and labour spending.
                 </p>
               </div>
             </div>
@@ -188,7 +184,7 @@ export function BudgetEditor({
             <form onSubmit={handleTotalSubmit} className="space-y-3 pt-2">
               <div>
                 <label className="block text-xs font-bold text-stone-800 mb-1.5">
-                  {language === "te" ? "మొత్తం బడ్జెట్ మొత్తం (₹)" : "Total Budget Amount (₹)"}
+                  Total Budget Amount (₹)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-2.5 text-sm font-bold text-stone-400">₹</span>
@@ -238,7 +234,7 @@ export function BudgetEditor({
                   disabled={pending}
                   className="w-full rounded-xl bg-clay-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition disabled:opacity-50"
                 >
-                  {pending ? "Saving..." : language === "te" ? "బడ్జెట్ భద్రపరచండి" : "Save Total Budget"}
+                  {pending ? "Saving..." : "Save Total Budget"}
                 </button>
               </div>
             </form>
@@ -256,12 +252,10 @@ export function BudgetEditor({
               </div>
               <div>
                 <h3 className="font-serif text-base font-bold text-stone-900">
-                  {language === "te" ? "ఖర్చు రకం వారీగా కేటాయింపు" : "Expense-Type Budget Allocation"}
+                  Expense-Type Budget Allocation
                 </h3>
                 <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
-                  {language === "te"
-                    ? "సామాగ్రి కొనుగోళ్లు (Material), కూలీల చెల్లింపులు (Labour), మరియు యంత్రాల ఖర్చుల కోసం విడివిడిగా పరిమితులను నిర్ణయించండి."
-                    : "Separate allocations for Material purchases, Labour wages, and machinery/services."}
+                  Separate allocations for Material purchases, Labour wages, and machinery/services.
                 </p>
               </div>
             </div>
@@ -270,7 +264,7 @@ export function BudgetEditor({
               {/* Type Grid Selection */}
               <div>
                 <label className="block text-xs font-bold text-stone-800 mb-1.5">
-                  {language === "te" ? "ఖర్చు రకం ఎంచుకోండి" : "Select Expense Type"}
+                  Select Expense Type
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {EXPENSE_TYPES.map((type) => {
@@ -289,7 +283,7 @@ export function BudgetEditor({
                         )}
                       >
                         <Icon className={cn("h-4 w-4 shrink-0", isSelected ? "text-clay-700" : "text-stone-400")} />
-                        <span className="text-xs truncate">{language === "te" ? type.labelTe : type.labelEn}</span>
+                        <span className="text-xs truncate">{type.label}</span>
                       </button>
                     );
                   })}
@@ -299,7 +293,7 @@ export function BudgetEditor({
               {/* Amount Input */}
               <div>
                 <label className="block text-xs font-bold text-stone-800 mb-1.5">
-                  {selectedType} {language === "te" ? "బడ్జెట్ లక్ష్యం (₹)" : "Budget Target (₹)"}
+                  {selectedType} Budget Target (₹)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-2.5 text-sm font-bold text-stone-400">₹</span>
@@ -327,7 +321,7 @@ export function BudgetEditor({
                   disabled={pending}
                   className="w-full rounded-xl bg-clay-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition disabled:opacity-50"
                 >
-                  {pending ? "Saving..." : language === "te" ? "కేటాయింపు భద్రపరచండి" : `Save ${selectedType} Budget`}
+                  {pending ? "Saving..." : `Save ${selectedType} Budget`}
                 </button>
               </div>
             </form>
@@ -337,7 +331,7 @@ export function BudgetEditor({
           {typeBudgets.length > 0 && (
             <div className="rounded-2xl border border-paper-200 bg-paper-50 p-4 space-y-2.5">
               <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 block">
-                {language === "te" ? "ప్రస్తుత రకం కేటాయింపులు" : "Current Type Allocations"}
+                Current Type Allocations
               </span>
               <div className="space-y-1.5">
                 {typeBudgets.map((b) => (
@@ -362,12 +356,10 @@ export function BudgetEditor({
               </div>
               <div>
                 <h3 className="font-serif text-base font-bold text-stone-900">
-                  {language === "te" ? "నిర్దిష్ట వర్గం బడ్జెట్ పరిమితి" : "Category Spending Limits"}
+                  Category Spending Limits
                 </h3>
                 <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">
-                  {language === "te"
-                    ? "సిమెంట్, స్టీల్, ఇటుకలు, మేస్త్రీ కూలీలు వంటి నిర్దిష్ట అంశాలకు గరిష్ట బడ్జెట్ పరిమితులను విధించండి."
-                    : "Set targeted spending caps for key materials like Cement, Steel, Sand, or specific labour trades."}
+                  Set targeted spending caps for key materials like Cement, Steel, Sand, or specific labour trades.
                 </p>
               </div>
             </div>
@@ -376,7 +368,7 @@ export function BudgetEditor({
               {/* Type Toggle: Material vs Labour */}
               <div>
                 <label className="block text-xs font-bold text-stone-800 mb-1.5">
-                  {language === "te" ? "వర్గ రకం" : "Category Group"}
+                  Category Group
                 </label>
                 <div className="flex rounded-xl bg-paper-100 p-1 border border-paper-200">
                   <button
@@ -390,7 +382,7 @@ export function BudgetEditor({
                       categoryType === "MATERIAL" ? "bg-white text-stone-900 shadow-2xs" : "text-stone-600 hover:text-stone-900"
                     )}
                   >
-                    {language === "te" ? "సామాగ్రి (Materials)" : "Material Categories"}
+                    Material Categories
                   </button>
                   <button
                     type="button"
@@ -403,7 +395,7 @@ export function BudgetEditor({
                       categoryType === "LABOUR" ? "bg-white text-stone-900 shadow-2xs" : "text-stone-600 hover:text-stone-900"
                     )}
                   >
-                    {language === "te" ? "కూలీలు (Labour)" : "Labour Categories"}
+                    Labour Categories
                   </button>
                 </div>
               </div>
@@ -411,7 +403,7 @@ export function BudgetEditor({
               {/* Category Select */}
               <div>
                 <label className="block text-xs font-bold text-stone-800 mb-1.5">
-                  {language === "te" ? "వర్గం ఎంచుకోండి" : "Select Category"} <span className="text-red-500">*</span>
+                  Select Category <span className="text-red-500">*</span>
                 </label>
                 <select
                   required
@@ -419,7 +411,7 @@ export function BudgetEditor({
                   onChange={(e) => setSelectedCategoryId(e.target.value)}
                   className="w-full rounded-xl border border-paper-300 bg-paper-50/60 px-3.5 py-2.5 text-xs font-bold text-stone-900 focus:border-clay-500 focus:bg-white focus:outline-none"
                 >
-                  <option value="">-- {language === "te" ? "వర్గం ఎంచుకోండి" : "Choose a category"} --</option>
+                  <option value="">-- Choose a category --</option>
                   {activeCategories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name} {c.groupName ? `(${c.groupName})` : ""}
@@ -431,7 +423,7 @@ export function BudgetEditor({
               {/* Amount Input */}
               <div>
                 <label className="block text-xs font-bold text-stone-800 mb-1.5">
-                  {language === "te" ? "బడ్జెట్ పరిమితి మొత్తం (₹)" : "Maximum Budget Target (₹)"}
+                  Maximum Budget Target (₹)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3.5 top-2.5 text-sm font-bold text-stone-400">₹</span>
@@ -459,7 +451,7 @@ export function BudgetEditor({
                   disabled={pending || !selectedCategoryId}
                   className="w-full rounded-xl bg-clay-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-98 transition disabled:opacity-50"
                 >
-                  {pending ? "Saving..." : language === "te" ? "వర్గం పరిమితిని సేవ్ చేయండి" : "Save Category Limit"}
+                  {pending ? "Saving..." : "Save Category Limit"}
                 </button>
               </div>
             </form>
@@ -469,7 +461,7 @@ export function BudgetEditor({
           {categoryBudgets.length > 0 && (
             <div className="rounded-2xl border border-paper-200 bg-paper-50 p-4 space-y-2.5">
               <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 block">
-                {language === "te" ? "ప్రస్తుత వర్గం పరిమితులు" : "Current Category Spending Caps"}
+                Current Category Spending Caps
               </span>
               <div className="space-y-1.5">
                 {categoryBudgets.map((cat) => (

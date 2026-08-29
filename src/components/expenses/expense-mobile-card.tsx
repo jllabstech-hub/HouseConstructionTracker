@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { formatINR } from "@/lib/money";
-import { useLanguage } from "@/context/language-context";
 import { Package, HardHat, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 export type ExpenseRowData = {
@@ -39,17 +38,15 @@ export function ExpenseMobileCard({
   expense: ExpenseRowData;
   onDelete?: (expense: ExpenseRowData) => void;
 }) {
-  const { language } = useLanguage();
-
   const isMaterial = expense.type === "MATERIAL";
   const isLabour = expense.type === "LABOUR";
 
   // Build subtitle: e.g. "Material · ABC Traders" or "Labour · Ramesh Mason"
   const typeLabel = isMaterial
-    ? language === "te" ? "సామాగ్రి" : "Material"
+    ? "Material"
     : isLabour
-    ? language === "te" ? "కూలీలు" : "Labour"
-    : language === "te" ? "ఇతర" : "Other";
+    ? "Labour"
+    : "Other";
 
   const entitySubtitle = expense.vendorName
     ? `${typeLabel} · ${expense.vendorName}`

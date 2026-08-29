@@ -3,7 +3,6 @@
 import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { UploadCloud, FileText, Image as ImageIcon, X, CheckCircle2, AlertCircle } from "lucide-react";
-import { useLanguage } from "@/context/language-context";
 import { cn } from "@/lib/utils";
 
 interface FileDropzoneProps {
@@ -27,7 +26,6 @@ export function FileDropzone({
   onFileSelect,
   className,
 }: FileDropzoneProps) {
-  const { language } = useLanguage();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [isDragging, setIsDragging] = useState(false);
@@ -47,9 +45,7 @@ export function FileDropzone({
 
     if (file.size > maxSizeBytes) {
       setError(
-        language === "te"
-          ? `ఫైల్ పరిమాణం చాలా పెద్దది (${(file.size / (1024 * 1024)).toFixed(1)}MB). గరిష్ట పరిమితి ${(maxSizeBytes / (1024 * 1024)).toFixed(0)}MB.`
-          : `File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum allowed is ${(maxSizeBytes / (1024 * 1024)).toFixed(0)}MB.`
+        `File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Maximum allowed is ${(maxSizeBytes / (1024 * 1024)).toFixed(0)}MB.`
       );
       return;
     }
@@ -176,7 +172,7 @@ export function FileDropzone({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 text-emerald-700 font-bold text-xs mb-0.5">
                 <CheckCircle2 className="h-4 w-4" />
-                <span>{language === "te" ? "ఫైల్ ఎంపికైంది" : "File Ready to Upload"}</span>
+                <span>File Ready to Upload</span>
               </div>
               <p className="text-sm font-extrabold text-ink-900 truncate" title={selectedFile.name}>
                 {selectedFile.name}
@@ -191,10 +187,10 @@ export function FileDropzone({
               type="button"
               onClick={handleRemove}
               className="inline-flex items-center gap-1 rounded-xl bg-paper-200/80 hover:bg-red-100 hover:text-red-700 px-3 py-2 text-xs font-bold text-ink-700 transition active:scale-95"
-              title={language === "te" ? "ఫైల్ మార్చండి / తొలగించండి" : "Remove file"}
+              title="Remove file"
             >
               <X className="h-4 w-4" />
-              <span>{language === "te" ? "మార్చండి" : "Change"}</span>
+              <span>Change</span>
             </button>
           </div>
         ) : (
@@ -207,25 +203,22 @@ export function FileDropzone({
               <p className="text-sm font-extrabold text-ink-900">
                 {isDragging ? (
                   <span className="text-clay-700">
-                    {language === "te" ? "ఇక్కడే ఫైల్‌ను వదలండి (Drop here)..." : "Drop your file here..."}
+                    Drop your file here...
                   </span>
                 ) : (
                   <>
                     <span className="text-clay-700 underline font-bold">
-                      {language === "te" ? "ఫైల్స్ బ్రౌజ్ చేయండి" : "Browse from Computer / Mobile"}
+                      Browse from Computer / Mobile
                     </span>{" "}
                     <span className="text-ink-600 font-medium">
-                      {language === "te" ? "లేదా డ్రాగ్ & డ్రాప్ చేయండి" : "or drag & drop here"}
+                      or drag & drop here
                     </span>
                   </>
                 )}
               </p>
 
               <p className="text-xs text-ink-400 font-medium">
-                {helperText ??
-                  (language === "te"
-                    ? "ఫోటోలు (JPG, PNG, WebP) లేదా PDF ప్లాన్లు (గరిష్టంగా 20 MB)"
-                    : "Supports Images (JPG, PNG, WebP) or PDF Blueprints (Up to 20 MB)")}
+                {helperText ?? "Supports Images (JPG, PNG, WebP) or PDF Blueprints (Up to 20 MB)"}
               </p>
             </div>
           </div>

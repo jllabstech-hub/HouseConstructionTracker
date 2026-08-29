@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Search, AlertTriangle, Check } from "lucide-react";
 import { TablePagination } from "@/components/ui/table-pagination";
 import { cn } from "@/lib/utils";
-import { useLanguage } from "@/context/language-context";
 
 type BudgetRow = {
   id: string;
@@ -16,7 +15,6 @@ type BudgetRow = {
 };
 
 export function CategoryBudgetsTable({ items }: { items: BudgetRow[] }) {
-  const { language, t } = useLanguage();
   const [query, setQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(8);
@@ -37,17 +35,17 @@ export function CategoryBudgetsTable({ items }: { items: BudgetRow[] }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="font-display text-lg font-bold text-ink-900">
-            {language === "te" ? "కేటగిరీ వారీ బడ్జెట్ పరిమితులు" : "Specific Item & Trade Limits"}
+            Specific Item & Trade Limits
           </h2>
           <p className="text-xs text-ink-500">
-            {language === "te" ? "సిమెంట్, ఇనుము, ఇసుక, టైల్స్, ప్లంబింగ్ తదితర ఖర్చుల పరిమితులు" : "Limits set on Cement, Steel, Sand, Tiles, Plumbing, etc."}
+            Limits set on Cement, Steel, Sand, Tiles, Plumbing, etc.
           </p>
         </div>
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-ink-400" />
           <input
             type="text"
-            placeholder={language === "te" ? "కేటగిరీలను వెతకండి..." : "Search category limits..."}
+            placeholder="Search category limits..."
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -62,11 +60,11 @@ export function CategoryBudgetsTable({ items }: { items: BudgetRow[] }) {
         <table className="min-w-full text-left text-sm">
           <thead className="bg-paper-100 text-[11px] font-bold uppercase tracking-wider text-ink-500 border-b border-paper-200">
             <tr>
-              <th className="px-4 py-3">{language === "te" ? "కేటగిరీ / అంశం" : "Category / Item"}</th>
-              <th className="px-4 py-3">{t.budget.planned}</th>
-              <th className="px-4 py-3">{t.budget.actual}</th>
-              <th className="px-4 py-3">{t.budget.difference}</th>
-              <th className="px-4 py-3 text-right">{t.budget.status}</th>
+              <th className="px-4 py-3">Category / Item</th>
+              <th className="px-4 py-3">Planned Limit</th>
+              <th className="px-4 py-3">Actual Spent</th>
+              <th className="px-4 py-3">Variance</th>
+              <th className="px-4 py-3 text-right">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-paper-100">
@@ -88,12 +86,12 @@ export function CategoryBudgetsTable({ items }: { items: BudgetRow[] }) {
                     {item.isOver ? (
                       <>
                         <AlertTriangle className="h-3 w-3 text-red-600" />
-                        <span>{t.budget.overBudget}</span>
+                        <span>Over Budget</span>
                       </>
                     ) : (
                       <>
                         <Check className="h-3 w-3 text-emerald-600" />
-                        <span>{t.budget.withinBudget}</span>
+                        <span>Within Budget</span>
                       </>
                     )}
                   </span>

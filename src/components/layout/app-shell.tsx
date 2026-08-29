@@ -27,7 +27,6 @@ import {
 import { useState, useTransition, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { switchProject } from "@/lib/actions/projects";
-import { useLanguage } from "@/context/language-context";
 import { GlobalSearchModal } from "@/components/search/global-search-modal";
 
 export function AppShell({
@@ -46,7 +45,6 @@ export function AppShell({
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [, start] = useTransition();
-  const { language, t } = useLanguage();
 
   // Keyboard shortcut: Ctrl+K / Cmd+K to open global search
   useEffect(() => {
@@ -68,18 +66,18 @@ export function AppShell({
   const isHomeActive = pathname === "/dashboard";
 
   const primaryNav = [
-    { href: "/dashboard", label: t.nav?.overview ?? "Home", icon: Home, active: isHomeActive },
-    { href: "/expenses", label: t.nav?.expenses ?? "Expenses", icon: Receipt, active: isExpensesActive },
-    { href: "/stages", label: t.nav?.stages ?? "Construction", icon: Milestone, active: isStagesActive },
-    { href: "/budget", label: t.nav?.budget ?? "Budget", icon: Wallet, active: isBudgetActive },
-    { href: "/reports", label: t.nav?.reports ?? "Reports", icon: FileText, active: isReportsActive },
+    { href: "/dashboard", label: "Home", icon: Home, active: isHomeActive },
+    { href: "/expenses", label: "Expenses", icon: Receipt, active: isExpensesActive },
+    { href: "/stages", label: "Construction", icon: Milestone, active: isStagesActive },
+    { href: "/budget", label: "Budget", icon: Wallet, active: isBudgetActive },
+    { href: "/reports", label: "Reports", icon: FileText, active: isReportsActive },
   ];
 
   const moreNav = [
     { href: "/leads", label: "Inquiries & Leads", icon: Sparkles, active: pathname === "/leads" },
-    { href: "/phonedirectory", label: t.nav?.shopsWorkers ?? "Phone Directory", icon: Users, active: pathname === "/phonedirectory" || pathname === "/masters" },
-    { href: "/documents", label: t.nav?.documents ?? "Documents", icon: Files, active: pathname === "/documents" },
-    { href: "/settings", label: t.nav?.settings ?? "Settings", icon: Settings, active: pathname === "/settings" },
+    { href: "/phonedirectory", label: "Phone Directory", icon: Users, active: pathname === "/phonedirectory" || pathname === "/masters" },
+    { href: "/documents", label: "Documents", icon: Files, active: pathname === "/documents" },
+    { href: "/settings", label: "Settings", icon: Settings, active: pathname === "/settings" },
   ];
 
   const activeProject = projects.find((p) => p.id === activeProjectId);
@@ -94,10 +92,10 @@ export function AppShell({
           </div>
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-wider text-ink-500">
-              {language === "te" ? "ఇంటి నిర్మాణం" : "House Construction"}
+              House Construction
             </p>
             <p className="text-sm font-bold text-ink-900 truncate">
-              {activeProject?.name ?? (language === "te" ? "నా ఇల్లు" : "My House")}
+              {activeProject?.name ?? "My House"}
             </p>
           </div>
         </div>
@@ -128,7 +126,7 @@ export function AppShell({
               </div>
               <div>
                 <h1 className="font-display text-sm font-bold text-ink-900 tracking-tight leading-tight">
-                  {language === "te" ? "హౌస్ కన్‌స్ట్రక్షన్" : "HOUSE CONSTRUCTION"}
+                  HOUSE CONSTRUCTION
                 </h1>
                 <p className="text-[10px] text-ink-400 font-medium">Tracker & Budget</p>
               </div>
@@ -198,7 +196,7 @@ export function AppShell({
             {/* Subtle Divider */}
             <div className="pt-3 pb-1">
               <span className="px-2.5 text-[10px] font-bold uppercase tracking-wider text-ink-400">
-                {language === "te" ? "మరిన్ని" : "More"}
+                More
               </span>
             </div>
 
@@ -246,7 +244,7 @@ export function AppShell({
                 type="button"
                 onClick={() => signOut({ callbackUrl: "/" })}
                 className="rounded-lg p-1 text-ink-400 hover:bg-paper-100 hover:text-red-600 transition"
-                title={t.nav?.signOut ?? "Sign Out"}
+                title="Sign Out"
                 aria-label="Sign Out"
               >
                 <LogOut className="h-4 w-4" />
@@ -261,7 +259,7 @@ export function AppShell({
           <header className="hidden lg:flex items-center justify-between border-b border-paper-200/90 bg-white/90 backdrop-blur-md px-8 py-2.5 sticky top-0 z-20 shadow-2xs">
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
-                {language === "te" ? "ప్రస్తుత ఇల్లు" : "Active Project"}:
+                Active Project:
               </span>
               <Link
                 href="/projects"
@@ -270,7 +268,7 @@ export function AppShell({
                 title="Manage all house projects"
               >
                 <Building2 className="h-3.5 w-3.5 text-clay-600 shrink-0" />
-                <span>{activeProject?.name ?? (language === "te" ? "నా ఇల్లు" : "My House")}</span>
+                <span>{activeProject?.name ?? "My House"}</span>
               </Link>
             </div>
 
@@ -285,7 +283,7 @@ export function AppShell({
               >
                 <Search className="h-4 w-4 text-clay-600 group-hover:text-clay-800 shrink-0" />
                 <span className="flex-1 text-left text-xs font-medium text-ink-500 truncate">
-                  {language === "te" ? "వెతకండి / అడగండి (Ctrl+K)..." : "Search files, pages, reports (Ctrl+K)..."}
+                  Search files, pages, reports (Ctrl+K)...
                 </span>
                 <kbd className="rounded-md border border-paper-300 bg-white px-1.5 py-0.5 text-[10px] font-bold text-ink-400 shadow-2xs">
                   Ctrl+K
@@ -299,7 +297,7 @@ export function AppShell({
                 className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-95 shrink-0"
               >
                 <Plus className="h-3.5 w-3.5 stroke-[2.5]" />
-                <span>{t.nav?.addExpense ?? "Add Expense"}</span>
+                <span>Add Expense</span>
               </Link>
             </div>
           </header>
@@ -326,7 +324,7 @@ export function AppShell({
           )}
         >
           <Home className="h-5 w-5 shrink-0" />
-          <span className="whitespace-nowrap">{t.nav?.overview ?? "Home"}</span>
+          <span className="whitespace-nowrap">Home</span>
         </Link>
 
         {/* 2. Expenses */}
@@ -339,7 +337,7 @@ export function AppShell({
           )}
         >
           <Receipt className="h-5 w-5 shrink-0" />
-          <span className="whitespace-nowrap">{t.nav?.expenses ?? "Expenses"}</span>
+          <span className="whitespace-nowrap">Expenses</span>
         </Link>
 
         {/* 3. Center Prominent Plus Action (Opens Quick Add Sheet) */}
@@ -347,8 +345,8 @@ export function AppShell({
           type="button"
           onClick={() => setAddSheetOpen(true)}
           className="flex h-11 w-11 items-center justify-center rounded-full bg-clay-600 text-white shadow-md hover:bg-clay-700 active:scale-95 transition shrink-0 self-center"
-          title={t.nav?.addExpense ?? "Add Expense"}
-          aria-label={t.nav?.addExpense ?? "Add Expense"}
+          title="Add Expense"
+          aria-label="Add Expense"
         >
           <Plus className="h-5 w-5 stroke-[2.5]" />
         </button>
@@ -363,7 +361,7 @@ export function AppShell({
           )}
         >
           <FileText className="h-5 w-5 shrink-0" />
-          <span className="whitespace-nowrap">{t.nav?.reports ?? "Reports"}</span>
+          <span className="whitespace-nowrap">Reports</span>
         </Link>
 
         {/* 5. More */}
@@ -377,7 +375,7 @@ export function AppShell({
           aria-label="More Options"
         >
           <Menu className="h-5 w-5 shrink-0" />
-          <span className="whitespace-nowrap">{language === "te" ? "మరిన్ని" : "More"}</span>
+          <span className="whitespace-nowrap">More</span>
         </button>
       </nav>
 
@@ -394,10 +392,10 @@ export function AppShell({
             <div className="flex items-center justify-between border-b border-paper-200 pb-3">
               <div>
                 <h2 id="add-action-sheet-title" className="font-display text-base font-bold text-ink-900 leading-tight">
-                  {language === "te" ? "ఖర్చు నమోదు చేయండి" : "What are you recording?"}
+                  What are you recording?
                 </h2>
                 <p className="text-xs text-ink-500 font-medium mt-0.5">
-                  {language === "te" ? "రకం ఎంచుకోండి (సామాగ్రి లేదా కూలీలు)" : "Select expense type to record in 15 seconds"}
+                  Select expense type to record in 15 seconds
                 </p>
               </div>
               <button
@@ -423,10 +421,10 @@ export function AppShell({
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-amber-950">
-                    {language === "te" ? "సామాగ్రి కొనుగోలు (Material)" : "Add Material"}
+                    Add Material
                   </p>
                   <p className="text-xs text-amber-800/90 mt-0.5">
-                    {language === "te" ? "సిమెంట్, స్టీల్, ఇసుక, ఇటుకలు, టైల్స్, మొదలైనవి" : "Cement, Steel, Sand, Bricks, Tiles, Electrical"}
+                    Cement, Steel, Sand, Bricks, Tiles, Electrical
                   </p>
                 </div>
               </Link>
@@ -442,10 +440,10 @@ export function AppShell({
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-emerald-950">
-                    {language === "te" ? "కూలీల చెల్లింపు (Labour)" : "Add Labour"}
+                    Add Labour
                   </p>
                   <p className="text-xs text-emerald-800/90 mt-0.5">
-                    {language === "te" ? "మేస్త్రీ, కార్పెంటర్, ప్లంబర్, ఎలక్ట్రీషియన్, రోజూవారీ వేతనాలు" : "Mason, Carpenter, Plumber, Electrician wages"}
+                    Mason, Carpenter, Plumber, Electrician wages
                   </p>
                 </div>
               </Link>
@@ -461,10 +459,10 @@ export function AppShell({
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-ink-900">
-                    {language === "te" ? "ఇతర ఖర్చులు (Other Expense)" : "Other Expense"}
+                    Other Expense
                   </p>
                   <p className="text-xs text-ink-500 mt-0.5">
-                    {language === "te" ? "బోర్‌వెల్, ప్లానింగ్, జేసీబీ, రవాణా ఖర్చులు" : "Borewell, Planning, JCB, Services & Transport"}
+                    Borewell, Planning, JCB, Services & Transport
                   </p>
                 </div>
               </Link>
@@ -486,7 +484,7 @@ export function AppShell({
             <div className="flex items-center justify-between border-b border-paper-200 pb-3">
               <div>
                 <h2 id="mobile-more-title" className="font-display text-base font-bold text-ink-900 leading-tight">
-                  {language === "te" ? "మరిన్ని విభాగాలు" : "More Options"}
+                  More Options
                 </h2>
                 <p className="text-xs text-ink-500 font-medium">
                   {userName} · {activeProject?.name ?? "My House"}
@@ -511,8 +509,8 @@ export function AppShell({
               >
                 <Milestone className="h-4.5 w-4.5 text-clay-600 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-ink-900 truncate">{t.nav?.stages ?? "Construction"}</p>
-                  <p className="text-[10px] text-ink-500 truncate">{language === "te" ? "దశల పురోగతి" : "20 Stages"}</p>
+                  <p className="text-xs font-bold text-ink-900 truncate">Construction</p>
+                  <p className="text-[10px] text-ink-500 truncate">20 Stages</p>
                 </div>
               </Link>
 
@@ -523,8 +521,8 @@ export function AppShell({
               >
                 <Wallet className="h-4.5 w-4.5 text-clay-600 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-ink-900 truncate">{t.nav?.budget ?? "Budget"}</p>
-                  <p className="text-[10px] text-ink-500 truncate">{language === "te" ? "పరిమితులు" : "Limits"}</p>
+                  <p className="text-xs font-bold text-ink-900 truncate">Budget</p>
+                  <p className="text-[10px] text-ink-500 truncate">Limits</p>
                 </div>
               </Link>
 
@@ -535,8 +533,8 @@ export function AppShell({
               >
                 <Users className="h-4.5 w-4.5 text-clay-600 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-ink-900 truncate">{t.nav?.shopsWorkers ?? "Phone Directory"}</p>
-                  <p className="text-[10px] text-ink-500 truncate">{language === "te" ? "ఫోన్ నంబర్లు" : "Directory"}</p>
+                  <p className="text-xs font-bold text-ink-900 truncate">Phone Directory</p>
+                  <p className="text-[10px] text-ink-500 truncate">Directory</p>
                 </div>
               </Link>
 
@@ -547,8 +545,8 @@ export function AppShell({
               >
                 <Files className="h-4.5 w-4.5 text-clay-600 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-ink-900 truncate">{t.nav?.documents ?? "Documents"}</p>
-                  <p className="text-[10px] text-ink-500 truncate">{language === "te" ? "ప్లాన్లు & ఫైళ్ళు" : "Plans & CAD"}</p>
+                  <p className="text-xs font-bold text-ink-900 truncate">Documents</p>
+                  <p className="text-[10px] text-ink-500 truncate">Plans & CAD</p>
                 </div>
               </Link>
 
@@ -559,8 +557,8 @@ export function AppShell({
               >
                 <Settings className="h-4.5 w-4.5 text-clay-600 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-ink-900 truncate">{t.nav?.settings ?? "Settings"}</p>
-                  <p className="text-[10px] text-ink-500 truncate">{language === "te" ? "ఖాతా వివరాలు" : "Account"}</p>
+                  <p className="text-xs font-bold text-ink-900 truncate">Settings</p>
+                  <p className="text-[10px] text-ink-500 truncate">Account</p>
                 </div>
               </Link>
 
@@ -574,7 +572,7 @@ export function AppShell({
               >
                 <LogOut className="h-4.5 w-4.5 shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs font-bold truncate">{t.nav?.signOut ?? "Sign Out"}</p>
+                  <p className="text-xs font-bold truncate">Sign Out</p>
                   <p className="text-[10px] text-red-500 truncate">{userName}</p>
                 </div>
               </button>
