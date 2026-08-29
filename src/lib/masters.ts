@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { getCached, setCached } from "@/lib/cache-utils";
+import { consolidateLegacyCategories } from "@/lib/catalog/seed-masters";
 
 export async function loadMasters(userId: string, projectId: string) {
   const cacheKey = `masters:${userId}:${projectId}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const cached = getCached<any>(cacheKey);
   if (cached) return cached;
+
+  await consolidateLegacyCategories(userId);
 
   const [materials, labours, services, equipment, professionals, vendors, workers, stages, floors] =
     await Promise.all([

@@ -1,13 +1,14 @@
 import { Prisma, type ExpenseType, type LabourCalcMethod, type PaymentMethod, type WorkerType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
-import { seedProjectStructure, seedUserMasters } from "../src/lib/catalog/seed-masters";
+import { seedProjectStructure, seedUserMasters, MATERIAL_CONSOLIDATION_MAP } from "../src/lib/catalog/seed-masters";
+import { Decimal } from "@prisma/client/runtime/library";
 
 const DEMO_EMAIL = "admin";
 const DEMO_PASSWORD = "test123";
 
 function money(value: number) {
-  return new Prisma.Decimal(value);
+  return new Decimal(value);
 }
 
 function onDay(month: number, day: number) {
@@ -41,13 +42,25 @@ async function main() {
     prisma.professionalCategory.findMany({ where: { userId: user.id } }),
   ]);
 
-  const mat = (name: string, group?: string) => {
-    const match = materials.find((row) => row.name === name && (!group || row.groupName === group));
+  const mat = (name: string, _group?: string) => {
+    const key = name.trim().toLowerCase();
+    const targetName = MATERIAL_CONSOLIDATION_MAP[key]?.targetName ?? name;
+    const match =
+      materials.find((row) => row.name === targetName) ||
+      materials.find((row) => row.name.toLowerCase() === name.toLowerCase()) ||
+      materials.find((row) => row.name.toLowerCase().includes(key)) ||
+      materials.find((row) => row.name === "Other Materials") ||
+      materials[0];
     if (!match) throw new Error(`Missing material ${name}`);
     return match.id;
   };
   const lab = (name: string) => {
-    const match = labours.find((row) => row.name === name);
+    const key = name.trim().toLowerCase();
+    const match =
+      labours.find((row) => row.name === name) ||
+      labours.find((row) => row.name.toLowerCase().includes(key) || key.includes(row.name.toLowerCase())) ||
+      labours.find((row) => row.name === "General Labour & Helpers") ||
+      labours[0];
     if (!match) throw new Error(`Missing labour ${name}`);
     return match.id;
   };

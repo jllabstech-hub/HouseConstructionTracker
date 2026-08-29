@@ -51,7 +51,7 @@ const MATERIAL_PRESETS_BY_KEYWORD: { keyword: string; preset: MaterialPreset }[]
     keyword: "sand",
     preset: {
       defaultUnit: "loads",
-      descriptions: ["M-sand truck load", "River sand"],
+      descriptions: ["Sand truck load", "Plastering sand load"],
       commonQty: [1, 2, 3, 4],
       commonRates: [12000, 15000, 18000, 22000],
     },
@@ -60,7 +60,7 @@ const MATERIAL_PRESETS_BY_KEYWORD: { keyword: string; preset: MaterialPreset }[]
     keyword: "brick",
     preset: {
       defaultUnit: "nos",
-      descriptions: ["Table-moulded bricks", "Flyash bricks"],
+      descriptions: ["Red wirecut bricks", "Table-moulded red bricks"],
       commonQty: [500, 1000, 2000, 5000],
       commonRates: [9, 10, 11, 12],
     },

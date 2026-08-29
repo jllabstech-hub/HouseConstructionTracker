@@ -10,7 +10,78 @@ import {
   WORK_AREA_TEMPLATES,
 } from "@/lib/catalog/defaults";
 
+export const MATERIAL_CONSOLIDATION_MAP: Record<string, { targetName: string; groupName: string }> = {
+  "m-sand": { targetName: "Sand", groupName: "Structure & Civil" },
+  "river sand": { targetName: "Sand", groupName: "Structure & Civil" },
+  "sand / m-sand / aggregates": { targetName: "Sand", groupName: "Structure & Civil" },
+  "sand": { targetName: "Sand", groupName: "Structure & Civil" },
+  "steel / tmt": { targetName: "Steel / TMT / Binding Wire", groupName: "Structure & Civil" },
+  "binding wire": { targetName: "Steel / TMT / Binding Wire", groupName: "Structure & Civil" },
+  "steel": { targetName: "Steel / TMT / Binding Wire", groupName: "Structure & Civil" },
+  "steel / tmt / binding wire": { targetName: "Steel / TMT / Binding Wire", groupName: "Structure & Civil" },
+  "bricks": { targetName: "Red Bricks", groupName: "Structure & Civil" },
+  "bricks & blocks": { targetName: "Red Bricks", groupName: "Structure & Civil" },
+  "red bricks": { targetName: "Red Bricks", groupName: "Structure & Civil" },
+  "aac blocks": { targetName: "Cement & AAC Blocks", groupName: "Structure & Civil" },
+  "solid cement blocks": { targetName: "Cement & AAC Blocks", groupName: "Structure & Civil" },
+  "blocks": { targetName: "Cement & AAC Blocks", groupName: "Structure & Civil" },
+  "cement & aac blocks": { targetName: "Cement & AAC Blocks", groupName: "Structure & Civil" },
+  "aggregate": { targetName: "Aggregates / Jelly", groupName: "Structure & Civil" },
+  "aggregates": { targetName: "Aggregates / Jelly", groupName: "Structure & Civil" },
+  "aggregates / jelly": { targetName: "Aggregates / Jelly", groupName: "Structure & Civil" },
+  "shuttering material": { targetName: "Shuttering & Scaffolding", groupName: "Structure & Civil" },
+  "shuttering & scaffolding": { targetName: "Shuttering & Scaffolding", groupName: "Structure & Civil" },
+  "tiles & flooring": { targetName: "Tiles, Granite & Marble", groupName: "Finishes & Carpentry" },
+  "tiles, granite & marble": { targetName: "Tiles, Granite & Marble", groupName: "Finishes & Carpentry" },
+  "paint & wall care": { targetName: "Paint, Primer & Wall Care", groupName: "Finishes & Carpentry" },
+  "paint, primer & wall care": { targetName: "Paint, Primer & Wall Care", groupName: "Finishes & Carpentry" },
+  "wood, doors & windows": { targetName: "Doors, Windows & Woodwork", groupName: "Finishes & Carpentry" },
+  "doors, windows & woodwork": { targetName: "Doors, Windows & Woodwork", groupName: "Finishes & Carpentry" },
+  "hardware & metal / grills": { targetName: "Hardware, Metal & Grills", groupName: "Finishes & Carpentry" },
+  "hardware, metal & grills": { targetName: "Hardware, Metal & Grills", groupName: "Finishes & Carpentry" },
+  "construction chemicals": { targetName: "Waterproofing & Chemicals", groupName: "Specialized & Other" },
+  "waterproofing & chemicals": { targetName: "Waterproofing & Chemicals", groupName: "Specialized & Other" },
+};
+
+export async function consolidateLegacyCategories(userId: string) {
+  try {
+    const existingMaterials = await prisma.materialCategory.findMany({ where: { userId } });
+    if (existingMaterials.length === 0) return;
+
+    for (const cat of existingMaterials) {
+      const key = cat.name.trim().toLowerCase();
+      const mapping = MATERIAL_CONSOLIDATION_MAP[key];
+      if (mapping && (cat.name !== mapping.targetName || cat.groupName !== mapping.groupName)) {
+        const targetCat = await prisma.materialCategory.findFirst({
+          where: { userId, name: mapping.targetName },
+        });
+
+        if (targetCat && targetCat.id !== cat.id) {
+          await prisma.expense.updateMany({
+            where: { materialCategoryId: cat.id },
+            data: { materialCategoryId: targetCat.id },
+          });
+          await prisma.budgetCategory.updateMany({
+            where: { materialCategoryId: cat.id },
+            data: { materialCategoryId: targetCat.id },
+          });
+          await prisma.materialCategory.delete({ where: { id: cat.id } });
+        } else {
+          await prisma.materialCategory.update({
+            where: { id: cat.id },
+            data: { name: mapping.targetName, groupName: mapping.groupName },
+          });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Error consolidating categories:", err);
+  }
+}
+
 export async function seedUserMasters(userId: string) {
+  await consolidateLegacyCategories(userId);
+
   const materialsCount = await prisma.materialCategory.count({ where: { userId } });
   if (materialsCount === 0) {
     const materialsData: { userId: string; name: string; groupName: string; sortOrder: number; isDefault: boolean }[] = [];

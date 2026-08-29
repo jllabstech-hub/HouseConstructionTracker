@@ -102,7 +102,7 @@ export const CHRONOLOGICAL_CONSTRUCTION_STAGES: StageConfig[] = [
     icon: "️",
     phase: "STRUCTURAL",
     keywords: ["excavation", "foundation", "footing", "pcc", "earthwork"],
-    recommendedMaterials: ["Cement", "Steel / TMT", "M-Sand", "Aggregate", "Binding Wire"],
+    recommendedMaterials: ["Cement", "Steel / TMT / Binding Wire", "Sand", "Aggregates / Jelly"],
     recommendedLabours: ["Foundation Work", "General Masonry", "RCC Work"],
     quickPresets: [
       {
@@ -157,7 +157,7 @@ export const CHRONOLOGICAL_CONSTRUCTION_STAGES: StageConfig[] = [
     icon: "",
     phase: "STRUCTURAL",
     keywords: ["plinth", "beam", "filling", "murrum", "compaction"],
-    recommendedMaterials: ["Cement", "Steel / TMT", "M-Sand", "Aggregate", "Binding Wire"],
+    recommendedMaterials: ["Cement", "Steel / TMT / Binding Wire", "Sand", "Aggregates / Jelly"],
     recommendedLabours: ["Foundation Work", "RCC Work", "General Masonry"],
     quickPresets: [
       {
@@ -196,7 +196,7 @@ export const CHRONOLOGICAL_CONSTRUCTION_STAGES: StageConfig[] = [
     icon: "️",
     phase: "STRUCTURAL",
     keywords: ["rcc", "column", "beam", "steel", "framework", "centering"],
-    recommendedMaterials: ["Steel / TMT", "Cement", "M-Sand", "Aggregate", "Binding Wire", "Shuttering Material"],
+    recommendedMaterials: ["Steel / TMT / Binding Wire", "Cement", "Sand", "Aggregates / Jelly", "Shuttering & Scaffolding"],
     recommendedLabours: ["RCC Work", "General Masonry"],
     quickPresets: [
       {
@@ -235,7 +235,7 @@ export const CHRONOLOGICAL_CONSTRUCTION_STAGES: StageConfig[] = [
     icon: "",
     phase: "STRUCTURAL",
     keywords: ["slab", "roof", "roofing", "casting", "rmc", "centering"],
-    recommendedMaterials: ["Ready Mix Concrete", "Steel / TMT", "Cement", "M-Sand", "Binding Wire", "Construction Chemicals"],
+    recommendedMaterials: ["Ready Mix Concrete (RMC)", "Steel / TMT / Binding Wire", "Cement", "Sand", "Waterproofing & Chemicals"],
     recommendedLabours: ["RCC Work", "General Masonry"],
     quickPresets: [
       {
@@ -281,7 +281,7 @@ export const CHRONOLOGICAL_CONSTRUCTION_STAGES: StageConfig[] = [
     icon: "",
     phase: "STRUCTURAL",
     keywords: ["brick", "block", "masonry", "aac", "solid", "wall"],
-    recommendedMaterials: ["Solid Cement Blocks", "Bricks", "Cement", "M-Sand", "AAC Blocks"],
+    recommendedMaterials: ["Cement & AAC Blocks", "Red Bricks", "Cement", "Sand"],
     recommendedLabours: ["Block Work", "Brick Work", "General Masonry"],
     quickPresets: [
       {
@@ -407,7 +407,7 @@ export const CHRONOLOGICAL_CONSTRUCTION_STAGES: StageConfig[] = [
     icon: "️",
     phase: "ROUGH_IN",
     keywords: ["plaster", "plastering", "smooth", "sponge", "sandface"],
-    recommendedMaterials: ["Cement", "River Sand", "M-Sand", "Binding Wire", "Construction Chemicals"],
+    recommendedMaterials: ["Cement", "Sand", "Waterproofing & Chemicals"],
     recommendedLabours: ["Plastering", "General Masonry"],
     quickPresets: [
       {

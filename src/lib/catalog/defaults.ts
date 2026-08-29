@@ -33,7 +33,16 @@ export const DEFAULT_STAGES = [
 export const MATERIAL_CATALOG: { group: string; items: string[] }[] = [
   {
     group: "Structure & Civil",
-    items: ["Cement", "Steel / TMT", "Sand / M-Sand / Aggregates", "Bricks & Blocks", "Ready Mix Concrete (RMC)"],
+    items: [
+      "Cement",
+      "Steel / TMT / Binding Wire",
+      "Sand",
+      "Aggregates / Jelly",
+      "Red Bricks",
+      "Cement & AAC Blocks",
+      "Ready Mix Concrete (RMC)",
+      "Shuttering & Scaffolding",
+    ],
   },
   {
     group: "Piping & Wiring",
@@ -41,7 +50,12 @@ export const MATERIAL_CATALOG: { group: string; items: string[] }[] = [
   },
   {
     group: "Finishes & Carpentry",
-    items: ["Tiles & Flooring", "Paint & Wall Care", "Wood, Doors & Windows", "Hardware & Metal / Grills"],
+    items: [
+      "Tiles, Granite & Marble",
+      "Paint, Primer & Wall Care",
+      "Doors, Windows & Woodwork",
+      "Hardware, Metal & Grills",
+    ],
   },
   {
     group: "Specialized & Other",
@@ -60,7 +74,7 @@ export const LABOUR_CATALOG: { group: string; items: string[] }[] = [
   },
   {
     group: "Finishing Labour",
-    items: ["Tile & Granite Laying", "Painting Labour"],
+    items: ["Tile & Granite Laying", "Painting Labour", "Fabrication & Grill Work"],
   },
   {
     group: "General & Helpers",

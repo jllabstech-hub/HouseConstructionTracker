@@ -1,16 +1,19 @@
 export const MAJOR_MATERIAL_CATEGORIES = [
   "Cement",
-  "Steel / TMT",
-  "Sand / M-Sand / Aggregates",
-  "Bricks & Blocks",
+  "Steel / TMT / Binding Wire",
+  "Sand",
+  "Aggregates / Jelly",
+  "Red Bricks",
+  "Cement & AAC Blocks",
   "Ready Mix Concrete (RMC)",
   "Plumbing & Sanitary",
   "Electrical & Wiring",
-  "Tiles & Flooring",
-  "Paint & Wall Care",
-  "Wood, Doors & Windows",
-  "Hardware & Metal / Grills",
+  "Tiles, Granite & Marble",
+  "Paint, Primer & Wall Care",
+  "Doors, Windows & Woodwork",
+  "Hardware, Metal & Grills",
   "Waterproofing & Chemicals",
+  "Shuttering & Scaffolding",
   "Other Materials",
 ] as const;
 
@@ -22,19 +25,21 @@ export const MAJOR_LABOUR_CATEGORIES = [
   "Plumbing Labour",
   "Electrical Labour",
   "Painting Labour",
+  "Fabrication & Grill Work",
   "General Labour & Helpers",
   "Other Labour",
 ] as const;
 
 export const QUICK_MATERIAL_PRESETS = [
   "Cement",
-  "Steel / TMT",
-  "Sand / M-Sand / Aggregates",
-  "Bricks & Blocks",
+  "Steel / TMT / Binding Wire",
+  "Sand",
+  "Red Bricks",
+  "Cement & AAC Blocks",
   "Electrical & Wiring",
   "Plumbing & Sanitary",
-  "Tiles & Flooring",
-  "Paint & Wall Care",
+  "Tiles, Granite & Marble",
+  "Paint, Primer & Wall Care",
 ] as const;
 
 export const QUICK_LABOUR_PRESETS = [
