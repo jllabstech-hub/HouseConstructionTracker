@@ -16,15 +16,21 @@ import {
   Trash2,
   Wallet,
   Sparkles,
+  Milestone,
 } from "lucide-react";
 import { saveExpense, deleteExpense } from "@/lib/actions/expenses";
 import { uploadReceipt } from "@/lib/actions/receipts";
-import { createMaterialCategory, createLabourCategory } from "@/lib/actions/masters";
+import {
+  createMaterialCategory,
+  createLabourCategory,
+  createConstructionStageAction,
+} from "@/lib/actions/masters";
 import { computeLabourAmount, computeMaterialAmount } from "@/lib/finance/aggregations";
 import { formatINR, parseMoneyInput } from "@/lib/money";
 import { getMaterialPreset } from "@/lib/catalog/expense-presets";
 import { FileDropzone } from "@/components/ui/file-dropzone";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { DEFAULT_STAGES } from "@/lib/catalog/defaults";
 import { cn } from "@/lib/utils";
 
 type Option = { id: string; name: string; groupName?: string | null; type?: string; phone?: string | null; company?: string | null };
@@ -183,7 +189,21 @@ export function ExpenseForm({
   );
   const [vendorId, setVendorId] = useState<string>(initial?.vendorId ?? "");
   const [workerId, setWorkerId] = useState<string>(initial?.workerId ?? "");
+  
+  // Construction Stage state with custom add support
+  const [stagesList, setStagesList] = useState<Option[]>(() => {
+    const list = [...stages];
+    if (initial?.constructionStageId) {
+      if (!list.some((s) => s.id === initial.constructionStageId)) {
+        list.push({ id: initial.constructionStageId, name: "Selected Stage" });
+      }
+    }
+    return list;
+  });
   const [stageId, setStageId] = useState<string>(initial?.constructionStageId ?? "");
+  const [isCustomStage, setIsCustomStage] = useState<boolean>(false);
+  const [customStageName, setCustomStageName] = useState<string>("");
+
   const [floorId, setFloorId] = useState<string>(initial?.floorId ?? "");
   const [paymentMethod, setPaymentMethod] = useState<string>(initial?.paymentMethod ?? "UPI");
   const [invoiceNumber, setInvoiceNumber] = useState<string>(initial?.invoiceNumber ?? "");
@@ -307,13 +327,28 @@ export function ExpenseForm({
           }
         }
 
+        // Auto-create construction stage if custom
+        let finalStageId = stageId;
+        if (isCustomStage && customStageName.trim()) {
+          const existingStage = stagesList.find((s) => s.name.toLowerCase() === customStageName.trim().toLowerCase());
+          if (existingStage) {
+            finalStageId = existingStage.id;
+          } else {
+            const createStageRes = await createConstructionStageAction({ projectId, name: customStageName.trim() });
+            if ("stage" in createStageRes && createStageRes.stage?.id) {
+              finalStageId = createStageRes.stage.id;
+              setStagesList((prev) => [...prev, { id: createStageRes.stage!.id, name: customStageName.trim() }]);
+            }
+          }
+        }
+
         const payload: Record<string, string | number | undefined> = {
           projectId,
           date,
           expenseType: superiorCategory === "MATERIAL" ? "MATERIAL" : "LABOUR",
           description: description.trim() || `${categoryNameToSave} expense`,
           paymentMethod,
-          constructionStageId: stageId || undefined,
+          constructionStageId: finalStageId || undefined,
           floorId: floorId || undefined,
           vendorId: superiorCategory === "MATERIAL" && vendorId ? vendorId : undefined,
           workerId: superiorCategory === "MANPOWER" && workerId ? workerId : undefined,
@@ -545,15 +580,15 @@ export function ExpenseForm({
             </div>
           </div>
 
-          {/* Section 2: Core Details */}
+          {/* Section 2: Core Details & Construction Stage */}
           <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400 block">
-              2. Core Details
+            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400 block border-b border-paper-100 pb-2">
+              2. Category & Construction Stage
             </span>
 
             <div>
               <label htmlFor="expense-date" className="text-xs font-bold text-ink-700 block mb-1.5">
-                Date
+                Payment / Transaction Date
               </label>
               <input
                 id="expense-date"
@@ -565,87 +600,162 @@ export function ExpenseForm({
               />
             </div>
 
-            {/* Category Dropdown + Clean Custom Input */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label htmlFor="expense-category-select" className="text-xs font-bold text-ink-700 block">
-                  {superiorCategory === "MATERIAL" ? "Material Category" : "Man Power Category"}
-                </label>
-                {currentCategoryList.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCustomCategory((prev) => !prev);
-                      if (!isCustomCategory) {
-                        handleCategoryNameChange("");
+            {/* Core 2-Column Responsive Grid: Category + Construction Stage */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              {/* Category Dropdown + Clean Custom Input */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="expense-category-select" className="text-xs font-bold text-ink-700 block">
+                    {superiorCategory === "MATERIAL" ? "Material Category" : "Labour / Work Category"} *
+                  </label>
+                  {currentCategoryList.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomCategory((prev) => !prev);
+                        if (!isCustomCategory) {
+                          handleCategoryNameChange("");
+                        }
+                      }}
+                      className="text-[11px] font-bold text-clay-700 hover:underline cursor-pointer"
+                    >
+                      {isCustomCategory ? "← Pick from List" : "+ Type Custom Category"}
+                    </button>
+                  )}
+                </div>
+
+                {isCustomCategory || currentCategoryList.length === 0 ? (
+                  <div className="space-y-1">
+                    <input
+                      id="expense-category-custom-input"
+                      type="text"
+                      required
+                      value={activeCategoryName}
+                      onChange={(e) => handleCategoryNameChange(e.target.value)}
+                      placeholder={
+                        superiorCategory === "MATERIAL"
+                          ? "e.g. Italian Marble, UPVC Windows, Teak Wood..."
+                          : "e.g. Masonry, Plumbing, Carpentry, Wages..."
                       }
-                    }}
-                    className="text-xs font-bold text-clay-700 hover:underline cursor-pointer"
-                  >
-                    {isCustomCategory ? "← Select from Dropdown" : "+ Type Custom Category"}
-                  </button>
+                      className="w-full rounded-xl border border-paper-300 bg-white p-3 text-base sm:text-sm font-semibold text-ink-900 placeholder:text-ink-400 placeholder:font-normal focus:border-clay-500 focus:outline-none shadow-2xs"
+                      autoFocus
+                    />
+                    <p className="text-[10px] text-ink-400">
+                      Saves automatically for future expenses in this project.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <select
+                      id="expense-category-select"
+                      value={
+                        currentCategoryList.some((c) => c.name.toLowerCase() === activeCategoryName.toLowerCase())
+                          ? activeCategoryName
+                          : activeCategoryName
+                          ? "__custom__"
+                          : ""
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "__custom__") {
+                          setIsCustomCategory(true);
+                        } else {
+                          setIsCustomCategory(false);
+                          handleCategoryNameChange(val);
+                        }
+                      }}
+                      className="w-full appearance-none rounded-xl border border-paper-300 bg-white p-3 pr-9 text-base sm:text-sm font-semibold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs cursor-pointer"
+                      required
+                    >
+                      <option value="">-- Select {superiorCategory === "MATERIAL" ? "Material" : "Labour"} Category --</option>
+                      {currentCategoryList.map((cat) => (
+                        <option key={cat.id} value={cat.name}>
+                          {cat.name} {cat.groupName ? `(${cat.groupName})` : ""}
+                        </option>
+                      ))}
+                      <option value="__custom__">+ Add / Write Custom Category...</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                  </div>
                 )}
               </div>
 
-              {isCustomCategory || currentCategoryList.length === 0 ? (
-                <div className="space-y-1.5">
-                  <input
-                    id="expense-category-custom-input"
-                    type="text"
-                    required
-                    value={activeCategoryName}
-                    onChange={(e) => handleCategoryNameChange(e.target.value)}
-                    placeholder={
-                      superiorCategory === "MATERIAL"
-                        ? "Type category name (e.g. Italian Marble, UPVC Windows, Teak Wood...)"
-                        : "Type trade / category (e.g. Masonry, Plumbing, Carpentry, Wages...)"
-                    }
-                    className="w-full rounded-xl border border-paper-300 bg-white p-3 text-base sm:text-sm font-semibold text-ink-900 placeholder:text-ink-400 placeholder:font-normal focus:border-clay-500 focus:outline-none shadow-2xs"
-                    autoFocus
-                  />
-                  <p className="text-[11px] text-ink-500">
-                    New category will be automatically saved for future expenses in this house project.
-                  </p>
-                </div>
-              ) : (
-                <div className="relative">
-                  <select
-                    id="expense-category-select"
-                    value={
-                      currentCategoryList.some((c) => c.name.toLowerCase() === activeCategoryName.toLowerCase())
-                        ? activeCategoryName
-                        : activeCategoryName
-                        ? "__custom__"
-                        : ""
-                    }
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (val === "__custom__") {
-                        setIsCustomCategory(true);
-                      } else {
-                        setIsCustomCategory(false);
-                        handleCategoryNameChange(val);
+              {/* Construction Stage Dropdown + Clean Custom Input */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="expense-stage-select-main" className="text-xs font-bold text-ink-700 flex items-center gap-1.5">
+                    <Milestone className="h-3.5 w-3.5 text-clay-600" />
+                    <span>Construction Stage</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomStage((prev) => !prev);
+                      if (!isCustomStage) {
+                        setCustomStageName("");
                       }
                     }}
-                    className="w-full appearance-none rounded-xl border border-paper-300 bg-white p-3 pr-9 text-base sm:text-sm font-semibold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs cursor-pointer"
-                    required
+                    className="text-[11px] font-bold text-clay-700 hover:underline cursor-pointer"
                   >
-                    <option value="">-- Select {superiorCategory === "MATERIAL" ? "Material" : "Labour"} Category --</option>
-                    {currentCategoryList.map((cat) => (
-                      <option key={cat.id} value={cat.name}>
-                        {cat.name} {cat.groupName ? `(${cat.groupName})` : ""}
-                      </option>
-                    ))}
-                    <option value="__custom__">+ Add / Write Custom Category...</option>
-                  </select>
-                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                    {isCustomStage ? "← Pick from Stages" : "+ Type Custom Stage"}
+                  </button>
                 </div>
-              )}
+
+                {isCustomStage ? (
+                  <div className="space-y-1">
+                    <input
+                      id="expense-stage-custom-input"
+                      type="text"
+                      value={customStageName}
+                      onChange={(e) => setCustomStageName(e.target.value)}
+                      placeholder="e.g. Slab 2 Casting, Boundary Wall, Borewell..."
+                      className="w-full rounded-xl border border-paper-300 bg-white p-3 text-base sm:text-sm font-semibold text-ink-900 placeholder:text-ink-400 placeholder:font-normal focus:border-clay-500 focus:outline-none shadow-2xs"
+                      autoFocus
+                    />
+                    <p className="text-[10px] text-ink-400">
+                      Saves new stage to your project construction list.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <select
+                      id="expense-stage-select-main"
+                      value={stageId}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "__custom__") {
+                          setIsCustomStage(true);
+                        } else {
+                          setIsCustomStage(false);
+                          setStageId(val);
+                        }
+                      }}
+                      className="w-full appearance-none rounded-xl border border-paper-300 bg-white p-3 pr-9 text-base sm:text-sm font-semibold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs cursor-pointer"
+                    >
+                      <option value="">-- General / Not Linked to Specific Stage --</option>
+                      {stagesList.length > 0
+                        ? stagesList.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.name}
+                            </option>
+                          ))
+                        : DEFAULT_STAGES.map((sName) => (
+                            <option key={sName} value={sName}>
+                              {sName}
+                            </option>
+                          ))}
+                      <option value="__custom__">+ Add / Write Custom Stage...</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* Description / Notes (Full Width) */}
             <div>
               <label htmlFor="expense-description" className="text-xs font-bold text-ink-700 block mb-1.5">
-                Description / Notes
+                Description / Notes / Specifications
               </label>
               <input
                 id="expense-description"
@@ -659,31 +769,6 @@ export function ExpenseForm({
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
               />
-            </div>
-
-            <div>
-              <label htmlFor="expense-stage-select-main" className="text-xs font-bold text-ink-700 block mb-1.5">
-                Construction Stage
-              </label>
-              <div className="relative">
-                <select
-                  id="expense-stage-select-main"
-                  value={stageId}
-                  onChange={(e) => setStageId(e.target.value)}
-                  className="w-full appearance-none rounded-xl border border-paper-300 bg-white p-2.5 pr-8 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs cursor-pointer"
-                >
-                  <option value="">-- General / Not Linked to Specific Stage --</option>
-                  {stages.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
-              </div>
-              <p className="text-[11px] text-ink-400 mt-1">
-                Select which construction stage (Foundation, Slabs, Masonry, Plastering, Electrical, etc.) this belongs to.
-              </p>
             </div>
           </div>
 
@@ -1111,14 +1196,14 @@ export function ExpenseForm({
                   <span className="font-bold text-ink-900">{date}</span>
                 </div>
 
-                {stageId && (
+                {(isCustomStage && customStageName.trim()) || stageId ? (
                   <div className="flex items-center justify-between">
                     <span className="text-ink-500 font-medium">Stage</span>
-                    <span className="font-bold text-ink-900 truncate max-w-[160px]">
-                      {stages.find((s) => s.id === stageId)?.name || "Linked"}
+                    <span className="font-bold text-clay-800 bg-clay-100/80 px-2 py-0.5 rounded-md truncate max-w-[160px]">
+                      {isCustomStage ? customStageName : stagesList.find((s) => s.id === stageId)?.name || stageId}
                     </span>
                   </div>
-                )}
+                ) : null}
 
                 <div className="flex items-center justify-between">
                   <span className="text-ink-500 font-medium">Payment Method</span>

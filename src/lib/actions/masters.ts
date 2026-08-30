@@ -688,3 +688,48 @@ export async function clearAllCategories(projectId?: string) {
   }
 }
 
+export async function createConstructionStageAction(input: { projectId: string; name: string }) {
+  try {
+    const user = await requireUser();
+    const projectId = input.projectId || (await getActiveProjectId(user.id));
+    if (!projectId) return { error: "Active house project not found" };
+    await requireProject(projectId, user.id);
+
+    const name = input.name.trim();
+    if (!name) return { error: "Stage name cannot be empty" };
+
+    const existing = await prisma.constructionStage.findFirst({
+      where: {
+        projectId,
+        name: { equals: name, mode: "insensitive" },
+      },
+    });
+
+    if (existing) {
+      return { ok: true, stage: { id: existing.id, name: existing.name } };
+    }
+
+    const count = await prisma.constructionStage.count({ where: { projectId } });
+
+    const created = await prisma.constructionStage.create({
+      data: {
+        projectId,
+        name,
+        sortOrder: count + 1,
+        status: "NOT_STARTED",
+      },
+    });
+
+    invalidateProjectCache(projectId);
+    invalidateUserCache(user.id);
+    revalidatePath("/stages");
+    revalidatePath("/expenses");
+    revalidatePath("/expenses/new");
+    return { ok: true, stage: { id: created.id, name: created.name } };
+  } catch (err: unknown) {
+    console.error("Error creating construction stage:", err);
+    return { error: err instanceof Error ? err.message : "Failed to create stage" };
+  }
+}
+
+
