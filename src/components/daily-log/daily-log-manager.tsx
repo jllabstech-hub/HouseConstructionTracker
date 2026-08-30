@@ -11,6 +11,9 @@ import {
   Users,
   CheckCircle2,
   ChevronDown,
+  Download,
+  Eye,
+  FileText,
 } from "lucide-react";
 import {
   recordDailySiteLog,
@@ -60,6 +63,65 @@ export function DailyLogManager({
   // Filtering
   const [filterStage, setFilterStage] = useState<string>("");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+
+  // PDF Export & Sharing State
+  const [sharingPdf, setSharingPdf] = useState<boolean>(false);
+  const [pdfSuccessMsg, setPdfSuccessMsg] = useState<string | null>(null);
+
+  const pdfUrl = `/api/daily-log/pdf?projectId=${projectId}${filterStage ? `&stageId=${filterStage}` : ""}`;
+
+  const handleDownloadPdf = () => {
+    window.open(`${pdfUrl}&download=1`, "_blank");
+  };
+
+  const handlePreviewPdf = () => {
+    window.open(pdfUrl, "_blank");
+  };
+
+  const handleSharePdf = async () => {
+    setSharingPdf(true);
+    setPdfSuccessMsg(null);
+    try {
+      const response = await fetch(`${pdfUrl}&download=1`);
+      if (!response.ok) throw new Error("Could not generate PDF");
+      const blob = await response.blob();
+      const filename = `daily-labour-muster-roll-${new Date().toISOString().slice(0, 10)}.pdf`;
+      const file = new File([blob], filename, { type: "application/pdf" });
+
+      if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: "Daily Site Labour Muster Roll Report",
+            text: `Daily Labour Muster Roll Report - Total Wages: ${formatINR(initialSummary.totalLabourSpent)}`,
+          });
+          setPdfSuccessMsg("PDF report shared successfully!");
+          setTimeout(() => setPdfSuccessMsg(null), 3500);
+          return;
+        } catch (err) {
+          if ((err as Error).name === "AbortError") return;
+        }
+      }
+
+      // Fallback: trigger download
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+
+      setPdfSuccessMsg("PDF report downloaded! You can now send it on WhatsApp or email.");
+      setTimeout(() => setPdfSuccessMsg(null), 4000);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to share PDF report. Please use the Download PDF button.");
+    } finally {
+      setSharingPdf(false);
+    }
+  };
 
   // Live Calculations
   const mCount = Math.max(0, Number(mestriCount) || 0);
@@ -483,6 +545,49 @@ export function DailyLogManager({
                 </div>
               </div>
             </div>
+
+            {pdfSuccessMsg && (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-semibold text-emerald-800 flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                <span>{pdfSuccessMsg}</span>
+              </div>
+            )}
+
+            {/* Action Bar: PDF Report Generation & Share */}
+            {initialLogs.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 p-2.5 bg-paper-50 rounded-2xl border border-paper-200">
+                <button
+                  type="button"
+                  onClick={handleDownloadPdf}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer"
+                  title="Download Daily Muster Roll PDF"
+                >
+                  <Download className="h-3.5 w-3.5" />
+                  <span>Download PDF Table</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={sharingPdf}
+                  onClick={handleSharePdf}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer disabled:opacity-50"
+                  title="Share PDF via WhatsApp or email"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  <span>{sharingPdf ? "Generating PDF..." : "Share PDF Table"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePreviewPdf}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-white border border-paper-300 hover:bg-paper-100 text-ink-800 px-3 py-1.5 text-xs font-bold shadow-2xs transition active:scale-95 cursor-pointer ml-auto"
+                  title="Preview PDF Report"
+                >
+                  <Eye className="h-3.5 w-3.5 text-ink-500" />
+                  <span>Preview</span>
+                </button>
+              </div>
+            )}
 
             {filteredLogs.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-paper-300 p-8 text-center space-y-2">
