@@ -602,7 +602,7 @@ export function ExpenseForm({
             </div>
 
             {currentCategoryList.length > 0 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1">
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
                 {currentCategoryList.map((cat) => {
                   const isSelected = activeCategoryName.toLowerCase() === cat.name.toLowerCase();
                   return (

@@ -21,36 +21,25 @@ export default function DashboardLoading() {
         ))}
       </div>
 
-      {/* 2-Column Responsive Layout skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Left Column */}
-        <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-          <div className="grid gap-3 sm:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs space-y-2">
-                <div className="h-3 w-24 rounded bg-paper-200" />
-                <div className="h-6 w-28 rounded bg-paper-100" />
-              </div>
-            ))}
-          </div>
+      {/* Progress bar skeleton */}
+      <div className="rounded-xl border border-paper-200 bg-white p-3.5 shadow-xs">
+        <div className="h-2 w-full rounded-full bg-paper-100" />
+      </div>
 
-          <div className="rounded-2xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs">
-            <div className="h-5 w-36 rounded bg-paper-200 mb-4" />
-            <div className="h-[200px] w-full rounded-xl bg-paper-50" />
+      {/* Financial Split skeleton */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-xl border border-paper-200 bg-white p-4 shadow-xs space-y-2">
+            <div className="h-3 w-24 rounded bg-paper-200" />
+            <div className="h-6 w-28 rounded bg-paper-100" />
           </div>
-        </div>
+        ))}
+      </div>
 
-        {/* Right Column */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-6">
-          <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-3">
-            <div className="h-5 w-36 rounded bg-paper-200" />
-            <div className="h-3 w-full rounded bg-paper-100" />
-          </div>
-          <div className="rounded-2xl border border-paper-200 bg-white p-5 shadow-xs space-y-3">
-            <div className="h-5 w-40 rounded bg-paper-200" />
-            <div className="h-16 w-full rounded bg-paper-100" />
-          </div>
-        </div>
+      {/* Chart skeleton */}
+      <div className="rounded-2xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs">
+        <div className="h-5 w-36 rounded bg-paper-200 mb-4" />
+        <div className="h-[200px] w-full rounded-xl bg-paper-50" />
       </div>
     </div>
   );
