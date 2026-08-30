@@ -49,6 +49,8 @@ export async function createMaterialCategory(input: unknown) {
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
     revalidatePath("/expenses");
+    revalidatePath("/expenses/new");
+    revalidatePath("/budget");
     return { ok: true, category: { id: created.id, name: created.name, groupName: created.groupName } };
   } catch (err: unknown) {
     if (
@@ -102,6 +104,8 @@ export async function createLabourCategory(input: unknown) {
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
     revalidatePath("/expenses");
+    revalidatePath("/expenses/new");
+    revalidatePath("/budget");
     return { ok: true, category: { id: created.id, name: created.name, groupName: created.groupName } };
   } catch (err: unknown) {
     if (
@@ -128,14 +132,30 @@ export async function createServiceCategory(input: unknown) {
     if (!projectId) return { error: "Active house project not found" };
     await requireProject(projectId, user.id);
 
-    await prisma.serviceCategory.create({
-      data: { projectId, name: parsed.data.name },
+    const name = parsed.data.name.trim();
+
+    const existing = await prisma.serviceCategory.findFirst({
+      where: {
+        projectId,
+        name: { equals: name, mode: "insensitive" },
+      },
+    });
+
+    if (existing) {
+      return { ok: true, category: { id: existing.id, name: existing.name } };
+    }
+
+    const created = await prisma.serviceCategory.create({
+      data: { projectId, name },
     });
     invalidateProjectCache(projectId);
     invalidateUserCache(user.id);
     revalidatePath("/phonedirectory");
     revalidatePath("/masters");
-    return { ok: true };
+    revalidatePath("/expenses");
+    revalidatePath("/expenses/new");
+    revalidatePath("/budget");
+    return { ok: true, category: { id: created.id, name: created.name } };
   } catch (err: unknown) {
     if (
       err &&

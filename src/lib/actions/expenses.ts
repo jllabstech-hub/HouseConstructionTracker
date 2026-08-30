@@ -76,9 +76,18 @@ export async function saveExpense(input: unknown, expenseId?: string) {
     materialSubcategoryId: data.expenseType === "MATERIAL" ? emptyToNull(data.materialSubcategoryId) : null,
     labourCategoryId: data.expenseType === "LABOUR" ? emptyToNull(data.labourCategoryId) : null,
     labourSubcategoryId: data.expenseType === "LABOUR" ? emptyToNull(data.labourSubcategoryId) : null,
-    serviceCategoryId: data.expenseType === "SERVICE" ? emptyToNull(data.serviceCategoryId) : null,
-    equipmentCategoryId: data.expenseType === "EQUIPMENT" ? emptyToNull(data.equipmentCategoryId) : null,
-    professionalCategoryId: data.expenseType === "PROFESSIONAL" ? emptyToNull(data.professionalCategoryId) : null,
+    serviceCategoryId:
+      data.expenseType === "SERVICE" || data.expenseType === "OTHER"
+        ? emptyToNull(data.serviceCategoryId)
+        : null,
+    equipmentCategoryId:
+      data.expenseType === "EQUIPMENT" || data.expenseType === "OTHER"
+        ? emptyToNull(data.equipmentCategoryId)
+        : null,
+    professionalCategoryId:
+      data.expenseType === "PROFESSIONAL" || data.expenseType === "OTHER"
+        ? emptyToNull(data.professionalCategoryId)
+        : null,
     labourCalcMethod: data.expenseType === "LABOUR" ? data.labourCalcMethod ?? "FIXED_CONTRACT" : null,
     numberOfWorkers: data.numberOfWorkers ? Number(data.numberOfWorkers) : null,
     numberOfDays: decimalOrNull(data.numberOfDays),

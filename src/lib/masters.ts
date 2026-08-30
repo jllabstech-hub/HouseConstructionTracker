@@ -12,11 +12,11 @@ export async function loadMasters(userId: string, projectId: string) {
 
   const [initialMaterials, initialLabours, initialServices, initialEquipment, initialProfessionals, vendors, workers, stages, floors] =
     await Promise.all([
-      prisma.materialCategory.findMany({ where: { projectId }, orderBy: [{ groupName: "asc" }, { sortOrder: "asc" }] }),
-      prisma.labourCategory.findMany({ where: { projectId }, orderBy: [{ groupName: "asc" }, { sortOrder: "asc" }] }),
-      prisma.serviceCategory.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
-      prisma.equipmentCategory.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
-      prisma.professionalCategory.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
+      prisma.materialCategory.findMany({ where: { projectId }, orderBy: [{ groupName: "asc" }, { name: "asc" }] }),
+      prisma.labourCategory.findMany({ where: { projectId }, orderBy: [{ groupName: "asc" }, { name: "asc" }] }),
+      prisma.serviceCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+      prisma.equipmentCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+      prisma.professionalCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
       prisma.vendor.findMany({ where: { userId }, orderBy: { name: "asc" } }),
       prisma.worker.findMany({ where: { userId }, orderBy: { name: "asc" } }),
       prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
@@ -32,11 +32,11 @@ export async function loadMasters(userId: string, projectId: string) {
   if (materials.length === 0 && labours.length === 0 && projectId) {
     await seedProjectMasters(projectId);
     [materials, labours, services, equipment, professionals] = await Promise.all([
-      prisma.materialCategory.findMany({ where: { projectId }, orderBy: [{ groupName: "asc" }, { sortOrder: "asc" }] }),
-      prisma.labourCategory.findMany({ where: { projectId }, orderBy: [{ groupName: "asc" }, { sortOrder: "asc" }] }),
-      prisma.serviceCategory.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
-      prisma.equipmentCategory.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
-      prisma.professionalCategory.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
+      prisma.materialCategory.findMany({ where: { projectId }, orderBy: [{ groupName: "asc" }, { name: "asc" }] }),
+      prisma.labourCategory.findMany({ where: { projectId }, orderBy: [{ groupName: "asc" }, { name: "asc" }] }),
+      prisma.serviceCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+      prisma.equipmentCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+      prisma.professionalCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
     ]);
   }
 

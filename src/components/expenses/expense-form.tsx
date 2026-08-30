@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { saveExpense, deleteExpense } from "@/lib/actions/expenses";
 import { uploadReceipt } from "@/lib/actions/receipts";
-import { createMaterialCategory, createLabourCategory } from "@/lib/actions/masters";
+import { createMaterialCategory, createLabourCategory, createServiceCategory } from "@/lib/actions/masters";
 import { computeLabourAmount, computeMaterialAmount } from "@/lib/finance/aggregations";
 import { formatINR, parseMoneyInput } from "@/lib/money";
 import { getMaterialPreset } from "@/lib/catalog/expense-presets";
@@ -85,9 +85,36 @@ export function ExpenseForm({
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Dynamic Category Lists (allows immediate on-the-fly additions)
-  const [materialsList, setMaterialsList] = useState<Option[]>(materials);
-  const [laboursList, setLaboursList] = useState<Option[]>(labours);
+  // Dynamic Category Lists (allows immediate on-the-fly additions and ensures edited categories are present)
+  const [materialsList, setMaterialsList] = useState<Option[]>(() => {
+    const list = [...materials];
+    if (initial?.materialCategoryId && initial?.materialCategoryName) {
+      if (!list.some((m) => m.id === initial.materialCategoryId)) {
+        list.push({ id: initial.materialCategoryId, name: initial.materialCategoryName, groupName: "Custom" });
+      }
+    }
+    return list;
+  });
+
+  const [laboursList, setLaboursList] = useState<Option[]>(() => {
+    const list = [...labours];
+    if (initial?.labourCategoryId && initial?.labourCategoryName) {
+      if (!list.some((l) => l.id === initial.labourCategoryId)) {
+        list.push({ id: initial.labourCategoryId, name: initial.labourCategoryName, groupName: "Custom" });
+      }
+    }
+    return list;
+  });
+
+  const [servicesList, setServicesList] = useState<Option[]>(() => {
+    const list = [...services];
+    if (initial?.serviceCategoryId && initial?.serviceCategoryName) {
+      if (!list.some((s) => s.id === initial.serviceCategoryId)) {
+        list.push({ id: initial.serviceCategoryId, name: initial.serviceCategoryName });
+      }
+    }
+    return list;
+  });
 
   // On-the-fly Category Creation States
   const [showNewMaterialModal, setShowNewMaterialModal] = useState(false);
@@ -97,6 +124,10 @@ export function ExpenseForm({
   const [showNewLabourModal, setShowNewLabourModal] = useState(false);
   const [newLabourName, setNewLabourName] = useState("");
   const [isCreatingLabour, setIsCreatingLabour] = useState(false);
+
+  const [showNewServiceModal, setShowNewServiceModal] = useState(false);
+  const [newServiceName, setNewServiceName] = useState("");
+  const [isCreatingService, setIsCreatingService] = useState(false);
 
   // Success State for 15-second fast continuous recording
   const [savedSuccess, setSavedSuccess] = useState<{ id: string; amount: number; title: string } | null>(null);
@@ -117,18 +148,20 @@ export function ExpenseForm({
   const [description, setDescription] = useState<string>(initial?.description ?? "");
 
   // 3. Material Specific Fields
-  const [materialCategory, setMaterialCategory] = useState<string>(
-    initial?.materialCategoryId ?? materials[0]?.id ?? ""
-  );
+  const [materialCategory, setMaterialCategory] = useState<string>(() => {
+    if (initial?.materialCategoryId) return initial.materialCategoryId;
+    return materials[0]?.id ?? "";
+  });
   const [quantity, setQuantity] = useState<string>(initial?.quantity ?? "");
   const [unit, setUnit] = useState<string>(initial?.unit ?? "bags");
   const [rate, setRate] = useState<string>(initial?.rate ?? "");
   const [materialManualAmount, setMaterialManualAmount] = useState<string>(initial?.amount ?? "");
 
   // 4. Labour Specific Fields
-  const [labourCategory, setLabourCategory] = useState<string>(
-    initial?.labourCategoryId ?? labours[0]?.id ?? ""
-  );
+  const [labourCategory, setLabourCategory] = useState<string>(() => {
+    if (initial?.labourCategoryId) return initial.labourCategoryId;
+    return labours[0]?.id ?? "";
+  });
   const [workerId, setWorkerId] = useState<string>(initial?.workerId ?? "");
   const [calcMode, setCalcMode] = useState<"DAILY_WAGE" | "FIXED_CONTRACT">(
     initial?.labourCalcMethod === "FIXED_CONTRACT" || (initial?.amount && !initial?.numberOfWorkers)
@@ -141,9 +174,12 @@ export function ExpenseForm({
   const [contractAmount, setContractAmount] = useState<string>(initial?.amount ?? "");
 
   // 5. Other Specific Fields
-  const [otherCategory, setOtherCategory] = useState<string>(
-    initial?.serviceCategoryId ?? initial?.equipmentCategoryId ?? initial?.professionalCategoryId ?? services[0]?.id ?? ""
-  );
+  const [otherCategory, setOtherCategory] = useState<string>(() => {
+    if (initial?.serviceCategoryId) return initial.serviceCategoryId;
+    if (initial?.equipmentCategoryId) return initial.equipmentCategoryId;
+    if (initial?.professionalCategoryId) return initial.professionalCategoryId;
+    return services[0]?.id ?? equipment[0]?.id ?? professionals[0]?.id ?? "";
+  });
   const [otherAmount, setOtherAmount] = useState<string>(initial?.amount ?? "");
 
   // 6. Optional Fields (Hidden under "More Details")
@@ -344,6 +380,36 @@ export function ExpenseForm({
     }
   };
 
+  // Create new custom Service Category on the fly
+  const handleCreateNewServiceCategory = async (nameToCreate?: string) => {
+    const name = (nameToCreate ?? newServiceName).trim();
+    if (!name) return;
+    setIsCreatingService(true);
+    setError(null);
+    try {
+      const res = await createServiceCategory({ projectId, name });
+      if (res.ok && res.category) {
+        const newCat = res.category;
+        setServicesList((prev) => {
+          if (prev.some((c) => c.id === newCat.id)) return prev;
+          return [...prev, newCat];
+        });
+        setOtherCategory(newCat.id);
+        if (!description || servicesList.some((s) => s.name === description)) {
+          setDescription(newCat.name);
+        }
+        setNewServiceName("");
+        setShowNewServiceModal(false);
+      } else if (res.error) {
+        setError(res.error);
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to create category");
+    } finally {
+      setIsCreatingService(false);
+    }
+  };
+
   // Reset form for "Add Another" 15-second workflow
   const handleAddAnother = () => {
     setSavedSuccess(null);
@@ -403,8 +469,26 @@ export function ExpenseForm({
       }
       payload.workerId = workerId || null;
     } else {
-      title = description.trim() || "Service / Equipment";
-      payload.serviceCategoryId = otherCategory || null;
+      const isEquip = equipment.some((eq) => eq.id === otherCategory);
+      const isProf = professionals.some((p) => p.id === otherCategory);
+      const matchedCat =
+        servicesList.find((s) => s.id === otherCategory) ||
+        equipment.find((eq) => eq.id === otherCategory) ||
+        professionals.find((p) => p.id === otherCategory);
+
+      title = description.trim() || matchedCat?.name || "Service / Equipment";
+
+      if (isEquip) {
+        payload.expenseType = "EQUIPMENT";
+        payload.equipmentCategoryId = otherCategory || null;
+      } else if (isProf) {
+        payload.expenseType = "PROFESSIONAL";
+        payload.professionalCategoryId = otherCategory || null;
+      } else {
+        payload.expenseType = "SERVICE";
+        payload.serviceCategoryId = otherCategory || null;
+      }
+
       payload.description = title;
       payload.vendorId = vendorId || null;
     }
@@ -1087,30 +1171,113 @@ export function ExpenseForm({
           {/* ================= IF OTHER ================= */}
           {type === "OTHER" && (
             <>
-              <div>
-                <label className="text-xs font-bold text-ink-700 block mb-1.5">
-                  Category
-                </label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="other-category-select" className="text-xs font-bold text-ink-700">
+                    Category
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewServiceModal((prev) => !prev)}
+                    className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Add New Category</span>
+                  </button>
+                </div>
+
+                {/* Inline Custom Service Category Creator */}
+                {showNewServiceModal && (
+                  <div className="p-3 rounded-2xl bg-clay-50/80 border border-clay-200 space-y-2 animate-in fade-in zoom-in-95 duration-150">
+                    <label className="text-xs font-bold text-clay-900 block">
+                      Add Custom Service / Other Category
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={newServiceName}
+                        onChange={(e) => setNewServiceName(e.target.value)}
+                        placeholder="e.g. Borewell Drilling, Site Cleaning, Soil Testing"
+                        className="flex-1 rounded-xl border border-paper-300 bg-white px-3 py-2 text-xs font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleCreateNewServiceCategory();
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        disabled={isCreatingService || !newServiceName.trim()}
+                        onClick={() => handleCreateNewServiceCategory()}
+                        className="rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-clay-700 disabled:opacity-50 transition shrink-0 cursor-pointer"
+                      >
+                        {isCreatingService ? "Saving..." : "Save & Select"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewServiceModal(false);
+                          setNewServiceName("");
+                        }}
+                        className="rounded-xl border border-paper-300 bg-white px-2.5 py-2 text-xs font-bold text-ink-600 hover:bg-paper-100 transition shrink-0 cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <select
+                  id="other-category-select"
+                  aria-label="Other category"
                   value={otherCategory}
-                  onChange={(e) => setOtherCategory(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value === "__NEW__") {
+                      setShowNewServiceModal(true);
+                    } else {
+                      setOtherCategory(e.target.value);
+                      const matched =
+                        servicesList.find((s) => s.id === e.target.value) ||
+                        equipment.find((eq) => eq.id === e.target.value) ||
+                        professionals.find((p) => p.id === e.target.value);
+                      if (matched && (!description || servicesList.some((s) => s.name === description))) {
+                        setDescription(matched.name);
+                      }
+                    }
+                  }}
                   className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
                 >
-                  {services.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                  {equipment.map((eq) => (
-                    <option key={eq.id} value={eq.id}>
-                      {eq.name}
-                    </option>
-                  ))}
-                  {professionals.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
+                  <option value="__NEW__" className="font-bold text-clay-700 bg-clay-50/80">
+                    + Add New Custom Category...
+                  </option>
+                  {servicesList.length > 0 && (
+                    <optgroup label="── Services & Permits ──">
+                      {servicesList.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {equipment.length > 0 && (
+                    <optgroup label="── Machinery & Equipment ──">
+                      {equipment.map((eq) => (
+                        <option key={eq.id} value={eq.id}>
+                          {eq.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {professionals.length > 0 && (
+                    <optgroup label="── Professional Fees ──">
+                      {professionals.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
 
