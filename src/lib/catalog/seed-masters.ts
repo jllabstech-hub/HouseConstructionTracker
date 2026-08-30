@@ -2,10 +2,8 @@ import { prisma } from "@/lib/prisma";
 import {
   DEFAULT_FLOORS,
   DEFAULT_STAGES,
-  EQUIPMENT_CATALOG,
   LABOUR_CATALOG,
   MATERIAL_CATALOG,
-  PROFESSIONAL_CATALOG,
   SERVICE_CATALOG,
   WORK_AREA_TEMPLATES,
 } from "@/lib/catalog/defaults";

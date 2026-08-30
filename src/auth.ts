@@ -4,7 +4,6 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
 import { authConfig } from "@/auth.config";
-import { seedProjectMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { ensureDatabaseSchema } from "@/lib/db/init-db";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -67,7 +66,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             input === "admin") &&
           parsed.data.password === "test123";
 
-        // Auto-provision default admin if missing
+        // Auto-provision default admin if missing (without any fake projects)
         if (!user && isAdminDemo) {
           try {
             const passwordHash = await bcrypt.hash("test123", 10);
@@ -80,24 +79,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 passwordHash,
               },
             });
-            // Ensure default project exists for admin
-            let project = await prisma.project.findFirst({ where: { userId: user.id } });
-            if (!project) {
-              project = await prisma.project.create({
-                data: {
-                  userId: user.id,
-                  name: "Nandakam",
-                  location: "Pruthvi Layout, Channasandra",
-                  builtUpArea: 3200,
-                  plotArea: 2400,
-                  totalBudget: 4000000,
-                  status: "IN_PROGRESS",
-                  startDate: new Date("2026-01-10"),
-                },
-              });
-              await seedProjectStructure(project.id, { demoProgress: true });
-            }
-            await seedProjectMasters(project.id);
           } catch (seedErr) {
             console.error("Auto-seed admin error:", seedErr);
           }

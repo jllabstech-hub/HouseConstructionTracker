@@ -24,7 +24,6 @@ import { createMaterialCategory, createLabourCategory } from "@/lib/actions/mast
 import { computeLabourAmount, computeMaterialAmount } from "@/lib/finance/aggregations";
 import { formatINR, parseMoneyInput } from "@/lib/money";
 import { getMaterialPreset } from "@/lib/catalog/expense-presets";
-import { QUICK_MATERIAL_PRESETS, QUICK_LABOUR_PRESETS, getStageGroupOrder } from "@/lib/catalog/category-constants";
 import { FileDropzone } from "@/components/ui/file-dropzone";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
@@ -129,21 +128,28 @@ export function ExpenseForm({
     return list;
   });
 
-  const [materialCategoryId, setMaterialCategoryId] = useState<string>(() => {
-    if (initial?.materialCategoryId) return initial.materialCategoryId;
-    return materials[0]?.id ?? "";
-  });
+  // Category Name and ID state - starts completely empty by default
+  const [materialCategoryName, setMaterialCategoryName] = useState<string>(
+    initial?.materialCategoryName ?? ""
+  );
+  const [materialCategoryId, setMaterialCategoryId] = useState<string>(
+    initial?.materialCategoryId ?? ""
+  );
 
-  const [labourCategoryId, setLabourCategoryId] = useState<string>(() => {
-    if (initial?.labourCategoryId) return initial.labourCategoryId;
-    return labours[0]?.id ?? "";
-  });
+  const [labourCategoryName, setLabourCategoryName] = useState<string>(
+    initial?.labourCategoryName ?? ""
+  );
+  const [labourCategoryId, setLabourCategoryId] = useState<string>(
+    initial?.labourCategoryId ?? ""
+  );
 
+  // 2. Shared Core Fields: Date & Description
   const [date, setDate] = useState<string>(
     initial?.date ? initial.date.slice(0, 10) : new Date().toISOString().slice(0, 10)
   );
   const [description, setDescription] = useState<string>(initial?.description ?? "");
 
+  // 3. Calculation Mode: "QUANTITY_RATE" vs "DIRECT_AMOUNT"
   const hasQuantityRateInitial =
     Boolean(initial?.quantity && initial?.rate) ||
     Boolean(initial?.dailyWorkers && initial?.rate) ||
@@ -153,22 +159,23 @@ export function ExpenseForm({
     hasQuantityRateInitial ? "QUANTITY_RATE" : initial?.amount && !hasQuantityRateInitial ? "DIRECT_AMOUNT" : "QUANTITY_RATE"
   );
 
+  // Material fields
   const [quantity, setQuantity] = useState<string>(initial?.quantity ?? "");
   const [unit, setUnit] = useState<string>(initial?.unit ?? "bags");
   const [rate, setRate] = useState<string>(initial?.rate ?? "");
 
+  // Manpower fields
   const [numberOfWorkers, setNumberOfWorkers] = useState<string>(initial?.dailyWorkers ?? "3");
   const [numberOfDays, setNumberOfDays] = useState<string>(initial?.dailyDays ?? "1");
   const [dailyRate, setDailyRate] = useState<string>(initial?.rate ?? "900");
 
+  // Direct Amount Field
   const [directAmount, setDirectAmount] = useState<string>(initial?.amount ?? "");
 
+  // 4. Bill Upload / Receipt State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const [showNewCatModal, setShowNewCatModal] = useState(false);
-  const [newCatName, setNewCatName] = useState("");
-  const [isCreatingCat, setIsCreatingCat] = useState(false);
-
+  // 5. Optional Details Accordion ("More Details")
   const [showMoreDetails, setShowMoreDetails] = useState(
     Boolean(initial?.vendorId || initial?.workerId || initial?.constructionStageId || initial?.floorId || initial?.invoiceNumber || initial?.notes)
   );
@@ -180,38 +187,10 @@ export function ExpenseForm({
   const [invoiceNumber, setInvoiceNumber] = useState<string>(initial?.invoiceNumber ?? "");
   const [notes, setNotes] = useState<string>(initial?.notes ?? "");
 
+  // Success State for Fast Continuous Logging
   const [savedSuccess, setSavedSuccess] = useState<{ id: string; amount: number; title: string } | null>(null);
 
-  const groupedMaterials = useMemo(() => {
-    const groups: Record<string, Option[]> = {};
-    for (const m of materialsList) {
-      const g = m.groupName || "Standard Categories";
-      if (!groups[g]) groups[g] = [];
-      groups[g].push(m);
-    }
-    return Object.entries(groups).sort(([a], [b]) => {
-      const orderA = getStageGroupOrder(a);
-      const orderB = getStageGroupOrder(b);
-      if (orderA !== orderB) return orderA - orderB;
-      return a.localeCompare(b);
-    });
-  }, [materialsList]);
-
-  const groupedLabours = useMemo(() => {
-    const groups: Record<string, Option[]> = {};
-    for (const l of laboursList) {
-      const g = l.groupName || "Standard Categories";
-      if (!groups[g]) groups[g] = [];
-      groups[g].push(l);
-    }
-    return Object.entries(groups).sort(([a], [b]) => {
-      const orderA = getStageGroupOrder(a);
-      const orderB = getStageGroupOrder(b);
-      if (orderA !== orderB) return orderA - orderB;
-      return a.localeCompare(b);
-    });
-  }, [laboursList]);
-
+  // Live Computed Total
   const computedTotal = useMemo(() => {
     if (calcMode === "DIRECT_AMOUNT") {
       return Number(parseMoneyInput(directAmount) ?? 0);
@@ -226,6 +205,7 @@ export function ExpenseForm({
       return 0;
     }
 
+    // MANPOWER
     const w = Number(numberOfWorkers) || 0;
     const d = Number(numberOfDays) || 0;
     const r = parseMoneyInput(dailyRate);
@@ -235,6 +215,40 @@ export function ExpenseForm({
     return 0;
   }, [superiorCategory, calcMode, directAmount, quantity, rate, numberOfWorkers, numberOfDays, dailyRate]);
 
+  const currentCategoryList = superiorCategory === "MATERIAL" ? materialsList : laboursList;
+  const activeCategoryName = superiorCategory === "MATERIAL" ? materialCategoryName : labourCategoryName;
+
+  const handleCategoryNameChange = (val: string) => {
+    if (superiorCategory === "MATERIAL") {
+      setMaterialCategoryName(val);
+      const matched = materialsList.find((m) => m.name.toLowerCase() === val.trim().toLowerCase());
+      if (matched) {
+        setMaterialCategoryId(matched.id);
+        const preset = getMaterialPreset(matched.name);
+        if (preset.defaultUnit) setUnit(preset.defaultUnit);
+        if (!description || materialsList.some((m) => m.name === description)) {
+          setDescription(matched.name);
+        }
+      } else {
+        setMaterialCategoryId("");
+        const preset = getMaterialPreset(val);
+        if (preset.defaultUnit) setUnit(preset.defaultUnit);
+      }
+    } else {
+      setLabourCategoryName(val);
+      const matched = laboursList.find((l) => l.name.toLowerCase() === val.trim().toLowerCase());
+      if (matched) {
+        setLabourCategoryId(matched.id);
+        if (!description || laboursList.some((l) => l.name === description)) {
+          setDescription(matched.name);
+        }
+      } else {
+        setLabourCategoryId("");
+      }
+    }
+  };
+
+  // Live Formula Label
   const formulaLabel = useMemo(() => {
     if (calcMode === "DIRECT_AMOUNT") return null;
 
@@ -256,91 +270,14 @@ export function ExpenseForm({
     return null;
   }, [superiorCategory, calcMode, quantity, rate, unit, numberOfWorkers, numberOfDays, dailyRate]);
 
-  const handleMaterialCatChange = (catId: string) => {
-    setMaterialCategoryId(catId);
-    const cat = materialsList.find((m) => m.id === catId);
-    if (cat) {
-      const preset = getMaterialPreset(cat.name);
-      if (preset.defaultUnit) setUnit(preset.defaultUnit);
-      if (!description || materialsList.some((m) => m.name === description)) {
-        setDescription(cat.name);
-      }
-    }
-  };
-
-  const handleLabourCatChange = (catId: string) => {
-    setLabourCategoryId(catId);
-    const cat = laboursList.find((l) => l.id === catId);
-    if (cat) {
-      if (!description || laboursList.some((l) => l.name === description)) {
-        setDescription(cat.name);
-      }
-    }
-  };
-
-  const handleCreateNewCategory = async (nameToCreate?: string) => {
-    const name = (nameToCreate ?? newCatName).trim();
-    if (!name) return;
-    setIsCreatingCat(true);
-    setError(null);
-    try {
-      if (superiorCategory === "MATERIAL") {
-        const res = await createMaterialCategory({ projectId, name, groupName: "Custom" });
-        if (res.ok && res.category) {
-          const newCat = res.category;
-          setMaterialsList((prev) => (prev.some((c) => c.id === newCat.id) ? prev : [...prev, newCat]));
-          handleMaterialCatChange(newCat.id);
-          setNewCatName("");
-          setShowNewCatModal(false);
-        } else if (res.error) {
-          setError(res.error);
-        }
-      } else {
-        const res = await createLabourCategory({ projectId, name, groupName: "Custom" });
-        if (res.ok && res.category) {
-          const newCat = res.category;
-          setLaboursList((prev) => (prev.some((c) => c.id === newCat.id) ? prev : [...prev, newCat]));
-          handleLabourCatChange(newCat.id);
-          setNewCatName("");
-          setShowNewCatModal(false);
-        } else if (res.error) {
-          setError(res.error);
-        }
-      }
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to create category");
-    } finally {
-      setIsCreatingCat(false);
-    }
-  };
-
-  const handleSelectPreset = async (presetName: string) => {
-    if (superiorCategory === "MATERIAL") {
-      const cleanPrefix = presetName.toLowerCase().split("/")[0].trim();
-      const existing = materialsList.find(
-        (m) => m.name.toLowerCase() === presetName.toLowerCase() || m.name.toLowerCase().includes(cleanPrefix)
-      );
-      if (existing) {
-        handleMaterialCatChange(existing.id);
-      } else {
-        await handleCreateNewCategory(presetName);
-      }
-    } else {
-      const cleanPrefix = presetName.toLowerCase().split("&")[0].trim();
-      const existing = laboursList.find(
-        (l) => l.name.toLowerCase() === presetName.toLowerCase() || l.name.toLowerCase().includes(cleanPrefix)
-      );
-      if (existing) {
-        handleLabourCatChange(existing.id);
-      } else {
-        await handleCreateNewCategory(presetName);
-      }
-    }
-  };
-
+  // Add Another Continuous Workflow
   const handleAddAnother = () => {
     setSavedSuccess(null);
     setError(null);
+    setMaterialCategoryName("");
+    setMaterialCategoryId("");
+    setLabourCategoryName("");
+    setLabourCategoryId("");
     setQuantity("");
     setRate("");
     setDirectAmount("");
@@ -349,56 +286,77 @@ export function ExpenseForm({
     setDescription("");
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // Form Submit
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
+
+    const activeCatName = superiorCategory === "MATERIAL" ? materialCategoryName.trim() : labourCategoryName.trim();
+    if (!activeCatName) {
+      setError(`Please enter or select a ${superiorCategory === "MATERIAL" ? "material" : "man power"} category`);
+      return;
+    }
 
     if (computedTotal <= 0) {
       setError("Please enter a valid amount or quantity and rate");
       return;
     }
 
-    const payload: Record<string, unknown> = {
-      projectId,
-      date,
-      expenseType: superiorCategory === "MATERIAL" ? "MATERIAL" : "LABOUR",
-      paymentMethod,
-      amount: String(computedTotal),
-      constructionStageId: stageId || null,
-      floorId: floorId || null,
-      invoiceNumber: invoiceNumber || null,
-      notes: notes || null,
-    };
-
-    let title = "Expense";
-
-    if (superiorCategory === "MATERIAL") {
-      const cat = materialsList.find((m) => m.id === materialCategoryId);
-      title = description.trim() || cat?.name || "Material";
-      payload.materialCategoryId = materialCategoryId || null;
-      payload.description = title;
-      payload.quantity = calcMode === "QUANTITY_RATE" && quantity ? quantity : null;
-      payload.unit = calcMode === "QUANTITY_RATE" && unit ? unit : null;
-      payload.rate = calcMode === "QUANTITY_RATE" && rate ? rate : null;
-      payload.vendorId = vendorId || null;
-    } else {
-      const cat = laboursList.find((l) => l.id === labourCategoryId);
-      title = description.trim() || cat?.name || "Man Power";
-      payload.labourCategoryId = labourCategoryId || null;
-      payload.description = title;
-      if (calcMode === "QUANTITY_RATE") {
-        payload.labourCalcMethod = "DAILY_WAGE";
-        payload.numberOfWorkers = numberOfWorkers || null;
-        payload.numberOfDays = numberOfDays || null;
-        payload.rate = dailyRate || null;
-      } else {
-        payload.labourCalcMethod = "FIXED_CONTRACT";
-      }
-      payload.workerId = workerId || null;
-    }
-
     start(async () => {
       try {
+        let finalCatId = superiorCategory === "MATERIAL" ? materialCategoryId : labourCategoryId;
+
+        // Auto-create category if user typed a new one
+        if (!finalCatId && activeCatName) {
+          if (superiorCategory === "MATERIAL") {
+            const res = await createMaterialCategory({ projectId, name: activeCatName, groupName: "Custom" });
+            if (res.ok && res.category) {
+              finalCatId = res.category.id;
+              setMaterialsList((prev) => (prev.some((c) => c.id === res.category!.id) ? prev : [...prev, res.category!]));
+            }
+          } else {
+            const res = await createLabourCategory({ projectId, name: activeCatName, groupName: "Custom" });
+            if (res.ok && res.category) {
+              finalCatId = res.category.id;
+              setLaboursList((prev) => (prev.some((c) => c.id === res.category!.id) ? prev : [...prev, res.category!]));
+            }
+          }
+        }
+
+        const title = description.trim() || activeCatName || (superiorCategory === "MATERIAL" ? "Material" : "Man Power");
+
+        const payload: Record<string, unknown> = {
+          projectId,
+          date,
+          expenseType: superiorCategory === "MATERIAL" ? "MATERIAL" : "LABOUR",
+          paymentMethod,
+          amount: String(computedTotal),
+          description: title,
+          constructionStageId: stageId || null,
+          floorId: floorId || null,
+          invoiceNumber: invoiceNumber || null,
+          notes: notes || null,
+        };
+
+        if (superiorCategory === "MATERIAL") {
+          payload.materialCategoryId = finalCatId || null;
+          payload.quantity = calcMode === "QUANTITY_RATE" && quantity ? quantity : null;
+          payload.unit = calcMode === "QUANTITY_RATE" && unit ? unit : null;
+          payload.rate = calcMode === "QUANTITY_RATE" && rate ? rate : null;
+          payload.vendorId = vendorId || null;
+        } else {
+          payload.labourCategoryId = finalCatId || null;
+          if (calcMode === "QUANTITY_RATE") {
+            payload.labourCalcMethod = "DAILY_WAGE";
+            payload.numberOfWorkers = numberOfWorkers || null;
+            payload.numberOfDays = numberOfDays || null;
+            payload.rate = dailyRate || null;
+          } else {
+            payload.labourCalcMethod = "FIXED_CONTRACT";
+          }
+          payload.workerId = workerId || null;
+        }
+
         const result = await saveExpense(payload, expenseId);
         if (result && "error" in result && result.error) {
           setError(typeof result.error === "string" ? result.error : "Failed to save expense");
@@ -484,9 +442,6 @@ export function ExpenseForm({
     );
   }
 
-  const currentCategoryList = superiorCategory === "MATERIAL" ? materialsList : laboursList;
-  const currentSelectedCategory =
-    superiorCategory === "MATERIAL" ? materialCategoryId : labourCategoryId;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-12">
@@ -617,134 +572,58 @@ export function ExpenseForm({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label htmlFor="expense-category-select" className="text-xs font-bold text-ink-700">
-                {superiorCategory === "MATERIAL" ? "Material Category" : "Man Power Category"}
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowNewCatModal((prev) => !prev)}
-                className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 hover:text-clay-900 transition cursor-pointer"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Add New Category</span>
-              </button>
-            </div>
+            <label htmlFor="expense-category-input" className="text-xs font-bold text-ink-700 block">
+              {superiorCategory === "MATERIAL" ? "Material Category" : "Man Power Category"}
+            </label>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {(superiorCategory === "MATERIAL" ? QUICK_MATERIAL_PRESETS : QUICK_LABOUR_PRESETS).map((preset) => {
-                const currentCat = currentCategoryList.find((c) => c.id === currentSelectedCategory);
-                const isSelected = currentCat?.name.toLowerCase().includes(preset.toLowerCase().split("/")[0].trim());
-                return (
-                  <button
-                    key={preset}
-                    type="button"
-                    onClick={() => handleSelectPreset(preset)}
-                    className={cn(
-                      "rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap transition active:scale-95 border cursor-pointer shrink-0",
-                      isSelected
-                        ? superiorCategory === "MATERIAL"
-                          ? "bg-clay-600 text-white border-clay-600 shadow-xs"
-                          : "bg-emerald-600 text-white border-emerald-600 shadow-xs"
-                        : "bg-paper-50 text-ink-700 border-paper-300 hover:bg-paper-100 hover:border-paper-400"
-                    )}
-                  >
-                    {preset}
-                  </button>
-                );
-              })}
-            </div>
+            <div className="relative">
+              <input
+                id="expense-category-input"
+                list="category-suggestions"
+                type="text"
+                required
+                value={activeCategoryName}
+                onChange={(e) => handleCategoryNameChange(e.target.value)}
+                placeholder={
+                  superiorCategory === "MATERIAL"
+                    ? "Type category name (e.g. Cement, Steel, Sand, Bricks, Tiles...)"
+                    : "Type trade / category (e.g. Masonry, Plumbing, Electrical, Wages...)"
+                }
+                className="w-full rounded-xl border border-paper-300 bg-white p-3 text-base sm:text-sm font-semibold text-ink-900 placeholder:text-ink-400 placeholder:font-normal focus:border-clay-500 focus:outline-none shadow-2xs"
+              />
 
-            {showNewCatModal && (
-              <div className="p-3.5 rounded-2xl bg-clay-50/90 border border-clay-200 space-y-2 animate-in fade-in zoom-in-95 duration-150">
-                <label className="text-xs font-bold text-clay-900 block">
-                  Add Custom {superiorCategory === "MATERIAL" ? "Material" : "Man Power"} Category
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={newCatName}
-                    onChange={(e) => setNewCatName(e.target.value)}
-                    placeholder={
-                      superiorCategory === "MATERIAL"
-                        ? "e.g. Solar Panels, UPVC Windows, Water Meter"
-                        : "e.g. Granite Polisher, JCB Operator, Surveyor"
-                    }
-                    className="flex-1 rounded-xl border border-paper-300 bg-white px-3 py-2 text-xs font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleCreateNewCategory();
-                      }
-                    }}
-                  />
-                  <button
-                    type="button"
-                    disabled={isCreatingCat || !newCatName.trim()}
-                    onClick={() => handleCreateNewCategory()}
-                    className="rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-clay-700 disabled:opacity-50 transition shrink-0 cursor-pointer"
-                  >
-                    {isCreatingCat ? "Saving..." : "Save & Select"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowNewCatModal(false);
-                      setNewCatName("");
-                    }}
-                    className="rounded-xl border border-paper-300 bg-white px-2.5 py-2 text-xs font-bold text-ink-600 hover:bg-paper-100 transition shrink-0 cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {currentCategoryList.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-paper-300 bg-paper-50/60 p-4 text-center space-y-2">
-                <p className="text-xs text-ink-600 font-medium">
-                  No {superiorCategory === "MATERIAL" ? "material" : "man power"} categories created yet.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setShowNewCatModal(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-clay-700 transition cursor-pointer"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>Add First Category</span>
-                </button>
-              </div>
-            ) : (
-              <select
-                id="expense-category-select"
-                aria-label="Category"
-                value={currentSelectedCategory}
-                onChange={(e) => {
-                  if (e.target.value === "__NEW__") {
-                    setShowNewCatModal(true);
-                  } else {
-                    if (superiorCategory === "MATERIAL") {
-                      handleMaterialCatChange(e.target.value);
-                    } else {
-                      handleLabourCatChange(e.target.value);
-                    }
-                  }
-                }}
-                className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
-              >
-                <option value="__NEW__" className="font-bold text-clay-700 bg-clay-50/80">
-                  + Add New Custom Category...
-                </option>
-                {(superiorCategory === "MATERIAL" ? groupedMaterials : groupedLabours).map(([groupName, items]) => (
-                  <optgroup key={groupName} label={`── ${groupName} ──`}>
-                    {items.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </optgroup>
+              <datalist id="category-suggestions">
+                {currentCategoryList.map((cat) => (
+                  <option key={cat.id} value={cat.name}>
+                    {cat.groupName ? `${cat.name} (${cat.groupName})` : cat.name}
+                  </option>
                 ))}
-              </select>
+              </datalist>
+            </div>
+
+            {currentCategoryList.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none pt-1">
+                {currentCategoryList.map((cat) => {
+                  const isSelected = activeCategoryName.toLowerCase() === cat.name.toLowerCase();
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => handleCategoryNameChange(cat.name)}
+                      className={cn(
+                        "rounded-xl px-3 py-1.5 text-xs font-bold whitespace-nowrap transition active:scale-95 border cursor-pointer shrink-0",
+                        isSelected
+                          ? superiorCategory === "MATERIAL"
+                            ? "bg-clay-600 text-white border-clay-600 shadow-xs"
+                            : "bg-emerald-600 text-white border-emerald-600 shadow-xs"
+                          : "bg-paper-50 text-ink-700 border-paper-300 hover:bg-paper-100 hover:border-paper-400"
+                      )}
+                    >
+                      {cat.name}
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
 

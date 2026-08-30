@@ -2,7 +2,6 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
-import { seedProjectMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { getCached, setCached } from "@/lib/cache-utils";
 import type { Project } from "@prisma/client";
 
@@ -34,32 +33,11 @@ export const getActiveProject = cache(async (userId?: string): Promise<ActivePro
       where: { userId: user.id },
       orderBy: { createdAt: "asc" },
     });
-
-    if (projects.length === 0) {
-      try {
-        const newProject = await prisma.project.create({
-          data: {
-            userId: user.id,
-            name: "Nandakam",
-            location: "Pruthvi Layout, Channasandra",
-            builtUpArea: 3200,
-            plotArea: 2400,
-            totalBudget: 4000000,
-            status: "IN_PROGRESS",
-            startDate: new Date("2026-01-10"),
-          },
-        });
-        await seedProjectStructure(newProject.id, { demoProgress: true });
-        await seedProjectMasters(newProject.id);
-        projects = [newProject];
-      } catch (healErr) {
-        console.warn("Auto-create project failed:", healErr);
-        await clearActiveProjectId();
-        return null;
-      }
-    }
-
     setCached(cacheKey, projects);
+  }
+
+  if (projects.length === 0) {
+    return null;
   }
 
   const jar = await cookies();

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { seedProjectMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { ensureDatabaseSchema } from "@/lib/db/init-db";
 
 export const dynamic = "force-dynamic";
@@ -84,26 +83,38 @@ export async function GET(request: Request) {
       throw new Error("Failed to initialize user record");
     }
 
-    // 4. Ensure default project exists
-    let project = await prisma.project.findFirst({ where: { userId: user.id } });
-    if (!project) {
-      project = await prisma.project.create({
-        data: {
-          userId: user.id,
-          name: "Nandakam",
-          location: "Pruthvi Layout, Channasandra",
-          builtUpArea: 3200,
-          plotArea: 2400,
-          totalBudget: 4000000,
-          status: "IN_PROGRESS",
-          startDate: new Date("2026-01-10"),
-        },
-      });
-      await seedProjectStructure(project.id, { demoProgress: true });
+    if (action === "delete-all-projects") {
+      try {
+        await ensureDatabaseSchema();
+        const res = await prisma.$transaction([
+          prisma.receipt.deleteMany({}),
+          prisma.expense.deleteMany({}),
+          prisma.projectDocument.deleteMany({}),
+          prisma.report.deleteMany({}),
+          prisma.budgetCategory.deleteMany({}),
+          prisma.budget.deleteMany({}),
+          prisma.materialSubcategory.deleteMany({}),
+          prisma.materialCategory.deleteMany({}),
+          prisma.labourCategory.deleteMany({}),
+          prisma.serviceCategory.deleteMany({}),
+          prisma.equipmentCategory.deleteMany({}),
+          prisma.professionalCategory.deleteMany({}),
+          prisma.workAreaMaterial.deleteMany({}),
+          prisma.workAreaLabour.deleteMany({}),
+          prisma.workArea.deleteMany({}),
+          prisma.floor.deleteMany({}),
+          prisma.constructionStage.deleteMany({}),
+          prisma.project.deleteMany({}),
+        ]);
+        return NextResponse.json({
+          ok: true,
+          message: "All projects and associated data have been deleted successfully!",
+          result: res,
+        });
+      } catch (err: unknown) {
+        return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : String(err) }, { status: 500 });
+      }
     }
-
-    // 5. Seed project masters (materials, labours, work areas) if missing
-    await seedProjectMasters(project.id);
 
     if (shouldRedirect) {
       const forwardedHost = request.headers.get("x-forwarded-host");
@@ -119,7 +130,6 @@ export async function GET(request: Request) {
         userId: "admin",
         password: "test123",
       },
-      projectName: project.name,
     });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);

@@ -21,28 +21,13 @@ export async function registerUser(input: unknown) {
     if (existing) return { error: "An account with this email already exists" };
 
     const passwordHash = await bcrypt.hash(parsed.data.password, 12);
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         name: parsed.data.name,
         email,
         passwordHash,
       },
     });
-    await seedUserMasters(user.id);
-
-    const project = await prisma.project.create({
-      data: {
-        userId: user.id,
-        name: "My Dream House",
-        location: "Main Plot",
-        builtUpArea: 2500,
-        plotArea: 2000,
-        totalBudget: 3500000,
-        status: "IN_PROGRESS",
-        startDate: new Date(),
-      },
-    });
-    await seedProjectStructure(project.id);
 
     return { ok: true };
   } catch (error: unknown) {
