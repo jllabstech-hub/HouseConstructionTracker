@@ -295,7 +295,7 @@ export function AppShell({
                   title="Create your house project"
                 >
                   <Plus className="h-3.5 w-3.5 text-clay-600 shrink-0" />
-                  <span>+ Create Project</span>
+                  <span>Create Project</span>
                 </Link>
               )}
             </div>
