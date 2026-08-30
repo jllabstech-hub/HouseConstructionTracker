@@ -27,6 +27,16 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       return NextResponse.json({ error: "Document not found or unauthorized" }, { status: 404 });
     }
 
+    if (doc.fileData) {
+      return new NextResponse(new Uint8Array(doc.fileData), {
+        headers: {
+          "Content-Type": doc.mimeType || "application/octet-stream",
+          "Content-Disposition": `inline; filename="${encodeURIComponent(doc.fileName)}"`,
+          "Cache-Control": "private, max-age=3600",
+        },
+      });
+    }
+
     // 1. Check if it points to a static sample file in public/
     if (doc.storagePath.startsWith("/images/") || doc.storagePath.startsWith("/")) {
       const normalizedRelative = doc.storagePath.replace(/^\/+/, "");

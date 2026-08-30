@@ -352,6 +352,7 @@ export async function ensureDatabaseSchema() {
         "mimeType" TEXT NOT NULL,
         "sizeBytes" INTEGER NOT NULL,
         "storagePath" TEXT NOT NULL,
+        "fileData" BYTEA,
         "version" TEXT,
         "isPinned" BOOLEAN NOT NULL DEFAULT false,
         "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,

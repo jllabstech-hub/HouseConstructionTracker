@@ -1,7 +1,7 @@
 "use server";
 
 import { randomUUID } from "crypto";
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { unlink } from "fs/promises";
 import path from "path";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
@@ -63,29 +63,11 @@ export async function uploadDocument(projectId: string, formData: FormData) {
       if (!validStage) return { error: "Selected stage not found in this project" };
     }
 
-    // Safe file naming and storage paths
+    // Store document bytes in Postgres so uploads work on serverless hosts such as Vercel.
     const sanitizedOriginalName = validation.sanitizedName!;
     const ext = extensionFor(validation.mimeType!, validation.ext!);
     const storedName = `${randomUUID()}${ext}`;
-    const relative = path.join("documents", user.id, projectId, storedName);
-    const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
-    const fullPath = path.join(root, relative);
-
-    // Path Traversal Security check
-    const storageRelative = path.relative(root, fullPath);
-    if (storageRelative.startsWith("..") || path.isAbsolute(storageRelative)) {
-      return { error: "Invalid storage path" };
-    }
-
-    try {
-      await mkdir(path.dirname(fullPath), { recursive: true });
-      await writeFile(fullPath, Buffer.from(await file.arrayBuffer()));
-    } catch (fsErr) {
-      console.error("Failed to write document file to storage directory:", fsErr);
-      return {
-        error: "Server storage error: Unable to save the uploaded file to disk. Please check storage directory permissions.",
-      };
-    }
+    const fileData = Buffer.from(await file.arrayBuffer());
 
     let doc;
     try {
@@ -102,15 +84,14 @@ export async function uploadDocument(projectId: string, formData: FormData) {
           storedName,
           mimeType: validation.mimeType!,
           sizeBytes: file.size,
-          storagePath: relative.replaceAll("\\", "/"),
+          storagePath: `database:${storedName}`,
+          fileData,
           isPinned: formData.get("isPinned") === "true",
         },
       });
     } catch (dbError) {
-      // Clean up uploaded file if database registration fails
-      await unlink(fullPath).catch(() => {});
       console.error("Database registration failed for uploaded document:", dbError);
-      return { error: "Database error occurred while recording document. Upload has been safely rolled back." };
+      return { error: "Database error occurred while saving the document." };
     }
 
     invalidateProjectCache(projectId);
@@ -241,7 +222,7 @@ export async function deleteDocument(documentId: string) {
 
     // Delete physical file if exists in uploads directory
     try {
-      if (!doc.storagePath.startsWith("/images/")) {
+      if (!doc.storagePath.startsWith("/images/") && !doc.storagePath.startsWith("database:")) {
         const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
         const fullPath = path.join(root, doc.storagePath);
         const storageRelative = path.relative(root, fullPath);

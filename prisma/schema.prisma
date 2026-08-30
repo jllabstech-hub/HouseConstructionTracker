@@ -564,6 +564,7 @@ model ProjectDocument {
   mimeType            String
   sizeBytes           Int
   storagePath         String
+  fileData            Bytes?
   version             String?
   isPinned            Boolean          @default(false)
   createdAt           DateTime         @default(now())
