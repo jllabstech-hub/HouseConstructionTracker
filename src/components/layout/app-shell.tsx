@@ -40,7 +40,6 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [, start] = useTransition();
 
@@ -373,16 +372,16 @@ export function AppShell({
           <span className="whitespace-nowrap">Expenses</span>
         </Link>
 
-        {/* 3. Center Prominent Plus Action (Opens Quick Add Sheet) */}
-        <button
-          type="button"
-          onClick={() => setAddSheetOpen(true)}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-clay-600 text-white shadow-md hover:bg-clay-700 active:scale-95 transition shrink-0 self-center"
+        {/* 3. Center Prominent Plus Action (Directly Opens Add Expense Form) */}
+        <Link
+          href="/expenses/new"
+          prefetch={true}
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-clay-600 text-white shadow-md hover:bg-clay-700 active:scale-95 transition shrink-0 self-center cursor-pointer"
           title="Add Expense"
           aria-label="Add Expense"
         >
           <Plus className="h-5 w-5 stroke-[2.5]" />
-        </button>
+        </Link>
 
         {/* 4. Reports */}
         <Link
@@ -411,98 +410,6 @@ export function AppShell({
           <span className="whitespace-nowrap">More</span>
         </button>
       </nav>
-
-      {/* Center + Action Sheet: Add Material | Add Labour | Other Expense */}
-      {addSheetOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true" aria-labelledby="add-action-sheet-title">
-          <div
-            className="fixed inset-0 bg-ink-900/50 backdrop-blur-xs transition-opacity"
-            onClick={() => setAddSheetOpen(false)}
-            aria-hidden="true"
-          />
-
-          <div className="relative z-10 mt-auto flex w-full flex-col rounded-t-3xl bg-white shadow-2xl p-5 space-y-4 max-h-[80vh] overflow-y-auto animate-in slide-in-from-bottom duration-200">
-            <div className="flex items-center justify-between border-b border-paper-200 pb-3">
-              <div>
-                <h2 id="add-action-sheet-title" className="font-display text-base font-bold text-ink-900 leading-tight">
-                  What are you recording?
-                </h2>
-                <p className="text-xs text-ink-500 font-medium mt-0.5">
-                  Select expense type to record in 15 seconds
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAddSheetOpen(false)}
-                className="rounded-xl p-2 text-ink-400 hover:bg-paper-100 hover:text-ink-700 transition"
-                aria-label="Close add menu"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* 3 Quick Selection Cards */}
-            <div className="space-y-2.5">
-              {/* Option 1: Add Material */}
-              <Link
-                href="/expenses/new?type=MATERIAL"
-                onClick={() => setAddSheetOpen(false)}
-                className="flex items-center gap-3.5 rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-4 hover:bg-amber-100/60 active:scale-[0.98] transition group"
-              >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-xs group-hover:scale-105 transition">
-                  <Package className="h-6 w-6" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-amber-950">
-                    Add Material
-                  </p>
-                  <p className="text-xs text-amber-800/90 mt-0.5">
-                    Cement, Steel, Sand, Bricks, Tiles, Electrical
-                  </p>
-                </div>
-              </Link>
-
-              {/* Option 2: Add Labour */}
-              <Link
-                href="/expenses/new?type=LABOUR"
-                onClick={() => setAddSheetOpen(false)}
-                className="flex items-center gap-3.5 rounded-2xl border-2 border-emerald-200 bg-emerald-50/50 p-4 hover:bg-emerald-100/60 active:scale-[0.98] transition group"
-              >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-xs group-hover:scale-105 transition">
-                  <HardHat className="h-6 w-6" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-emerald-950">
-                    Add Labour
-                  </p>
-                  <p className="text-xs text-emerald-800/90 mt-0.5">
-                    Mason, Carpenter, Plumber, Electrician wages
-                  </p>
-                </div>
-              </Link>
-
-              {/* Option 3: Other Expense */}
-              <Link
-                href="/expenses/new?type=OTHER"
-                onClick={() => setAddSheetOpen(false)}
-                className="flex items-center gap-3.5 rounded-2xl border border-paper-200 bg-paper-50 p-4 hover:bg-paper-100 active:scale-[0.98] transition group"
-              >
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-ink-700 text-white shadow-xs group-hover:scale-105 transition">
-                  <MoreHorizontal className="h-6 w-6" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-bold text-ink-900">
-                    Other Expense
-                  </p>
-                  <p className="text-xs text-ink-500 mt-0.5">
-                    Borewell, Planning, JCB, Services & Transport
-                  </p>
-                </div>
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Mobile More Sheet / Drawer */}
       {mobileDrawerOpen && (
