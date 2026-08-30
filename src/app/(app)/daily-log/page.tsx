@@ -15,7 +15,7 @@ export default async function DailyLogPage() {
     return (
       <NoProjectState
         title="No House Project Selected"
-        description="Daily labour and cement tracking requires an active house project. Please create or select a house first."
+        description="Daily labour tracking requires an active house project. Please create or select a house first."
       />
     );
   }

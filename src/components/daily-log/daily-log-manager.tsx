@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   Calendar,
   HardHat,
-  Package,
   Plus,
   Trash2,
   Share2,
@@ -46,17 +45,12 @@ export function DailyLogManager({
   const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [stageId, setStageId] = useState<string>("");
   const [floorId, setFloorId] = useState<string>("");
-  
+
   // Labour Fields
   const [mestriCount, setMestriCount] = useState<string>("2");
   const [mestriRate, setMestriRate] = useState<string>("950");
   const [helperCount, setHelperCount] = useState<string>("4");
   const [helperRate, setHelperRate] = useState<string>("650");
-  
-  // Cement Fields
-  const [cementBags, setCementBags] = useState<string>("15");
-  const [cementBrand, setCementBrand] = useState<string>("UltraTech 53 Grade");
-  const [cementRate, setCementRate] = useState<string>("380");
 
   // Notes & Description
   const [workDescription, setWorkDescription] = useState<string>("");
@@ -77,20 +71,15 @@ export function DailyLogManager({
   const hTotal = hCount * hRate;
 
   const labourTotal = mTotal + hTotal;
-
-  const cBags = Math.max(0, Number(cementBags) || 0);
-  const cRate = Math.max(0, Number(cementRate) || 0);
-  const cementTotal = cBags * cRate;
-
-  const combinedDayTotal = labourTotal + cementTotal;
+  const totalWorkersToday = mCount + hCount;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
 
-    if (labourTotal <= 0 && cBags <= 0) {
-      setError("Please record either labour worker count/wages or cement bags used.");
+    if (labourTotal <= 0 && totalWorkersToday <= 0) {
+      setError("Please enter the number of mestri or helpers working today.");
       return;
     }
 
@@ -105,12 +94,10 @@ export function DailyLogManager({
           mestriRate: mRate,
           helperCount: hCount,
           helperRate: hRate,
-          cementBags: cBags,
-          cementBrand,
-          cementRate: cRate,
+          cementBags: 0,
           workDescription:
             workDescription.trim() ||
-            `Site Work (${mCount} Mestri, ${hCount} Helpers${cBags > 0 ? `, ${cBags} bags cement` : ""})`,
+            `Site Work (${mCount} Mestri, ${hCount} Helpers)`,
           notes: notes.trim() || undefined,
           paymentMethod,
         });
@@ -120,7 +107,7 @@ export function DailyLogManager({
           return;
         }
 
-        setSuccessMsg(`Daily log for ${date} saved successfully!`);
+        setSuccessMsg(`Daily labour log for ${date} saved successfully!`);
         setWorkDescription("");
         setNotes("");
         router.refresh();
@@ -145,16 +132,15 @@ export function DailyLogManager({
     return initialLogs.filter((l) => l.stageId === filterStage);
   }, [initialLogs, filterStage]);
 
-  // Share via WhatsApp / Copy
+  // Share via WhatsApp
   const handleShareWhatsApp = (log: DailySiteLogEntry) => {
-    const text = `*🏗️ House Construction Daily Site Log - ${log.date}*\n` +
+    const text =
+      `*🏗️ Daily Site Labour Log - ${log.date}*\n` +
       `*Stage:* ${log.stageName || "General"}\n` +
-      `*Labour Breakdown:*\n` +
+      `*Muster Roll Breakdown:*\n` +
       `• Masons / Mestri: ${log.mestriCount} @ ₹${log.mestriRate} = ${formatINR(log.mestriTotal)}\n` +
       `• Helpers / Mazdoors: ${log.helperCount} @ ₹${log.helperRate} = ${formatINR(log.helperTotal)}\n` +
-      `• *Total Daily Wages:* ${formatINR(log.totalLabourCost)}\n` +
-      (log.cementBags > 0 ? `\n*Cement Used:* ${log.cementBags} bags (${log.cementBrand}) = ${formatINR(log.totalCementCost)}\n` : "") +
-      `\n*Total Day Expenditure:* ${formatINR(log.totalDayCost)}\n` +
+      `• *Total Daily Wage Payout:* ${formatINR(log.totalLabourCost)}\n` +
       (log.workDescription ? `*Work Done:* ${log.workDescription}\n` : "") +
       (log.notes ? `*Notes:* ${log.notes}` : "");
 
@@ -168,10 +154,10 @@ export function DailyLogManager({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-paper-200/80 pb-4">
         <div>
           <h1 className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">
-            Daily Labour & Cement Log
+            Daily Labour Log
           </h1>
           <p className="text-xs text-ink-500 mt-0.5">
-            Day-wise muster roll tracking for Mestri, Helpers, wage payouts, and cement bag consumption
+            Day-wise muster roll tracking for Mestri, Helpers, and daily wage payouts
           </p>
         </div>
 
@@ -194,31 +180,31 @@ export function DailyLogManager({
             {initialSummary.totalMestriDays}{" "}
             <span className="text-xs font-medium text-ink-400">days</span>
           </p>
-          <p className="text-[11px] text-ink-500">Total head mason work</p>
+          <p className="text-[11px] text-ink-500">Head mason work</p>
         </div>
 
         <div className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs space-y-1">
           <div className="flex items-center justify-between text-ink-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Helpers (Mazdoor)</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider">Helpers (Mazdoors)</span>
             <Users className="h-4 w-4 text-emerald-600" />
           </div>
           <p className="font-display text-xl sm:text-2xl font-bold text-ink-900">
             {initialSummary.totalHelperDays}{" "}
             <span className="text-xs font-medium text-ink-400">days</span>
           </p>
-          <p className="text-[11px] text-ink-500">Total helper work days</p>
+          <p className="text-[11px] text-ink-500">Helper work days</p>
         </div>
 
         <div className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs space-y-1">
           <div className="flex items-center justify-between text-ink-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Cement Consumed</span>
-            <Package className="h-4 w-4 text-clay-600" />
+            <span className="text-[11px] font-bold uppercase tracking-wider">Total Worker Days</span>
+            <Users className="h-4 w-4 text-blue-600" />
           </div>
           <p className="font-display text-xl sm:text-2xl font-bold text-ink-900">
-            {initialSummary.totalCementBags}{" "}
-            <span className="text-xs font-medium text-ink-400">bags</span>
+            {initialSummary.totalMestriDays + initialSummary.totalHelperDays}{" "}
+            <span className="text-xs font-medium text-ink-400">days</span>
           </p>
-          <p className="text-[11px] text-ink-500">{formatINR(initialSummary.totalCementSpent)} cement value</p>
+          <p className="text-[11px] text-ink-500">Combined labour strength</p>
         </div>
 
         <div className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs space-y-1">
@@ -229,11 +215,11 @@ export function DailyLogManager({
           <p className="font-display text-xl sm:text-2xl font-bold text-clay-700">
             {formatINR(initialSummary.totalLabourSpent)}
           </p>
-          <p className="text-[11px] text-ink-500">Labour wages paid</p>
+          <p className="text-[11px] text-ink-500">Total wages paid</p>
         </div>
       </div>
 
-      {/* Main 2-Column Responsive Section: Entry Form on Left + History on Right / Below */}
+      {/* Main 2-Column Responsive Section: Entry Form on Left + History on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Quick Entry Form (5 Cols) */}
         <div className="lg:col-span-5 space-y-4">
@@ -245,9 +231,9 @@ export function DailyLogManager({
                 </div>
                 <div>
                   <h2 className="font-display text-base font-bold text-ink-900">
-                    Record Day-Wise Log
+                    Record Daily Labour
                   </h2>
-                  <p className="text-[11px] text-ink-500">Log today&apos;s workers and cement used</p>
+                  <p className="text-[11px] text-ink-500">Log today&apos;s workers and wages</p>
                 </div>
               </div>
 
@@ -354,7 +340,7 @@ export function DailyLogManager({
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5 text-emerald-700" />
-                    <span>Helpers / Mazdoor</span>
+                    <span>Helpers / Mazdoors</span>
                   </span>
                   <span className="font-mono text-xs font-extrabold text-emerald-900">
                     {formatINR(hTotal)}
@@ -388,61 +374,6 @@ export function DailyLogManager({
                       className="w-full rounded-xl border border-paper-300 bg-white p-2 text-xs font-semibold text-ink-900 focus:border-clay-500 focus:outline-none"
                     />
                   </div>
-                </div>
-              </div>
-
-              {/* CEMENT CONSUMPTION */}
-              <div className="rounded-2xl border border-clay-200/80 bg-clay-50/40 p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-clay-950 flex items-center gap-1.5">
-                    <Package className="h-3.5 w-3.5 text-clay-700" />
-                    <span>Cement Bags Used Today</span>
-                  </span>
-                  <span className="font-mono text-xs font-extrabold text-clay-900">
-                    {formatINR(cementTotal)}
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2.5">
-                  <div>
-                    <label className="text-[11px] font-bold text-ink-600 block mb-1">
-                      Bags Consumed
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={cementBags}
-                      onChange={(e) => setCementBags(e.target.value)}
-                      placeholder="e.g. 15"
-                      className="w-full rounded-xl border border-paper-300 bg-white p-2 text-xs font-semibold text-ink-900 focus:border-clay-500 focus:outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[11px] font-bold text-ink-600 block mb-1">
-                      Rate (₹ / Bag)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={cementRate}
-                      onChange={(e) => setCementRate(e.target.value)}
-                      placeholder="e.g. 380"
-                      className="w-full rounded-xl border border-paper-300 bg-white p-2 text-xs font-semibold text-ink-900 focus:border-clay-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="text-[11px] font-bold text-ink-600 block mb-1">
-                    Cement Brand / Type
-                  </label>
-                  <input
-                    type="text"
-                    value={cementBrand}
-                    onChange={(e) => setCementBrand(e.target.value)}
-                    placeholder="e.g. UltraTech 53 Grade / ACC Suraksha"
-                    className="w-full rounded-xl border border-paper-300 bg-white p-2 text-xs font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
-                  />
                 </div>
               </div>
 
@@ -500,15 +431,14 @@ export function DailyLogManager({
               <div className="rounded-2xl bg-paper-100 p-3.5 border border-paper-200 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-ink-500 block">
-                    Combined Day Total
+                    Total Daily Wages
                   </span>
                   <span className="font-display text-lg font-bold text-ink-900">
-                    {formatINR(combinedDayTotal)}
+                    {formatINR(labourTotal)}
                   </span>
                 </div>
-                <div className="text-right text-[11px] text-ink-500">
-                  <p>Labour: {formatINR(labourTotal)}</p>
-                  <p>Cement: {formatINR(cementTotal)}</p>
+                <div className="text-right text-[11px] text-ink-500 font-medium">
+                  <p>{totalWorkersToday} Workers ({mCount} M + {hCount} H)</p>
                 </div>
               </div>
 
@@ -517,7 +447,7 @@ export function DailyLogManager({
                 disabled={pending}
                 className="w-full flex items-center justify-center gap-2 rounded-2xl bg-clay-600 hover:bg-clay-700 py-3 px-4 text-xs font-bold text-white shadow-xs transition active:scale-[0.99] disabled:opacity-50 cursor-pointer"
               >
-                {pending ? "Saving Daily Log…" : "Save Daily Site Log"}
+                {pending ? "Saving Daily Log…" : "Save Daily Labour Log"}
               </button>
             </form>
           </div>
@@ -529,9 +459,9 @@ export function DailyLogManager({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-paper-100 pb-3">
               <div>
                 <h2 className="font-display text-base font-bold text-ink-900">
-                  Day-Wise Muster Roll & Cement Ledger
+                  Day-Wise Labour Muster Roll
                 </h2>
-                <p className="text-[11px] text-ink-500">Complete day-by-day record of site operations</p>
+                <p className="text-[11px] text-ink-500">Complete day-by-day record of site workers and wages</p>
               </div>
 
               {/* Stage Filter */}
@@ -561,7 +491,7 @@ export function DailyLogManager({
                 </div>
                 <h3 className="font-display text-sm font-bold text-ink-900">No Daily Logs Recorded Yet</h3>
                 <p className="text-xs text-ink-500 max-w-sm mx-auto">
-                  Use the quick form on the left to record daily mestri, helpers, wages, and cement bags.
+                  Use the quick form on the left to record daily mestri, helpers, and wage payouts.
                 </p>
               </div>
             ) : (
@@ -578,49 +508,32 @@ export function DailyLogManager({
                           <span className="font-display text-sm font-bold text-ink-900">
                             {log.date}
                           </span>
-                          <span className="rounded-md bg-clay-100 px-2 py-0.5 text-[10px] font-bold text-clay-800">
-                            {log.stageName}
-                          </span>
+                          {log.stageName && (
+                            <span className="rounded-md bg-clay-100 px-2 py-0.5 text-[10px] font-bold text-clay-800">
+                              {log.stageName}
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-ink-600 mt-0.5">{log.workDescription}</p>
                       </div>
 
                       <div className="text-right shrink-0">
                         <span className="font-display text-base font-extrabold text-clay-700 block">
-                          {formatINR(log.totalDayCost)}
+                          {formatINR(log.totalLabourCost)}
                         </span>
-                        <span className="text-[10px] text-ink-400 font-medium">Day Total</span>
+                        <span className="text-[10px] text-ink-400 font-medium">Daily Wages</span>
                       </div>
                     </div>
 
-                    {/* Row 2: Labour & Cement breakdown chips */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1 border-t border-paper-100">
-                      <div className="rounded-xl bg-amber-50/60 p-2.5 border border-amber-100/80 space-y-1">
-                        <div className="flex justify-between font-bold text-amber-950">
-                          <span>Labour Wages</span>
-                          <span>{formatINR(log.totalLabourCost)}</span>
-                        </div>
-                        <div className="text-[11px] text-amber-900 space-y-0.5">
-                          <p>• {log.mestriCount} Mestri @ ₹{log.mestriRate} = {formatINR(log.mestriTotal)}</p>
-                          <p>• {log.helperCount} Helpers @ ₹{log.helperRate} = {formatINR(log.helperTotal)}</p>
-                        </div>
+                    {/* Row 2: Labour details chip */}
+                    <div className="rounded-xl bg-amber-50/60 p-2.5 border border-amber-100/80 space-y-1 text-xs">
+                      <div className="flex justify-between font-bold text-amber-950">
+                        <span>Worker Breakdown ({log.totalWorkers} workers)</span>
+                        <span>{formatINR(log.totalLabourCost)}</span>
                       </div>
-
-                      <div className="rounded-xl bg-clay-50/60 p-2.5 border border-clay-100/80 space-y-1">
-                        <div className="flex justify-between font-bold text-clay-950">
-                          <span>Cement Used</span>
-                          <span>{formatINR(log.totalCementCost)}</span>
-                        </div>
-                        <div className="text-[11px] text-clay-900 space-y-0.5">
-                          {log.cementBags > 0 ? (
-                            <>
-                              <p>• {log.cementBags} Bags ({log.cementBrand})</p>
-                              <p>• @ ₹{log.cementRate} / bag</p>
-                            </>
-                          ) : (
-                            <p className="text-ink-400">No cement logged today</p>
-                          )}
-                        </div>
+                      <div className="text-[11px] text-amber-900 flex flex-wrap gap-x-4 gap-y-0.5">
+                        <p>• {log.mestriCount} Mestri @ ₹{log.mestriRate} = {formatINR(log.mestriTotal)}</p>
+                        <p>• {log.helperCount} Helpers @ ₹{log.helperRate} = {formatINR(log.helperTotal)}</p>
                       </div>
                     </div>
 
@@ -657,8 +570,8 @@ export function DailyLogManager({
         open={Boolean(deleteTargetId)}
         onClose={() => setDeleteTargetId(null)}
         onConfirm={handleDelete}
-        title="Delete Daily Site Log?"
-        description="Are you sure you want to delete this daily log entry? Associated labour and cement calculations will be adjusted automatically."
+        title="Delete Daily Labour Log?"
+        description="Are you sure you want to delete this daily labour log entry? The recorded wages will be adjusted automatically."
         confirmText={pending ? "Deleting..." : "Delete Log"}
         variant="danger"
       />
