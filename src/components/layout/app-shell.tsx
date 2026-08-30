@@ -89,7 +89,7 @@ export function AppShell({
   };
 
   return (
-    <div className="min-h-screen bg-paper-50 flex flex-col text-ink-900">
+    <div className="min-h-[100dvh] bg-paper-50 flex flex-col text-ink-900">
       {/* Mobile Top Bar */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-paper-200 bg-white px-4 py-2.5 lg:hidden shadow-xs">
         <div className="flex items-center gap-2.5 min-w-0">
@@ -331,7 +331,12 @@ export function AppShell({
           </header>
 
           {/* Main Content Viewport */}
-          <main className="px-3 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto pb-24 lg:pb-12">
+          <main
+            className={cn(
+              "px-3 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto flex-1 flex flex-col min-h-0",
+              activeProject ? "pb-24 lg:pb-12" : "pb-16 lg:pb-8"
+            )}
+          >
             {children}
           </main>
         </div>
