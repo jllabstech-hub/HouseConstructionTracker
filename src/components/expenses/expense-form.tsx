@@ -413,7 +413,6 @@ export function ExpenseForm({
 
         if (expenseId) {
           router.push("/expenses");
-          router.refresh();
         } else {
           setSavedSuccess({
             id: targetExpenseId || "",
@@ -432,7 +431,6 @@ export function ExpenseForm({
     start(async () => {
       await deleteExpense(projectId, expenseId);
       router.push("/expenses");
-      router.refresh();
     });
   };
 

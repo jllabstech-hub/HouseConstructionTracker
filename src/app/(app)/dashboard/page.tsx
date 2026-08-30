@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getActiveProject } from "@/lib/project-context";
+import { requireUser } from "@/lib/auth-guard";
 import { getCriticalFinancialSummary, getDashboardSecondaryData } from "@/lib/finance/financial-aggregates";
 import { NoProjectState } from "@/components/projects/no-project-state";
 import { FinancialHero } from "@/components/dashboard/financial-hero";
@@ -65,9 +66,9 @@ function CardsSkeleton() {
 
 // ----------- Async streamed components -----------
 
-async function SpendingChart({ projectId }: { projectId: string }) {
+async function SpendingChart({ dataPromise }: { dataPromise: ReturnType<typeof getDashboardSecondaryData> }) {
   try {
-    const data = await getDashboardSecondaryData(projectId);
+    const data = await dataPromise;
     if (!data || data.monthly.length === 0) return null;
 
     return (
@@ -93,9 +94,9 @@ async function SpendingChart({ projectId }: { projectId: string }) {
   }
 }
 
-async function BottomCards({ projectId }: { projectId: string }) {
+async function BottomCards({ dataPromise }: { dataPromise: ReturnType<typeof getDashboardSecondaryData> }) {
   try {
-    const data = await getDashboardSecondaryData(projectId);
+    const data = await dataPromise;
     if (!data) return null;
 
     return (
@@ -114,7 +115,8 @@ async function BottomCards({ projectId }: { projectId: string }) {
 // ----------- Main page -----------
 
 export default async function DashboardPage() {
-  const ctx = await getActiveProject();
+  const user = await requireUser();
+  const ctx = await getActiveProject(user.id);
 
   if (!ctx?.project) {
     return (
@@ -138,6 +140,8 @@ export default async function DashboardPage() {
       />
     );
   }
+
+  const secondaryData = getDashboardSecondaryData(projectId);
 
   return (
     <div className="space-y-6 w-full pb-10">
@@ -163,12 +167,12 @@ export default async function DashboardPage() {
 
       {/* 3. Streamed: Monthly spending chart (heavy recharts) */}
       <Suspense fallback={<ChartSkeleton />}>
-        <SpendingChart projectId={projectId} />
+        <SpendingChart dataPromise={secondaryData} />
       </Suspense>
 
       {/* 4. Streamed: Top expenses, progress, recent transactions */}
       <Suspense fallback={<CardsSkeleton />}>
-        <BottomCards projectId={projectId} />
+        <BottomCards dataPromise={secondaryData} />
       </Suspense>
     </div>
   );
