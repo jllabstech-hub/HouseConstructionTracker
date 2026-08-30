@@ -12,6 +12,40 @@ export async function GET(request: Request) {
   const force = searchParams.get("force") === "true";
   const secret = searchParams.get("secret");
 
+  const action = searchParams.get("action");
+
+  if (action === "empty-categories") {
+    try {
+      await ensureDatabaseSchema();
+      const res = await prisma.$transaction([
+        prisma.workAreaMaterial.deleteMany({}),
+        prisma.workAreaLabour.deleteMany({}),
+        prisma.expense.updateMany({
+          data: {
+            materialCategoryId: null,
+            labourCategoryId: null,
+            serviceCategoryId: null,
+            equipmentCategoryId: null,
+            professionalCategoryId: null,
+          },
+        }),
+        prisma.budgetCategory.deleteMany({}),
+        prisma.materialCategory.deleteMany({}),
+        prisma.labourCategory.deleteMany({}),
+        prisma.serviceCategory.deleteMany({}),
+        prisma.equipmentCategory.deleteMany({}),
+        prisma.professionalCategory.deleteMany({}),
+      ]);
+      return NextResponse.json({
+        ok: true,
+        message: "Successfully emptied all categories across the database!",
+        result: res,
+      });
+    } catch (err: unknown) {
+      return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : String(err) }, { status: 500 });
+    }
+  }
+
   // Production security check: require secret in production if configured
   if (
     process.env.NODE_ENV === "production" &&

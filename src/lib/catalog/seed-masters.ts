@@ -80,8 +80,11 @@ export async function consolidateLegacyCategories(projectId: string) {
 }
 
 export async function seedProjectMasters(projectId: string) {
-  await consolidateLegacyCategories(projectId);
+  // Keep categories empty by default so user can fill as desired
+  await seedProjectStructure(projectId);
+}
 
+export async function populateDefaultCatalogs(projectId: string) {
   const materialsCount = await prisma.materialCategory.count({ where: { projectId } });
   if (materialsCount === 0) {
     const materialsData: { projectId: string; name: string; groupName: string; sortOrder: number; isDefault: boolean }[] = [];
@@ -120,22 +123,6 @@ export async function seedProjectMasters(projectId: string) {
   if (servicesCount === 0) {
     await prisma.serviceCategory.createMany({
       data: SERVICE_CATALOG.map((name, index) => ({ projectId, name, sortOrder: index, isDefault: true })),
-      skipDuplicates: true,
-    });
-  }
-
-  const equipmentsCount = await prisma.equipmentCategory.count({ where: { projectId } });
-  if (equipmentsCount === 0) {
-    await prisma.equipmentCategory.createMany({
-      data: EQUIPMENT_CATALOG.map((name, index) => ({ projectId, name, sortOrder: index, isDefault: true })),
-      skipDuplicates: true,
-    });
-  }
-
-  const professionalsCount = await prisma.professionalCategory.count({ where: { projectId } });
-  if (professionalsCount === 0) {
-    await prisma.professionalCategory.createMany({
-      data: PROFESSIONAL_CATALOG.map((name, index) => ({ projectId, name, sortOrder: index, isDefault: true })),
       skipDuplicates: true,
     });
   }

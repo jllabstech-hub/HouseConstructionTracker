@@ -635,3 +635,56 @@ export async function deleteServiceCategory(id: string) {
     return { error: err instanceof Error ? err.message : "Failed to delete service category" };
   }
 }
+
+export async function clearAllCategories(projectId?: string) {
+  try {
+    const user = await requireUser();
+    const activeProjectId = projectId || (await getActiveProjectId(user.id));
+    if (!activeProjectId) return { error: "Active house project not found" };
+    await requireProject(activeProjectId, user.id);
+
+    await prisma.$transaction([
+      prisma.workAreaMaterial.deleteMany({ where: { category: { projectId: activeProjectId } } }),
+      prisma.workAreaLabour.deleteMany({ where: { category: { projectId: activeProjectId } } }),
+      prisma.expense.updateMany({
+        where: { projectId: activeProjectId },
+        data: {
+          materialCategoryId: null,
+          labourCategoryId: null,
+          serviceCategoryId: null,
+          equipmentCategoryId: null,
+          professionalCategoryId: null,
+        },
+      }),
+      prisma.budgetCategory.deleteMany({ where: { projectId: activeProjectId } }),
+      prisma.materialCategory.deleteMany({ where: { projectId: activeProjectId } }),
+      prisma.labourCategory.deleteMany({ where: { projectId: activeProjectId } }),
+      prisma.serviceCategory.deleteMany({ where: { projectId: activeProjectId } }),
+      prisma.equipmentCategory.deleteMany({ where: { projectId: activeProjectId } }),
+      prisma.professionalCategory.deleteMany({ where: { projectId: activeProjectId } }),
+    ]);
+
+    invalidateProjectCache(activeProjectId);
+    invalidateUserCache(user.id);
+    revalidatePath("/phonedirectory");
+    revalidatePath("/masters");
+    revalidatePath("/expenses");
+    revalidatePath("/expenses/new");
+    revalidatePath("/budget");
+    revalidatePath("/reports");
+    return { ok: true };
+  } catch (err: unknown) {
+    if (
+      err &&
+      typeof err === "object" &&
+      "digest" in err &&
+      typeof (err as { digest?: unknown }).digest === "string" &&
+      ((err as { digest: string }).digest.startsWith("NEXT_REDIRECT"))
+    ) {
+      throw err;
+    }
+    console.error("Error clearing all categories:", err);
+    return { error: err instanceof Error ? err.message : "Failed to clear all categories" };
+  }
+}
+

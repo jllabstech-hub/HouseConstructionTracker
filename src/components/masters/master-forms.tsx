@@ -18,6 +18,7 @@ import {
   clearAllVendors,
   clearAllWorkers,
   clearAllPhoneDirectory,
+  clearAllCategories,
 } from "@/lib/actions/masters";
 import { formatINR } from "@/lib/money";
 import { getVendorTotal, getWorkerTotal, type ExpenseRecord } from "@/lib/finance/aggregations";
@@ -148,7 +149,7 @@ export function MasterForms({
   const [editingVendor, setEditingVendor] = useState<VendorItem | null>(null);
   const [editingWorker, setEditingWorker] = useState<WorkerItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: "vendor" | "worker" | "material" | "labour" | "service"; id: string; name: string } | null>(null);
-  const [clearTarget, setClearTarget] = useState<"VENDORS" | "WORKERS" | "ALL" | null>(null);
+  const [clearTarget, setClearTarget] = useState<"VENDORS" | "WORKERS" | "ALL_CATEGORIES" | "ALL" | null>(null);
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -263,12 +264,17 @@ export function MasterForms({
         <div className="flex flex-wrap items-center gap-2">
           {((activeTab === "VENDORS" && effectiveVendors.length > 0) ||
             (activeTab === "WORKERS" && effectiveWorkers.length > 0) ||
-            (effectiveVendors.length > 0 || effectiveWorkers.length > 0)) && (
+            ((activeTab === "MATERIALS" || activeTab === "LABOURS" || activeTab === "SERVICES") &&
+              (materials.length > 0 || labours.length > 0 || services.length > 0))) && (
             <button
               type="button"
               onClick={() =>
                 setClearTarget(
-                  activeTab === "VENDORS" ? "VENDORS" : activeTab === "WORKERS" ? "WORKERS" : "ALL"
+                  activeTab === "VENDORS"
+                    ? "VENDORS"
+                    : activeTab === "WORKERS"
+                    ? "WORKERS"
+                    : "ALL_CATEGORIES"
                 )
               }
               className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/80 hover:bg-red-100 px-3 py-2 text-xs font-bold text-red-700 shadow-2xs transition active:scale-95 cursor-pointer"
@@ -280,7 +286,7 @@ export function MasterForms({
                   ? `Clear All Shops (${effectiveVendors.length})`
                   : activeTab === "WORKERS"
                   ? `Clear All Workers (${effectiveWorkers.length})`
-                  : "Clear All"}
+                  : `Empty All Categories (${materials.length + labours.length + services.length})`}
               </span>
             </button>
           )}
@@ -1084,22 +1090,32 @@ export function MasterForms({
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              {paginatedMaterials.map((mat) => (
-                <div key={mat.id} className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-bold text-ink-900 text-sm">{mat.name}</p>
-                    <p className="text-xs text-ink-500">{mat.groupName ?? "Custom"}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteTarget({ id: mat.id, name: mat.name, type: "material" })}
-                    className="rounded-lg p-1.5 text-ink-300 hover:bg-red-50 hover:text-red-500 transition shrink-0"
-                    title={`Delete ${mat.name}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+              {paginatedMaterials.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-paper-300 bg-paper-50/60 p-8 text-center sm:col-span-2 space-y-2">
+                  <Package className="h-8 w-8 text-ink-300 mx-auto" />
+                  <p className="text-sm font-bold text-ink-700">No Material Categories</p>
+                  <p className="text-xs text-ink-500 max-w-sm mx-auto">
+                    You have a clean catalog. Add custom material categories using the form on the right or on the fly when recording expenses.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                paginatedMaterials.map((mat) => (
+                  <div key={mat.id} className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-ink-900 text-sm">{mat.name}</p>
+                      <p className="text-xs text-ink-500">{mat.groupName ?? "Custom"}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget({ id: mat.id, name: mat.name, type: "material" })}
+                      className="rounded-lg p-1.5 text-ink-300 hover:bg-red-50 hover:text-red-500 transition shrink-0"
+                      title={`Delete ${mat.name}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
 
             {filteredMaterials.length > pageSize && (
@@ -1182,22 +1198,32 @@ export function MasterForms({
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              {paginatedLabours.map((lab) => (
-                <div key={lab.id} className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="font-bold text-ink-900 text-sm">{lab.name}</p>
-                    <p className="text-xs text-ink-500">{lab.groupName ?? "Custom"}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteTarget({ id: lab.id, name: lab.name, type: "labour" })}
-                    className="rounded-lg p-1.5 text-ink-300 hover:bg-red-50 hover:text-red-500 transition shrink-0"
-                    title={`Delete ${lab.name}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+              {paginatedLabours.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-paper-300 bg-paper-50/60 p-8 text-center sm:col-span-2 space-y-2">
+                  <HardHat className="h-8 w-8 text-ink-300 mx-auto" />
+                  <p className="text-sm font-bold text-ink-700">No Man Power Categories</p>
+                  <p className="text-xs text-ink-500 max-w-sm mx-auto">
+                    You have a clean catalog. Add custom labour trades using the form on the right or on the fly when recording expenses.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                paginatedLabours.map((lab) => (
+                  <div key={lab.id} className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="font-bold text-ink-900 text-sm">{lab.name}</p>
+                      <p className="text-xs text-ink-500">{lab.groupName ?? "Custom"}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget({ id: lab.id, name: lab.name, type: "labour" })}
+                      className="rounded-lg p-1.5 text-ink-300 hover:bg-red-50 hover:text-red-500 transition shrink-0"
+                      title={`Delete ${lab.name}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
 
             {filteredLabours.length > pageSize && (
@@ -1261,24 +1287,34 @@ export function MasterForms({
         </div>
       )}
 
-      {/* 5. TAB: SERVICES & MACHINERY */}
+      {/* 5. TAB: SERVICES & EQUIPMENT */}
       {activeTab === "SERVICES" && (
         <div className="grid gap-6 lg:grid-cols-3 items-start min-w-0 max-w-full">
           <div className="lg:col-span-2 space-y-3 min-w-0 max-w-full">
             <div className="grid gap-3 sm:grid-cols-2">
-              {services.map((srv) => (
-                <div key={srv.id} className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs flex items-start justify-between gap-2">
-                  <p className="font-bold text-ink-900 text-sm min-w-0">{srv.name}</p>
-                  <button
-                    type="button"
-                    onClick={() => setDeleteTarget({ id: srv.id, name: srv.name, type: "service" })}
-                    className="rounded-lg p-1.5 text-ink-300 hover:bg-red-50 hover:text-red-500 transition shrink-0"
-                    title={`Delete ${srv.name}`}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+              {services.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-paper-300 bg-paper-50/60 p-8 text-center sm:col-span-2 space-y-2">
+                  <Truck className="h-8 w-8 text-ink-300 mx-auto" />
+                  <p className="text-sm font-bold text-ink-700">No Services or Machinery</p>
+                  <p className="text-xs text-ink-500 max-w-sm mx-auto">
+                    You have a clean catalog. Add custom machinery, transport, or permit categories using the form on the right.
+                  </p>
                 </div>
-              ))}
+              ) : (
+                services.map((srv) => (
+                  <div key={srv.id} className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs flex items-start justify-between gap-2">
+                    <p className="font-bold text-ink-900 text-sm min-w-0">{srv.name}</p>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteTarget({ id: srv.id, name: srv.name, type: "service" })}
+                      className="rounded-lg p-1.5 text-ink-300 hover:bg-red-50 hover:text-red-500 transition shrink-0"
+                      title={`Delete ${srv.name}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -1343,8 +1379,7 @@ export function MasterForms({
               setIsDeleting(false);
               return;
             }
-            // Immediately remove from local UI so it vanishes as soon as dialog closes
-            setDeletedIds((prev) => new Set(prev).add(target.id));
+            setDeletedIds((prev) => new Set([...prev, target.id]));
             setDeleteTarget(null);
             router.refresh();
           } catch (err) {
@@ -1354,9 +1389,11 @@ export function MasterForms({
           }
         }}
         title={
-          deleteTarget?.type === "vendor" ? "Delete Vendor / Store"
-          : deleteTarget?.type === "worker" ? "Delete Construction Worker"
-          : "Delete Category"
+          deleteTarget?.type === "vendor"
+            ? "Delete Vendor / Store"
+            : deleteTarget?.type === "worker"
+            ? "Delete Construction Worker"
+            : "Delete Category"
         }
         description={`Are you sure you want to delete "${deleteTarget?.name ?? "this entry"}"? This action cannot be undone.`}
         confirmText="Delete"
@@ -1381,6 +1418,8 @@ export function MasterForms({
                 ? await clearAllVendors()
                 : target === "WORKERS"
                 ? await clearAllWorkers()
+                : target === "ALL_CATEGORIES"
+                ? await clearAllCategories(projectId)
                 : await clearAllPhoneDirectory();
 
             if (res && "error" in res && res.error) {
@@ -1399,6 +1438,14 @@ export function MasterForms({
               setDeletedIds((prev) => {
                 const next = new Set(prev);
                 workers.forEach((w) => next.add(w.id));
+                return next;
+              });
+            } else if (target === "ALL_CATEGORIES") {
+              setDeletedIds((prev) => {
+                const next = new Set(prev);
+                materials.forEach((m) => next.add(m.id));
+                labours.forEach((l) => next.add(l.id));
+                services.forEach((s) => next.add(s.id));
                 return next;
               });
             } else {
@@ -1422,6 +1469,8 @@ export function MasterForms({
             ? "Clear All Shops & Vendors?"
             : clearTarget === "WORKERS"
             ? "Clear All Workers & Contractors?"
+            : clearTarget === "ALL_CATEGORIES"
+            ? "Empty All Categories?"
             : "Clear All Phone Directory Entries?"
         }
         description={
@@ -1429,9 +1478,11 @@ export function MasterForms({
             ? `Are you sure you want to delete all ${effectiveVendors.length} shops & vendors in a single click? This action cannot be undone.`
             : clearTarget === "WORKERS"
             ? `Are you sure you want to delete all ${effectiveWorkers.length} workers & contractors in a single click? This action cannot be undone.`
+            : clearTarget === "ALL_CATEGORIES"
+            ? `Are you sure you want to delete all ${materials.length + labours.length + services.length} categories to start fresh? This action cannot be undone.`
             : `Are you sure you want to delete all phone directory entries in a single click? This action cannot be undone.`
         }
-        confirmText={`Clear All (${clearTarget === "VENDORS" ? effectiveVendors.length : clearTarget === "WORKERS" ? effectiveWorkers.length : effectiveVendors.length + effectiveWorkers.length})`}
+        confirmText={`Clear All (${clearTarget === "VENDORS" ? effectiveVendors.length : clearTarget === "WORKERS" ? effectiveWorkers.length : clearTarget === "ALL_CATEGORIES" ? materials.length + labours.length + services.length : effectiveVendors.length + effectiveWorkers.length})`}
         loading={isDeleting}
       />
 
