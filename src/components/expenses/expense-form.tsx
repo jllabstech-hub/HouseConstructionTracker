@@ -30,7 +30,6 @@ import { formatINR, parseMoneyInput } from "@/lib/money";
 import { getMaterialPreset } from "@/lib/catalog/expense-presets";
 import { FileDropzone } from "@/components/ui/file-dropzone";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { DEFAULT_STAGES } from "@/lib/catalog/defaults";
 import { cn } from "@/lib/utils";
 
 type Option = { id: string; name: string; groupName?: string | null; type?: string; phone?: string | null; company?: string | null };
@@ -733,17 +732,11 @@ export function ExpenseForm({
                       className="w-full appearance-none rounded-xl border border-paper-300 bg-white p-3 pr-9 text-base sm:text-sm font-semibold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs cursor-pointer"
                     >
                       <option value="">-- General / Not Linked to Specific Stage --</option>
-                      {stagesList.length > 0
-                        ? stagesList.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.name}
-                            </option>
-                          ))
-                        : DEFAULT_STAGES.map((sName) => (
-                            <option key={sName} value={sName}>
-                              {sName}
-                            </option>
-                          ))}
+                      {stagesList.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
                       <option value="__custom__">+ Add / Write Custom Stage...</option>
                     </select>
                     <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />

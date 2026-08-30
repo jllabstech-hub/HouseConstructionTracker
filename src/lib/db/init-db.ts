@@ -1,6 +1,5 @@
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { seedProjectMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 
 export async function ensureDatabaseSchema() {
   try {
@@ -533,29 +532,8 @@ export async function ensureDatabaseSchema() {
       create: { email: "admin", name: "Admin", passwordHash },
     });
 
-    // 4. Ensure default project exists with 20 stages & masters
-    let project = await prisma.project.findFirst({ where: { userId: adminUser.id } });
-    if (!project) {
-      project = await prisma.project.create({
-        data: {
-          userId: adminUser.id,
-          name: "Nandakam",
-          location: "Pruthvi Layout, Channasandra",
-          builtUpArea: 3200,
-          plotArea: 2400,
-          totalBudget: 4000000,
-          status: "IN_PROGRESS",
-          startDate: new Date("2026-01-10"),
-        },
-      });
-      await seedProjectStructure(project.id, { demoProgress: true });
-    }
-
-    // 5. Seed project masters (materials & labours)
-    await seedProjectMasters(project.id);
-
     console.log("Database schema successfully verified and created via DDL.");
-    return { created: true, message: "Tables created successfully", userId: adminUser.id, projectId: project.id };
+    return { created: true, message: "Tables created successfully", userId: adminUser.id };
   } catch (error) {
     console.error("ensureDatabaseSchema error:", error);
     throw error;

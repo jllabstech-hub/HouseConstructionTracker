@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Building2,
   ChevronDown,
+  Tags,
   FileText,
   Files,
   HardHat,
@@ -71,7 +72,8 @@ export function AppShell({
   const moreNav = [
     { href: "/daily-log", label: "Daily Labour Log", icon: HardHat, active: pathname.startsWith("/daily-log") },
     { href: "/projects", label: "My Houses", icon: Building2, active: pathname.startsWith("/projects") },
-    { href: "/phonedirectory", label: "Phone Directory", icon: Users, active: pathname === "/phonedirectory" || pathname === "/masters" },
+    { href: "/phonedirectory", label: "Phone Directory", icon: Users, active: pathname === "/phonedirectory" },
+    { href: "/masters", label: "Categories", icon: Tags, active: pathname === "/masters" },
     { href: "/documents", label: "Documents", icon: Files, active: pathname === "/documents" },
   ];
 
@@ -331,7 +333,7 @@ export function AppShell({
           {/* Main Content Viewport */}
           <main
             className={cn(
-              "px-4 sm:px-6 lg:px-8 xl:px-10 max-w-[1600px] w-full mx-auto flex-1 flex flex-col min-h-0",
+              "px-4 sm:px-6 lg:px-8 xl:px-10 w-full flex-1 flex flex-col min-h-0",
               activeProject ? "pb-24 lg:pb-12 pt-4 sm:pt-6" : "pb-16 lg:pb-8 pt-4 sm:pt-6"
             )}
           >
@@ -510,6 +512,18 @@ export function AppShell({
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-ink-900 truncate">Documents</p>
                   <p className="text-[10px] text-ink-500 truncate">Plans & CAD</p>
+                </div>
+              </Link>
+
+              <Link
+                href="/masters"
+                onClick={() => setMobileDrawerOpen(false)}
+                className="flex items-center gap-2.5 rounded-xl border border-paper-200 bg-paper-50 p-3 hover:bg-paper-100 transition"
+              >
+                <Tags className="h-4.5 w-4.5 text-clay-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-ink-900 truncate">Categories</p>
+                  <p className="text-[10px] text-ink-500 truncate">Materials & Labour</p>
                 </div>
               </Link>
 

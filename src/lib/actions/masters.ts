@@ -122,6 +122,42 @@ export async function createLabourCategory(input: unknown) {
   }
 }
 
+export async function updateMaterialCategory(id: string, input: unknown) {
+  return updateCategory(id, input, "material");
+}
+
+export async function updateLabourCategory(id: string, input: unknown) {
+  return updateCategory(id, input, "labour");
+}
+
+async function updateCategory(id: string, input: unknown, type: "material" | "labour") {
+  const user = await requireUser();
+  const parsed = categorySchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid category" };
+  const projectId = parsed.data.projectId;
+  if (!projectId) return { error: "Project is required" };
+  await requireProject(projectId, user.id);
+  const name = parsed.data.name.trim();
+  const where = { id, projectId };
+  const existing = type === "material"
+    ? await prisma.materialCategory.findFirst({ where })
+    : await prisma.labourCategory.findFirst({ where });
+  if (!existing) return { error: "Category not found" };
+  const duplicateWhere = { projectId, name: { equals: name, mode: "insensitive" as const }, NOT: { id } };
+  const duplicate = type === "material"
+    ? await prisma.materialCategory.findFirst({ where: duplicateWhere })
+    : await prisma.labourCategory.findFirst({ where: duplicateWhere });
+  if (duplicate) return { error: "A category with this name already exists" };
+  const data = { name, groupName: emptyToNull(parsed.data.groupName) ?? "Custom" };
+  if (type === "material") await prisma.materialCategory.update({ where: { id }, data });
+  else await prisma.labourCategory.update({ where: { id }, data });
+  invalidateProjectCache(projectId);
+  revalidatePath("/masters");
+  revalidatePath("/expenses");
+  revalidatePath("/expenses/new");
+  return { ok: true };
+}
+
 export async function createServiceCategory(input: unknown) {
   try {
     const user = await requireUser();

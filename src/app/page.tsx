@@ -99,7 +99,7 @@ export default async function HomePage() {
               className="inline-flex items-center gap-1.5 text-xs font-semibold text-clay-700 hover:text-clay-900 bg-clay-50/80 px-3 py-1 rounded-full border border-clay-200 hover:bg-clay-100 transition"
             >
               <CheckCircle2 className="h-3.5 w-3.5 text-clay-600" />
-              <span>Demo Login Available (1-Click Sign In)</span>
+              <span>Start with your own project and categories</span>
             </Link>
           </div>
 
@@ -129,9 +129,9 @@ export default async function HomePage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700">
                 <BarChart3 className="h-5 w-5" />
               </div>
-              <h3 className="font-display text-sm font-bold text-ink-900">20-Stage Milestones</h3>
+              <h3 className="font-display text-sm font-bold text-ink-900">Your work stages</h3>
               <p className="text-xs text-ink-500 leading-relaxed">
-                Track stage-wise costs from Excavation &amp; Foundation to Roofing, Plastering, and Handover.
+                Add only the stages that match your construction plan, then track their costs and progress.
               </p>
             </div>
 

@@ -78,8 +78,8 @@ export async function consolidateLegacyCategories(projectId: string) {
 }
 
 export async function seedProjectMasters(projectId: string) {
-  // Keep categories empty by default so user can fill as desired
-  await seedProjectStructure(projectId);
+  // Projects start empty. Categories, stages and floors are added by the homeowner.
+  void projectId;
 }
 
 export async function populateDefaultCatalogs(projectId: string) {
@@ -166,6 +166,8 @@ export async function seedWorkAreas(projectId: string) {
 }
 
 export async function seedProjectStructure(projectId: string, options?: { demoProgress?: boolean }) {
+  if (!options?.demoProgress) return;
+
   const existingFloors = await prisma.floor.count({ where: { projectId } });
   if (existingFloors === 0) {
     await prisma.floor.createMany({

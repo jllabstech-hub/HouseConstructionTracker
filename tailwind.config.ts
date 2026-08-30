@@ -73,8 +73,8 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: ["var(--font-plus-jakarta)", "system-ui", "sans-serif"],
-        display: ["var(--font-source-serif)", "Georgia", "serif"],
+        sans: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        display: ["Georgia", "Cambria", "Times New Roman", "serif"],
       },
       boxShadow: {
         xs: "0 1px 2px 0 rgba(36, 49, 58, 0.04)",
