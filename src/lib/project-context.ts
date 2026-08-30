@@ -25,16 +25,10 @@ export const getActiveProject = cache(async (userId?: string): Promise<ActivePro
   const user = userId ? { id: userId, name: "Homeowner", email: null } : await requireUser();
   if (!user?.id) return null;
 
-  const cacheKey = `user-projects:${user.id}`;
-  let projects = getCached<Project[]>(cacheKey);
-
-  if (!projects) {
-    projects = await prisma.project.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "asc" },
-    });
-    setCached(cacheKey, projects);
-  }
+  const projects = await prisma.project.findMany({
+    where: { userId: user.id },
+    orderBy: { createdAt: "asc" },
+  });
 
   if (projects.length === 0) {
     return null;

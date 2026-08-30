@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
-import { requireUser } from "@/lib/auth-guard";
-import { getActiveProjectId } from "@/lib/project-context";
+import { getActiveProject } from "@/lib/project-context";
 import { getCriticalFinancialSummary, getDashboardSecondaryData } from "@/lib/finance/financial-aggregates";
 import { EmptyState } from "@/components/ui/page-header";
 import { FinancialHero } from "@/components/dashboard/financial-hero";
@@ -117,26 +116,27 @@ async function BottomCards({ projectId }: { projectId: string }) {
 // ----------- Main page -----------
 
 export default async function DashboardPage() {
-  const user = await requireUser();
-  const projectId = await getActiveProjectId(user.id);
+  const ctx = await getActiveProject();
 
-  if (!projectId) {
+  if (!ctx?.project) {
     return (
       <EmptyState
         title="Start your house project"
         body="Track every rupee spent on cement, steel, bricks, and mason wages with zero confusion."
         action={
           <Link
-            href="/projects"
+            href="/projects/new"
             className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-5 py-2.5 font-bold text-white shadow-xs hover:bg-clay-700 transition"
           >
             <Plus className="h-4 w-4" />
-            <span>Add Your House</span>
+            <span>Create New Project</span>
           </Link>
         }
       />
     );
   }
+
+  const projectId = ctx.project.id;
 
   // Fast query — only summary numbers (1-2ms via DB aggregates)
   const summary = await getCriticalFinancialSummary(projectId);
@@ -148,11 +148,11 @@ export default async function DashboardPage() {
         body="Track every rupee spent on cement, steel, bricks, and mason wages with zero confusion."
         action={
           <Link
-            href="/projects"
+            href="/projects/new"
             className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-5 py-2.5 font-bold text-white shadow-xs hover:bg-clay-700 transition"
           >
             <Plus className="h-4 w-4" />
-            <span>Add Your House</span>
+            <span>Create New Project</span>
           </Link>
         }
       />
