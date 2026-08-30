@@ -40,6 +40,7 @@ import {
   MoreVertical,
   AlertCircle,
   Check,
+  ChevronDown,
 } from "lucide-react";
 
 export type DocumentItem = {
@@ -170,6 +171,8 @@ export function DocumentsHub({
   const [activeMenuDocId, setActiveMenuDocId] = useState<string | null>(null);
   const [copiedDocId, setCopiedDocId] = useState<string | null>(null);
   const [previewErrors, setPreviewErrors] = useState<Record<string, boolean>>({});
+  const [isCustomDocCategory, setIsCustomDocCategory] = useState(false);
+  const [customDocCategoryName, setCustomDocCategoryName] = useState("");
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -189,6 +192,23 @@ export function DocumentsHub({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [lightboxDoc, showUploadModal, editingDoc]);
 
+  const openEditDoc = (doc: DocumentItem) => {
+    setEditingDoc(doc);
+    if (doc.description && doc.description.includes("[Category:")) {
+      const match = doc.description.match(/\[Category:\s*([^\]]+)\]/);
+      if (match && match[1]) {
+        setIsCustomDocCategory(true);
+        setCustomDocCategoryName(match[1].trim());
+      } else {
+        setIsCustomDocCategory(false);
+        setCustomDocCategoryName("");
+      }
+    } else {
+      setIsCustomDocCategory(false);
+      setCustomDocCategoryName("");
+    }
+  };
+
   const clearAllFilters = () => {
     setSearch("");
     setSelectedType("ALL");
@@ -198,6 +218,32 @@ export function DocumentsHub({
     setDrawerPinned("ALL");
     setDrawerDate("ALL");
   };
+
+  const allDocCategories = useMemo(() => {
+    const defaultList: { value: string; labelEn: string }[] = CATEGORIES.map((c) => ({
+      value: c.value,
+      labelEn: c.labelEn,
+    }));
+
+    const customCats = new Set<string>();
+    documents.forEach((d) => {
+      if (d.description && d.description.includes("[Category:")) {
+        const match = d.description.match(/\[Category:\s*([^\]]+)\]/);
+        if (match && match[1]) {
+          customCats.add(match[1].trim());
+        }
+      }
+    });
+
+    customCats.forEach((c) => {
+      defaultList.push({
+        value: `CUSTOM_${c}`,
+        labelEn: c,
+      });
+    });
+
+    return defaultList;
+  }, [documents]);
 
   // Filtered documents
   const filteredDocs = useMemo(() => {
@@ -210,7 +256,15 @@ export function DocumentsHub({
       })
       .filter((doc) => {
         // Category / Type
-        if (effectiveCategory !== "ALL" && doc.category !== effectiveCategory) return false;
+        if (effectiveCategory !== "ALL") {
+          if (effectiveCategory.startsWith("CUSTOM_")) {
+            const customName = effectiveCategory.replace("CUSTOM_", "").toLowerCase();
+            const docCatName = (doc.description?.match(/\[Category:\s*([^\]]+)\]/)?.[1] || "").toLowerCase();
+            if (docCatName !== customName) return false;
+          } else {
+            if (doc.category !== effectiveCategory) return false;
+          }
+        }
 
         // Floor
         if (drawerFloor !== "ALL" && doc.floorId !== drawerFloor) return false;
@@ -254,8 +308,22 @@ export function DocumentsHub({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const getDocCategoryObj = (cat: string) => {
-    return CATEGORIES.find((c) => c.value === cat) ?? CATEGORIES[0];
+  const getDocCategoryObj = (docOrCat: DocumentItem | string) => {
+    if (typeof docOrCat === "string") {
+      return CATEGORIES.find((c) => c.value === docOrCat) ?? CATEGORIES[0];
+    }
+    if (docOrCat.description && docOrCat.description.includes("[Category:")) {
+      const match = docOrCat.description.match(/\[Category:\s*([^\]]+)\]/);
+      if (match && match[1]) {
+        return {
+          value: docOrCat.category,
+          labelEn: match[1].trim(),
+          icon: FileText,
+          badgeColor: "bg-indigo-100 text-indigo-800 border-indigo-200",
+        };
+      }
+    }
+    return CATEGORIES.find((c) => c.value === docOrCat.category) ?? CATEGORIES[0];
   };
 
   const getFloorName = (floorId: string | null) => {
@@ -325,6 +393,8 @@ export function DocumentsHub({
             type="button"
             onClick={() => {
               setEditingDoc(null);
+              setIsCustomDocCategory(false);
+              setCustomDocCategoryName("");
               setShowUploadModal(true);
             }}
             className="inline-flex items-center gap-2 rounded-xl bg-clay-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition whitespace-nowrap shrink-0"
@@ -370,7 +440,7 @@ export function DocumentsHub({
             className="rounded-xl border border-paper-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-bold text-ink-800 focus:border-clay-500 focus:outline-none shadow-2xs"
           >
             <option value="ALL">All Types ({documents.length})</option>
-            {CATEGORIES.map((cat) => (
+            {allDocCategories.map((cat) => (
               <option key={cat.value} value={cat.value}>
                 {cat.labelEn}
               </option>
@@ -550,7 +620,7 @@ export function DocumentsHub({
         /* Grid View: Responsive 1-col (mobile) -> 2-col (tablet) -> 3-col (desktop) */
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {filteredDocs.map((doc) => {
-            const catObj = getDocCategoryObj(doc.category);
+            const catObj = getDocCategoryObj(doc);
             const isImage = doc.mimeType.startsWith("image/");
             const isPdf = doc.mimeType === "application/pdf";
             const fileUrl = doc.storagePath.startsWith("/images/") ? doc.storagePath : `/api/documents/${doc.id}`;
@@ -720,7 +790,7 @@ export function DocumentsHub({
                           type="button"
                           onClick={() => {
                             setActiveMenuDocId(null);
-                            setEditingDoc(doc);
+                            openEditDoc(doc);
                           }}
                           className="flex items-center gap-2 w-full px-3 py-2 text-left font-semibold text-ink-700 hover:bg-paper-50"
                         >
@@ -776,7 +846,7 @@ export function DocumentsHub({
             </thead>
             <tbody className="divide-y divide-paper-100">
               {filteredDocs.map((doc) => {
-                const catObj = getDocCategoryObj(doc.category);
+                const catObj = getDocCategoryObj(doc);
                 const fileUrl = doc.storagePath.startsWith("/images/") ? doc.storagePath : `/api/documents/${doc.id}`;
                 const floorName = getFloorName(doc.floorId);
                 const stageName = getStageName(doc.constructionStageId);
@@ -848,7 +918,7 @@ export function DocumentsHub({
                         </button>
                         <button
                           type="button"
-                          onClick={() => setEditingDoc(doc)}
+                          onClick={() => openEditDoc(doc)}
                           className="rounded-lg p-1.5 text-ink-400 hover:bg-paper-100 hover:text-clay-700 transition"
                           title="Edit"
                         >
@@ -1040,15 +1110,26 @@ export function DocumentsHub({
                 e.preventDefault();
                 setUploadError(null);
                 const formData = new FormData(e.currentTarget);
+                const rawDesc = formData.get("description")?.toString() || "";
+                let finalDesc = rawDesc;
+                let finalCategory = (formData.get("category")?.toString() || "FLOOR_PLAN") as DocumentItem["category"];
+
+                if (isCustomDocCategory && customDocCategoryName.trim()) {
+                  finalCategory = "OTHER";
+                  finalDesc = `[Category: ${customDocCategoryName.trim()}] ${rawDesc}`.trim();
+                }
+
+                formData.set("category", finalCategory);
+                formData.set("description", finalDesc);
 
                 start(async () => {
                   try {
                     if (editingDoc) {
                       const res = await updateDocument(editingDoc.id, {
                         title: formData.get("title")?.toString() ?? editingDoc.title,
-                        category: (formData.get("category")?.toString() ?? editingDoc.category) as DocumentItem["category"],
-                        description: formData.get("description")?.toString() || null,
-                        version: formData.get("version")?.toString() || null,
+                        category: finalCategory,
+                        description: finalDesc || null,
+                        version: null,
                         floorId: formData.get("floorId")?.toString() || null,
                         constructionStageId: formData.get("constructionStageId")?.toString() || null,
                       });
@@ -1064,6 +1145,8 @@ export function DocumentsHub({
                         return;
                       }
                       setShowUploadModal(false);
+                      setIsCustomDocCategory(false);
+                      setCustomDocCategoryName("");
                     }
                     router.refresh();
                   } catch (err) {
@@ -1095,33 +1178,62 @@ export function DocumentsHub({
 
               {/* Category */}
               <div>
-                <label className="font-bold text-ink-700 block mb-1">Category</label>
-                <select
-                  name="category"
-                  defaultValue={editingDoc?.category ?? "FLOOR_PLAN"}
-                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.labelEn}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Version & Floor */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-bold text-ink-700 block mb-1">Version / Revision</label>
-                  <input
-                    name="version"
-                    type="text"
-                    defaultValue={editingDoc?.version ?? ""}
-                    placeholder="e.g. v2.1 Final"
-                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
-                  />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="font-bold text-ink-700 block">Category</label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCustomDocCategory(!isCustomDocCategory);
+                      if (isCustomDocCategory) setCustomDocCategoryName("");
+                    }}
+                    className="text-[11px] font-bold text-clay-700 hover:underline cursor-pointer"
+                  >
+                    {isCustomDocCategory ? "← Select Standard Category" : "+ Type Custom Category"}
+                  </button>
                 </div>
 
+                {isCustomDocCategory ? (
+                  <div className="space-y-1">
+                    <input
+                      name="customCategory"
+                      type="text"
+                      required
+                      value={customDocCategoryName}
+                      onChange={(e) => setCustomDocCategoryName(e.target.value)}
+                      placeholder="e.g. Soil Test Report, Interior 3D, Tax / Khata, Quotation"
+                      className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none"
+                      autoFocus
+                    />
+                    <p className="text-[10px] text-ink-500">
+                      New custom category will be created and tagged to this document.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <select
+                      name="category"
+                      defaultValue={editingDoc?.category ?? "FLOOR_PLAN"}
+                      onChange={(e) => {
+                        if (e.target.value === "__custom__") {
+                          setIsCustomDocCategory(true);
+                        }
+                      }}
+                      className="w-full appearance-none rounded-xl border border-paper-300 bg-white p-2.5 pr-8 font-medium text-ink-900 focus:border-clay-500 focus:outline-none cursor-pointer"
+                    >
+                      {CATEGORIES.map((c) => (
+                        <option key={c.value} value={c.value}>
+                          {c.labelEn}
+                        </option>
+                      ))}
+                      <option value="__custom__">+ Add / Write Custom Category...</option>
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-400" />
+                  </div>
+                )}
+              </div>
+
+              {/* Floor & Linked Stage */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="font-bold text-ink-700 block mb-1">Floor (Optional)</label>
                   <select
@@ -1137,23 +1249,22 @@ export function DocumentsHub({
                     ))}
                   </select>
                 </div>
-              </div>
 
-              {/* Construction Stage */}
-              <div>
-                <label className="font-bold text-ink-700 block mb-1">Linked Stage (Optional)</label>
-                <select
-                  name="constructionStageId"
-                  defaultValue={editingDoc?.constructionStageId ?? ""}
-                  className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
-                >
-                  <option value="">None / General</option>
-                  {stages.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
+                <div>
+                  <label className="font-bold text-ink-700 block mb-1">Linked Stage (Optional)</label>
+                  <select
+                    name="constructionStageId"
+                    defaultValue={editingDoc?.constructionStageId ?? ""}
+                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 font-medium text-ink-900 focus:border-clay-500 focus:outline-none"
+                  >
+                    <option value="">None / General</option>
+                    {stages.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               {/* File Dropzone (Only for new uploads) */}

@@ -93,7 +93,6 @@ const WORKER_TYPE_MAP: Record<string, string> = {
 };
 
 export function MasterForms({
-  projectId,
   vendors = [],
   workers = [],
   expenses = [],
