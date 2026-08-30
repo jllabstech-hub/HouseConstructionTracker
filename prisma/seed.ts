@@ -1,4 +1,4 @@
-import { Prisma, type ExpenseType, type LabourCalcMethod, type PaymentMethod, type WorkerType } from "@prisma/client";
+import { type ExpenseType, type LabourCalcMethod, type PaymentMethod, type WorkerType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { prisma } from "../src/lib/prisma";
 import { seedProjectStructure, seedProjectMasters, MATERIAL_CONSOLIDATION_MAP } from "../src/lib/catalog/seed-masters";
@@ -65,7 +65,8 @@ async function main() {
     prisma.professionalCategory.findMany({ where: { projectId: project.id } }),
   ]);
 
-  const mat = (name: string, _group?: string) => {
+  const mat = (name: string, group?: string) => {
+    void group;
     const key = name.trim().toLowerCase();
     const targetName = MATERIAL_CONSOLIDATION_MAP[key]?.targetName ?? name;
     const match =

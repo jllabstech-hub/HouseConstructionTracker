@@ -33,7 +33,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       const publicPath = path.join(process.cwd(), "public", normalizedRelative);
       const publicRoot = path.join(process.cwd(), "public");
 
-      if (publicPath.startsWith(publicRoot)) {
+      const publicRelative = path.relative(publicRoot, publicPath);
+      if (!publicRelative.startsWith("..") && !path.isAbsolute(publicRelative)) {
         try {
           const file = await readFile(publicPath);
           return new NextResponse(file, {
@@ -53,7 +54,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
     const fullPath = path.join(root, doc.storagePath);
 
-    if (fullPath.startsWith(root)) {
+    const storageRelative = path.relative(root, fullPath);
+    if (!storageRelative.startsWith("..") && !path.isAbsolute(storageRelative)) {
       try {
         const file = await readFile(fullPath);
         return new NextResponse(file, {

@@ -5,14 +5,17 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   use: {
-    baseURL: "http://127.0.0.1:7000",
+    baseURL: "http://127.0.0.1:7001",
     trace: "on-first-retry",
   },
   webServer: {
-    command: "npm run dev",
-    url: "http://127.0.0.1:7000",
+    command: "npx next dev -p 7001 --turbopack",
+    url: "http://127.0.0.1:7001",
     reuseExistingServer: true,
     timeout: 120_000,
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "desktop-chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "mobile-chromium", use: { ...devices["Pixel 7"] } },
+  ],
 });

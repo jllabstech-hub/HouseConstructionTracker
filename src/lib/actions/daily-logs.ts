@@ -229,6 +229,28 @@ export async function recordDailySiteLog(input: RecordDailyLogInput) {
   const user = await requireUser();
   await requireProject(input.projectId, user.id);
 
+  const logDate = new Date(input.date);
+  if (!input.date || Number.isNaN(logDate.getTime())) {
+    return { error: "Please enter a valid date" };
+  }
+
+  if (input.stageId) {
+    const stage = await prisma.constructionStage.findFirst({ where: { id: input.stageId, projectId: input.projectId } });
+    if (!stage) return { error: "Selected construction stage not found in this project" };
+  }
+  if (input.floorId) {
+    const floor = await prisma.floor.findFirst({ where: { id: input.floorId, projectId: input.projectId } });
+    if (!floor) return { error: "Selected floor not found in this project" };
+  }
+  if (input.workerId) {
+    const worker = await prisma.worker.findFirst({ where: { id: input.workerId, userId: user.id } });
+    if (!worker) return { error: "Selected worker not found in your account" };
+  }
+  if (input.vendorId) {
+    const vendor = await prisma.vendor.findFirst({ where: { id: input.vendorId, userId: user.id } });
+    if (!vendor) return { error: "Selected vendor not found in your account" };
+  }
+
   const mestriCount = Math.max(0, Number(input.mestriCount) || 0);
   const mestriRate = Math.max(0, Number(input.mestriRate) || 0);
   const helperCount = Math.max(0, Number(input.helperCount) || 0);
@@ -246,8 +268,6 @@ export async function recordDailySiteLog(input: RecordDailyLogInput) {
   if (totalLabourCost <= 0 && cementBags <= 0) {
     return { error: "Please enter either labour count/rates or cement bags used." };
   }
-
-  const logDate = new Date(input.date || new Date().toISOString().slice(0, 10));
 
   // Find or create default "Masonry & Labour" category
   let labourCategory = await prisma.labourCategory.findFirst({
@@ -273,90 +293,42 @@ export async function recordDailySiteLog(input: RecordDailyLogInput) {
     const totalWorkers = mestriCount + helperCount + otherWorkersCount;
     const avgRate = totalWorkers > 0 ? totalLabourCost / totalWorkers : 0;
 
-    let linkedCementExpenseId: string | null = null;
+    const paymentMethod = Object.values(PaymentMethod).includes(input.paymentMethod as PaymentMethod)
+      ? input.paymentMethod as PaymentMethod
+      : PaymentMethod.CASH;
+    const labourExp = await prisma.$transaction(async (tx) => {
+      let linkedCementExpenseId: string | null = null;
+      if (cementBags > 0 && totalCementCost > 0) {
+        const cementExp = await tx.expense.create({
+          data: {
+            projectId: input.projectId, date: logDate, expenseType: "MATERIAL", materialCategoryId: cementCategory?.id ?? null,
+            description: `Daily Cement: ${cementBags} bags (${cementBrand})`, quantity: new Prisma.Decimal(cementBags), unit: "bags",
+            rate: new Prisma.Decimal(cementRate), amount: new Prisma.Decimal(totalCementCost), constructionStageId: input.stageId || null,
+            floorId: input.floorId || null, vendorId: input.vendorId || null, paymentMethod,
+            notes: JSON.stringify({ type: "DAILY_LOG_CEMENT", cementBags, cementBrand, cementRate }),
+          },
+        });
+        linkedCementExpenseId = cementExp.id;
+      }
 
-    // 1. If cement is recorded, create Material Expense
-    if (cementBags > 0 && totalCementCost > 0) {
-      const cementExp = await prisma.expense.create({
+      const logMetadata = { type: "DAILY_LOG", mestriCount, mestriRate, helperCount, helperRate, otherWorkersCount, otherWorkersRate,
+        cementBags, cementBrand, cementRate, workDescription: input.workDescription.trim() || `Daily Site Work (${mestriCount} Masons, ${helperCount} Helpers)`,
+        notes: input.notes?.trim() || "", linkedCementExpenseId };
+      const labour = await tx.expense.create({
         data: {
-          projectId: input.projectId,
-          date: logDate,
-          expenseType: "MATERIAL",
-          materialCategoryId: cementCategory?.id ?? null,
-          description: `Daily Cement: ${cementBags} bags (${cementBrand})`,
-          quantity: new Prisma.Decimal(cementBags),
-          unit: "bags",
-          rate: new Prisma.Decimal(cementRate),
-          amount: new Prisma.Decimal(totalCementCost),
-          constructionStageId: input.stageId || null,
-          floorId: input.floorId || null,
-          vendorId: input.vendorId || null,
-          paymentMethod: (input.paymentMethod as PaymentMethod) || PaymentMethod.CASH,
-          notes: JSON.stringify({
-            type: "DAILY_LOG_CEMENT",
-            cementBags,
-            cementBrand,
-            cementRate,
-          }),
+          projectId: input.projectId, date: logDate, expenseType: "LABOUR", labourCategoryId: labourCategory?.id ?? null,
+          labourCalcMethod: "DAILY_WAGE", numberOfWorkers: totalWorkers || 0, numberOfDays: new Prisma.Decimal(1),
+          rate: new Prisma.Decimal(avgRate.toFixed(2)), amount: new Prisma.Decimal(totalLabourCost), constructionStageId: input.stageId || null,
+          floorId: input.floorId || null, workerId: input.workerId || null, paymentMethod,
+          description: input.workDescription.trim() || `Daily Site Log: ${mestriCount} Mestri (₹${mestriRate}) + ${helperCount} Helpers (₹${helperRate})`,
+          notes: JSON.stringify(logMetadata),
         },
       });
-      linkedCementExpenseId = cementExp.id;
-    }
-
-    // 2. Create Labour Expense (Daily Site Log Master)
-    const logMetadata = {
-      type: "DAILY_LOG",
-      mestriCount,
-      mestriRate,
-      helperCount,
-      helperRate,
-      otherWorkersCount,
-      otherWorkersRate,
-      cementBags,
-      cementBrand,
-      cementRate,
-      workDescription: input.workDescription.trim() || `Daily Site Work (${mestriCount} Masons, ${helperCount} Helpers)`,
-      notes: input.notes?.trim() || "",
-      linkedCementExpenseId,
-    };
-
-    const labourExp = await prisma.expense.create({
-      data: {
-        projectId: input.projectId,
-        date: logDate,
-        expenseType: "LABOUR",
-        labourCategoryId: labourCategory?.id ?? null,
-        labourCalcMethod: "DAILY_WAGE",
-        numberOfWorkers: totalWorkers || 1,
-        numberOfDays: new Prisma.Decimal(1),
-        rate: new Prisma.Decimal(avgRate.toFixed(2)),
-        amount: new Prisma.Decimal(totalLabourCost || 0.01),
-        constructionStageId: input.stageId || null,
-        floorId: input.floorId || null,
-        workerId: input.workerId || null,
-        paymentMethod: (input.paymentMethod as PaymentMethod) || PaymentMethod.CASH,
-        description:
-          input.workDescription.trim() ||
-          `Daily Site Log: ${mestriCount} Mestri (₹${mestriRate}) + ${helperCount} Helpers (₹${helperRate})`,
-        notes: JSON.stringify(logMetadata),
-      },
+      if (linkedCementExpenseId) {
+        await tx.expense.update({ where: { id: linkedCementExpenseId }, data: { notes: JSON.stringify({ type: "DAILY_LOG_CEMENT", linkedLogId: labour.id, cementBags, cementBrand, cementRate }) } });
+      }
+      return labour;
     });
-
-    // Update cement metadata with linked labour ID
-    if (linkedCementExpenseId) {
-      await prisma.expense.update({
-        where: { id: linkedCementExpenseId },
-        data: {
-          notes: JSON.stringify({
-            type: "DAILY_LOG_CEMENT",
-            linkedLogId: labourExp.id,
-            cementBags,
-            cementBrand,
-            cementRate,
-          }),
-        },
-      });
-    }
 
     invalidateProjectCache(input.projectId);
     revalidatePath("/");

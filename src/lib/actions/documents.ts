@@ -72,7 +72,8 @@ export async function uploadDocument(projectId: string, formData: FormData) {
     const fullPath = path.join(root, relative);
 
     // Path Traversal Security check
-    if (!fullPath.startsWith(root)) {
+    const storageRelative = path.relative(root, fullPath);
+    if (storageRelative.startsWith("..") || path.isAbsolute(storageRelative)) {
       return { error: "Invalid storage path" };
     }
 
@@ -243,7 +244,8 @@ export async function deleteDocument(documentId: string) {
       if (!doc.storagePath.startsWith("/images/")) {
         const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
         const fullPath = path.join(root, doc.storagePath);
-        if (fullPath.startsWith(root)) {
+        const storageRelative = path.relative(root, fullPath);
+        if (!storageRelative.startsWith("..") && !path.isAbsolute(storageRelative)) {
           await unlink(fullPath).catch(() => {});
         }
       }

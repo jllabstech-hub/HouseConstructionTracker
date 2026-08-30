@@ -26,6 +26,9 @@ export async function uploadReceipt(expenseId: string, formData: FormData) {
   const relative = path.join("receipts", user.id, expenseId, storedName);
   const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
   const fullPath = path.join(root, relative);
+  if (path.relative(root, fullPath).startsWith("..") || path.isAbsolute(path.relative(root, fullPath))) {
+    return { error: "Invalid storage path" };
+  }
   await mkdir(path.dirname(fullPath), { recursive: true });
   await writeFile(fullPath, Buffer.from(await file.arrayBuffer()));
 

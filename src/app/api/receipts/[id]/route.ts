@@ -24,18 +24,22 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
     // 1. Check if public static image
     if (receipt.storagePath.startsWith("/images/") || receipt.storagePath.startsWith("/")) {
-      const publicPath = path.join(process.cwd(), "public", receipt.storagePath);
-      try {
-        const file = await readFile(publicPath);
-        return new NextResponse(file, {
-          headers: {
-            "Content-Type": receipt.mimeType || "application/octet-stream",
-            "Content-Disposition": `inline; filename="${encodeURIComponent(receipt.fileName)}"`,
-            "Cache-Control": "public, max-age=86400",
-          },
-        });
-      } catch {
-        // Fallback below
+      const publicRoot = path.join(process.cwd(), "public");
+      const publicPath = path.join(publicRoot, receipt.storagePath.replace(/^\/+/, ""));
+      const publicRelative = path.relative(publicRoot, publicPath);
+      if (!publicRelative.startsWith("..") && !path.isAbsolute(publicRelative)) {
+        try {
+          const file = await readFile(publicPath);
+          return new NextResponse(file, {
+            headers: {
+              "Content-Type": receipt.mimeType || "application/octet-stream",
+              "Content-Disposition": `inline; filename="${encodeURIComponent(receipt.fileName)}"`,
+              "Cache-Control": "public, max-age=86400",
+            },
+          });
+        } catch {
+          // Fallback below
+        }
       }
     }
 
@@ -43,7 +47,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     const root = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
     const fullPath = path.join(root, receipt.storagePath);
 
-    if (fullPath.startsWith(root)) {
+    const storageRelative = path.relative(root, fullPath);
+    if (!storageRelative.startsWith("..") && !path.isAbsolute(storageRelative)) {
       try {
         const file = await readFile(fullPath);
         return new NextResponse(file, {

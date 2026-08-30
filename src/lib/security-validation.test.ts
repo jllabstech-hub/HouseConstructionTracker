@@ -50,9 +50,13 @@ describe("Security & Validation Suite", () => {
   it("prevents path traversal attacks on uploads", () => {
     const root = path.resolve("./uploads");
     
-    // Normal safe relative path
+    const isWithinRoot = (target: string) => {
+      const relative = path.relative(root, target);
+      return !relative.startsWith("..") && !path.isAbsolute(relative);
+    };
+
     const safePath = path.join(root, "documents", "user-1", "proj-1", "blueprint.pdf");
-    expect(safePath.startsWith(root)).toBe(true);
+    expect(isWithinRoot(safePath)).toBe(true);
 
     // Malicious path traversal attempts
     const maliciousPaths = [
@@ -62,10 +66,7 @@ describe("Security & Validation Suite", () => {
     ];
 
     for (const mal of maliciousPaths) {
-      const sanitized = path.basename(mal).replace(/[^a-zA-Z0-9._-]/g, "_");
-      const fullPath = path.join(root, "documents", "user-1", sanitized);
-      expect(fullPath.startsWith(root)).toBe(true);
-      expect(fullPath).not.toContain("..");
+      expect(isWithinRoot(path.resolve(root, mal))).toBe(false);
     }
   });
 });

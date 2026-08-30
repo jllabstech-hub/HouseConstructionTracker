@@ -2,9 +2,9 @@ import { expect, test, type Page } from "@playwright/test";
 
 async function login(page: Page) {
   await page.goto("/login");
-  await page.getByLabel(/User ID|Email/).fill("admin");
-  await page.getByLabel("Password").fill("test123");
-  await page.getByRole("button", { name: "Sign In", exact: true }).click();
+  await page.getByPlaceholder("admin or user@example.com").fill("admin");
+  await page.getByPlaceholder("Password").fill("test123");
+  await page.getByRole("button", { name: /sign in/i }).click();
   await expect(page).toHaveURL(/dashboard/, { timeout: 15_000 });
 }
 

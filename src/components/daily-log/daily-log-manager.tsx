@@ -71,10 +71,6 @@ export function DailyLogManager({
 
   const pdfUrl = `/api/daily-log/pdf?projectId=${projectId}${filterStage ? `&stageId=${filterStage}` : ""}`;
 
-  const handleDownloadPdf = () => {
-    window.open(`${pdfUrl}&download=1`, "_blank");
-  };
-
   const handlePreviewPdf = () => {
     window.open(pdfUrl, "_blank");
   };
@@ -234,74 +230,6 @@ export function DailyLogManager({
     if (!filterStage) return initialLogs;
     return initialLogs.filter((l) => l.stageId === filterStage);
   }, [initialLogs, filterStage]);
-
-  // Share individual log entry via PDF to WhatsApp
-  const handleShareWhatsApp = async (log: DailySiteLogEntry) => {
-    setPdfSuccessMsg(null);
-    try {
-      const response = await fetch(`/api/daily-log/pdf?projectId=${projectId}&logId=${log.id}&download=1`);
-      if (!response.ok) throw new Error("Could not generate PDF");
-      const blob = await response.blob();
-      const filename = `daily-labour-${log.date}.pdf`;
-      const file = new File([blob], filename, { type: "application/pdf" });
-
-      if (typeof navigator !== "undefined" && navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: `Daily Labour Report - ${log.date}`,
-            text: `Daily Labour Report (${log.date}): ${log.mestriCount} Mestri, ${log.helperCount} Helpers — Total Wages: ${formatINR(log.totalLabourCost)}`,
-          });
-          setPdfSuccessMsg(`PDF for ${log.date} shared successfully!`);
-          setTimeout(() => setPdfSuccessMsg(null), 3500);
-          return;
-        } catch (err) {
-          if ((err as Error).name === "AbortError") return;
-        }
-      }
-
-      // Fallback for browsers without native file sharing
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(blobUrl);
-
-      const text =
-        `*🏗️ Daily Site Labour Log - ${log.date}*\n` +
-        `*Stage:* ${log.stageName || "General"}\n` +
-        `*Muster Roll Breakdown:*\n` +
-        `• Masons / Mestri: ${log.mestriCount} @ ₹${log.mestriRate} = ${formatINR(log.mestriTotal)}\n` +
-        `• Helpers / Mazdoors: ${log.helperCount} @ ₹${log.helperRate} = ${formatINR(log.helperTotal)}\n` +
-        `• *Total Daily Wage Payout:* ${formatINR(log.totalLabourCost)}\n` +
-        (log.workDescription ? `*Work Done:* ${log.workDescription}\n` : "") +
-        (log.notes ? `*Notes:* ${log.notes}\n` : "") +
-        `\n📄 _(PDF Report downloaded: attach ${filename})_`;
-
-      const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-      window.open(url, "_blank");
-
-      setPdfSuccessMsg(`PDF downloaded and WhatsApp opened! Attach ${filename} to send.`);
-      setTimeout(() => setPdfSuccessMsg(null), 4500);
-    } catch (err) {
-      console.error(err);
-      const text =
-        `*🏗️ Daily Site Labour Log - ${log.date}*\n` +
-        `*Stage:* ${log.stageName || "General"}\n` +
-        `*Muster Roll Breakdown:*\n` +
-        `• Masons / Mestri: ${log.mestriCount} @ ₹${log.mestriRate} = ${formatINR(log.mestriTotal)}\n` +
-        `• Helpers / Mazdoors: ${log.helperCount} @ ₹${log.helperRate} = ${formatINR(log.helperTotal)}\n` +
-        `• *Total Daily Wage Payout:* ${formatINR(log.totalLabourCost)}\n` +
-        (log.workDescription ? `*Work Done:* ${log.workDescription}\n` : "") +
-        (log.notes ? `*Notes:* ${log.notes}` : "");
-
-      const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
-      window.open(url, "_blank");
-    }
-  };
 
   return (
     <div className="w-full space-y-6 pb-12">
