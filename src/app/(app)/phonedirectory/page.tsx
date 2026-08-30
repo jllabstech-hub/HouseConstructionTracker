@@ -38,7 +38,7 @@ export default async function PhoneDirectoryPage() {
     const serializedVendors = vendors.map((v) => ({
       id: v.id,
       name: v.name,
-      company: null,
+      company: v.company ?? null,
       phone: v.phone ?? null,
       address: v.address ?? null,
       notes: v.notes ?? null,
@@ -47,7 +47,7 @@ export default async function PhoneDirectoryPage() {
       id: w.id,
       name: w.name,
       type: w.type,
-      specialization: w.type,
+      specialization: w.specialization ?? w.type,
       phone: w.phone ?? null,
       notes: w.notes ?? null,
     }));
