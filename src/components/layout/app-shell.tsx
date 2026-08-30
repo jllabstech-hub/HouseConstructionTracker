@@ -2,19 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import {
   Building2,
   ChevronDown,
   FileText,
   Files,
-  HardHat,
   Home,
   LogOut,
   Menu,
   Milestone,
-  MoreHorizontal,
-  Package,
   Plus,
   Receipt,
   Search,
@@ -25,6 +21,7 @@ import {
 import { useState, useTransition, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { switchProject } from "@/lib/actions/projects";
+import { logoutUser } from "@/lib/actions/auth";
 import { GlobalSearchModal } from "@/components/search/global-search-modal";
 
 export function AppShell({
@@ -80,7 +77,7 @@ export function AppShell({
 
   const handleSignOut = async () => {
     try {
-      await signOut({ redirect: false });
+      await logoutUser();
     } catch {
       // ignore
     }

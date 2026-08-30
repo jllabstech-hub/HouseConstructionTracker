@@ -2,12 +2,22 @@
 
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
-import { signIn } from "@/auth";
+import { signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { seedUserMasters, seedProjectStructure } from "@/lib/catalog/seed-masters";
 import { registerSchema } from "@/lib/validations";
-
+import { clearActiveProjectId } from "@/lib/project-context";
 import { ensureDatabaseSchema } from "@/lib/db/init-db";
+
+export async function logoutUser() {
+  await clearActiveProjectId();
+  try {
+    await signOut({ redirect: false });
+  } catch {
+    // safe catch for Next.js redirect
+  }
+  return { ok: true };
+}
 
 export async function registerUser(input: unknown) {
   const parsed = registerSchema.safeParse(input);

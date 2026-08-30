@@ -112,6 +112,7 @@ export default async function ProjectsPage() {
                 projectId={project.id}
                 projectName={project.name}
                 isActive={isActive}
+                project={project}
               />
             </Card>
           ))}
