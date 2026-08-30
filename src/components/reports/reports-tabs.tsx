@@ -436,18 +436,6 @@ export function ReportsTabs({
     }
   };
 
-  // Helper to select material category by name pattern
-  const selectMaterialByName = (query: string) => {
-    if (query === "ALL") {
-      setSelectedCategoryId("ALL");
-      return;
-    }
-    const matched = materials.find((m) => m.name.toLowerCase().includes(query.toLowerCase()));
-    if (matched) {
-      setSelectedCategoryId(matched.id);
-    }
-  };
-
   return (
     <div className="space-y-6 w-full pb-12">
       {/* 1. Header Section */}
@@ -599,7 +587,7 @@ export function ReportsTabs({
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
+              className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs cursor-pointer"
             >
               <option value="ALL">All Materials Summary ({materials.length} items)</option>
               {materials.map((m) => (
@@ -608,48 +596,6 @@ export function ReportsTabs({
                 </option>
               ))}
             </select>
-
-            {/* Quick 1-Tap Material Chips */}
-            <div className="space-y-1.5 pt-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-clay-800">
-                Quick 1-Tap Material Filters:
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  { name: "All", query: "ALL" },
-                  { name: "Cement", query: "cement" },
-                  { name: "Steel / Rebar", query: "steel" },
-                  { name: "Sand", query: "sand" },
-                  { name: "Bricks / Blocks", query: "brick" },
-                  { name: "Tiles & Marble", query: "tile" },
-                  { name: "Paints & Putty", query: "paint" },
-                  { name: "Plumbing & Pipes", query: "plumb" },
-                  { name: "Electrical & Wire", query: "elect" },
-                  { name: "Wood & Doors", query: "wood" },
-                ].map((chip) => {
-                  const isMatching =
-                    chip.query === "ALL"
-                      ? selectedCategoryId === "ALL"
-                      : allCategories.find((c) => c.id === selectedCategoryId)?.name.toLowerCase().includes(chip.query);
-
-                  return (
-                    <button
-                      key={chip.name}
-                      type="button"
-                      onClick={() => selectMaterialByName(chip.query)}
-                      className={cn(
-                        "rounded-lg px-2.5 py-1 text-xs font-semibold transition active:scale-95 shadow-2xs",
-                        isMatching
-                          ? "bg-clay-600 text-white font-bold"
-                          : "bg-white border border-clay-200 text-clay-900 hover:bg-clay-100"
-                      )}
-                    >
-                      {chip.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         )}
 
