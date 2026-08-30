@@ -81,7 +81,7 @@ export function FinancialSplit({
               </span>
             </div>
 
-            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 mt-2.5">
+            <p className="mt-2.5 text-lg font-semibold tracking-tight tabular-nums text-ink-900 sm:text-xl">
               <AnimatedNumber value={materialTotal} />
             </p>
             <p className="text-[11px] text-ink-500 mt-0.5">
@@ -111,7 +111,7 @@ export function FinancialSplit({
               </span>
             </div>
 
-            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 mt-2.5">
+            <p className="mt-2.5 text-lg font-semibold tracking-tight tabular-nums text-ink-900 sm:text-xl">
               <AnimatedNumber value={labourTotal} />
             </p>
             <p className="text-[11px] text-ink-500 mt-0.5">
@@ -141,7 +141,7 @@ export function FinancialSplit({
               </span>
             </div>
 
-            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 mt-2.5">
+            <p className="mt-2.5 text-lg font-semibold tracking-tight tabular-nums text-ink-900 sm:text-xl">
               <AnimatedNumber value={otherTotal} />
             </p>
             <p className="text-[11px] text-ink-500 mt-0.5">

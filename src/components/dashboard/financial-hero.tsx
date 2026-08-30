@@ -45,7 +45,7 @@ export function FinancialHero({
               </span>
               <Wallet className="h-4 w-4 text-clay-600" />
             </div>
-            <p className="font-display text-2xl sm:text-3xl font-bold text-ink-900 mt-2">
+            <p className="mt-2 text-xl font-semibold tracking-tight tabular-nums text-ink-900 sm:text-2xl">
               <AnimatedNumber value={totalSpent} />
             </p>
           </div>
@@ -68,7 +68,7 @@ export function FinancialHero({
               </span>
               <PiggyBank className="h-4 w-4 text-ink-400" />
             </div>
-            <p className="font-display text-2xl sm:text-3xl font-bold text-ink-900 mt-2">
+            <p className="mt-2 text-xl font-semibold tracking-tight tabular-nums text-ink-900 sm:text-2xl">
               <AnimatedNumber value={totalBudget} />
             </p>
           </div>
@@ -87,7 +87,7 @@ export function FinancialHero({
               <Landmark className={`h-4 w-4 ${isOverBudget ? "text-red-500" : "text-emerald-600"}`} />
             </div>
             <p
-              className={`font-display text-2xl sm:text-3xl font-bold mt-2 ${
+              className={`mt-2 text-xl font-semibold tracking-tight tabular-nums sm:text-2xl ${
                 isOverBudget ? "text-red-600" : "text-emerald-700"
               }`}
             >
