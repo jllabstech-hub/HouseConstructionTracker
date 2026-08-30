@@ -39,7 +39,7 @@ export default async function EditExpensePage({ params }: { params: Promise<{ id
     expense.expenseType;
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* Back Link */}
       <div>
         <Link
