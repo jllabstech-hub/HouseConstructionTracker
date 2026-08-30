@@ -508,14 +508,24 @@ export function ExpenseForm({
         </div>
 
         {expenseId && (
-          <button
-            type="button"
-            onClick={() => setShowDeleteConfirm(true)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/60 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100 transition cursor-pointer"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span>Delete</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="submit"
+              form="expense-form"
+              disabled={pending}
+              className="rounded-xl bg-clay-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-clay-700 disabled:opacity-50"
+            >
+              {pending ? "Updating…" : "Update"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50/60 px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100 transition cursor-pointer"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              <span>Delete</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -528,7 +538,7 @@ export function ExpenseForm({
       {/* Spacious 2-Column Responsive Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column (Main Form - 8 Cols) */}
-        <form onSubmit={handleSubmit} className="lg:col-span-8 space-y-5">
+        <form id="expense-form" onSubmit={handleSubmit} className="lg:col-span-8 space-y-5">
           <div className="rounded-3xl border border-paper-200 bg-white p-4 sm:p-5 shadow-xs">
             <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400 block">
               1. Date & Expense Type
