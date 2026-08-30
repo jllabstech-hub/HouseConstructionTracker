@@ -442,6 +442,18 @@ export function AppShell({
             {/* Secondary Navigation Grid */}
             <div className="grid grid-cols-2 gap-2.5">
               <Link
+                href="/daily-log"
+                onClick={() => setMobileDrawerOpen(false)}
+                className="flex items-center gap-2.5 rounded-xl border border-clay-200 bg-clay-50/70 p-3 hover:bg-clay-100 transition"
+              >
+                <HardHat className="h-4.5 w-4.5 text-clay-700 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-clay-950 truncate">Daily Labour Log</p>
+                  <p className="text-[10px] text-clay-700 truncate">Muster Roll</p>
+                </div>
+              </Link>
+
+              <Link
                 href="/projects"
                 onClick={() => setMobileDrawerOpen(false)}
                 className="flex items-center gap-2.5 rounded-xl border border-paper-200 bg-paper-50 p-3 hover:bg-paper-100 transition"
