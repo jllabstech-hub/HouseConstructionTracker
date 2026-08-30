@@ -261,10 +261,10 @@ export function ExpenseTable({
           </p>
         </div>
 
-        {/* Primary Action */}
+        {/* Primary Action (Shown on mobile/tablet; desktop uses top bar CTA) */}
         <Link
           href="/expenses/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto whitespace-nowrap shrink-0 cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto whitespace-nowrap shrink-0 cursor-pointer lg:hidden"
         >
           <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
           <span className="whitespace-nowrap">Add Expense</span>
