@@ -12,9 +12,11 @@ import {
   CheckCircle2,
   ChevronDown,
   Eye,
+  Pencil,
 } from "lucide-react";
 import {
   recordDailySiteLog,
+  updateDailySiteLog,
   deleteDailySiteLog,
   type DailySiteLogEntry,
   type DailySiteLogsSummary,
@@ -61,6 +63,7 @@ export function DailyLogManager({
   // Filtering
   const [filterStage, setFilterStage] = useState<string>("");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [editingLogId, setEditingLogId] = useState<string | null>(null);
 
   // PDF Export & Sharing State
   const [sharingPdf, setSharingPdf] = useState<boolean>(false);
@@ -143,33 +146,38 @@ export function DailyLogManager({
       return;
     }
 
+    const payload = {
+      projectId,
+      date,
+      stageId: stageId || undefined,
+      floorId: floorId || undefined,
+      mestriCount: mCount,
+      mestriRate: mRate,
+      helperCount: hCount,
+      helperRate: hRate,
+      cementBags: 0,
+      workDescription:
+        workDescription.trim() ||
+        `Site Work (${mCount} Mestri, ${hCount} Helpers)`,
+      notes: notes.trim() || undefined,
+      paymentMethod,
+    };
+
     start(async () => {
       try {
-        const res = await recordDailySiteLog({
-          projectId,
-          date,
-          stageId: stageId || undefined,
-          floorId: floorId || undefined,
-          mestriCount: mCount,
-          mestriRate: mRate,
-          helperCount: hCount,
-          helperRate: hRate,
-          cementBags: 0,
-          workDescription:
-            workDescription.trim() ||
-            `Site Work (${mCount} Mestri, ${hCount} Helpers)`,
-          notes: notes.trim() || undefined,
-          paymentMethod,
-        });
+        const res = editingLogId
+          ? await updateDailySiteLog(editingLogId, payload)
+          : await recordDailySiteLog(payload);
 
         if ("error" in res && res.error) {
           setError(res.error);
           return;
         }
 
-        setSuccessMsg(`Daily labour log for ${date} saved successfully!`);
+        setSuccessMsg(editingLogId ? `Daily labour log updated successfully!` : `Daily labour log for ${date} saved successfully!`);
         setWorkDescription("");
         setNotes("");
+        setEditingLogId(null);
         router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to record daily site log");
@@ -177,11 +185,46 @@ export function DailyLogManager({
     });
   };
 
+  const handleEdit = (log: DailySiteLogEntry) => {
+    setEditingLogId(log.id);
+    setDate(log.date);
+    setStageId(log.stageId || "");
+    setFloorId(log.floorId || "");
+    setMestriCount(String(log.mestriCount));
+    setMestriRate(String(log.mestriRate));
+    setHelperCount(String(log.helperCount));
+    setHelperRate(String(log.helperRate));
+    setWorkDescription(log.workDescription || "");
+    setNotes(log.notes || "");
+    setPaymentMethod(log.paymentMethod || "CASH");
+    setError(null);
+    setSuccessMsg(null);
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingLogId(null);
+    setDate(new Date().toISOString().slice(0, 10));
+    setStageId("");
+    setFloorId("");
+    setMestriCount("2");
+    setMestriRate("950");
+    setHelperCount("4");
+    setHelperRate("650");
+    setWorkDescription("");
+    setNotes("");
+    setPaymentMethod("CASH");
+    setError(null);
+    setSuccessMsg(null);
+  };
+
   const handleDelete = () => {
     if (!deleteTargetId) return;
     start(async () => {
       await deleteDailySiteLog(projectId, deleteTargetId);
       setDeleteTargetId(null);
+      if (editingLogId === deleteTargetId) handleCancelEdit();
       router.refresh();
     });
   };
@@ -338,20 +381,32 @@ export function DailyLogManager({
           <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-paper-100 pb-3">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-clay-100 text-clay-700">
-                  <Plus className="h-4 w-4" />
+                <div className={`flex h-8 w-8 items-center justify-center rounded-xl ${editingLogId ? "bg-amber-100 text-amber-700" : "bg-clay-100 text-clay-700"}`}>
+                  {editingLogId ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
                 </div>
                 <div>
                   <h2 className="font-display text-base font-bold text-ink-900">
-                    Record Daily Labour
+                    {editingLogId ? "Edit Daily Labour" : "Record Daily Labour"}
                   </h2>
-                  <p className="text-[11px] text-ink-500">Log today&apos;s workers and wages</p>
+                  <p className="text-[11px] text-ink-500">
+                    {editingLogId ? "Update worker count, rates, or notes" : "Log today\u0027s workers and wages"}
+                  </p>
                 </div>
               </div>
 
-              <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-800">
-                1-Click Save
-              </span>
+              {editingLogId ? (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="rounded-xl bg-paper-100 border border-paper-300 px-3 py-1 text-[11px] font-bold text-ink-700 hover:bg-paper-200 transition cursor-pointer"
+                >
+                  ✕ Cancel Edit
+                </button>
+              ) : (
+                <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-extrabold text-emerald-800">
+                  1-Click Save
+                </span>
+              )}
             </div>
 
             {error && (
@@ -557,9 +612,11 @@ export function DailyLogManager({
               <button
                 type="submit"
                 disabled={pending}
-                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-clay-600 hover:bg-clay-700 py-3 px-4 text-xs font-bold text-white shadow-xs transition active:scale-[0.99] disabled:opacity-50 cursor-pointer"
+                className={`w-full flex items-center justify-center gap-2 rounded-2xl py-3 px-4 text-xs font-bold text-white shadow-xs transition active:scale-[0.99] disabled:opacity-50 cursor-pointer ${editingLogId ? "bg-amber-600 hover:bg-amber-700" : "bg-clay-600 hover:bg-clay-700"}`}
               >
-                {pending ? "Saving Daily Log…" : "Save Daily Labour Log"}
+                {pending
+                  ? (editingLogId ? "Updating…" : "Saving…")
+                  : (editingLogId ? "Update Daily Labour Log" : "Save Daily Labour Log")}
               </button>
             </form>
           </div>
@@ -682,8 +739,16 @@ export function DailyLogManager({
                       </div>
                     </div>
 
-                    {/* Row 3: Delete */}
-                    <div className="flex items-center justify-end pt-1 border-t border-paper-100 text-xs">
+                    {/* Row 3: Edit & Delete */}
+                    <div className="flex items-center justify-end gap-1 pt-1 border-t border-paper-100 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(log)}
+                        className={`rounded-lg p-1 transition cursor-pointer ${editingLogId === log.id ? "bg-amber-100 text-amber-700" : "text-ink-400 hover:bg-amber-50 hover:text-amber-700"}`}
+                        title="Edit log entry"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
                       <button
                         type="button"
                         onClick={() => setDeleteTargetId(log.id)}

@@ -372,6 +372,26 @@ export async function recordDailySiteLog(input: RecordDailyLogInput) {
   }
 }
 
+export async function updateDailySiteLog(logId: string, input: RecordDailyLogInput) {
+  const user = await requireUser();
+  await requireProject(input.projectId, user.id);
+
+  try {
+    // Delete old entry (and linked cement)
+    const deleteRes = await deleteDailySiteLog(input.projectId, logId);
+    if ("error" in deleteRes && deleteRes.error) {
+      return { error: deleteRes.error };
+    }
+
+    // Create fresh entry with updated values
+    const createRes = await recordDailySiteLog(input);
+    return createRes;
+  } catch (err) {
+    console.error("updateDailySiteLog error:", err);
+    return { error: err instanceof Error ? err.message : "Failed to update daily log" };
+  }
+}
+
 export async function deleteDailySiteLog(projectId: string, logId: string) {
   const user = await requireUser();
   await requireProject(projectId, user.id);
