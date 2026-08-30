@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCached, setCached } from "@/lib/cache-utils";
 import { getBudgetVariance, getCategoryTotal, getTypeTotals } from "@/lib/finance/aggregations";
 import { EmptyState } from "@/components/ui/page-header";
+import { NoProjectState } from "@/components/projects/no-project-state";
 import { BudgetEditor } from "@/components/budget/budget-editor";
 import { BudgetOverview, type CategoryRiskItem, type TypeBudgetRow } from "@/components/budget/budget-overview";
 
@@ -12,7 +13,14 @@ export const dynamic = "force-dynamic";
 export default async function BudgetPage() {
   const user = await requireUser();
   const projectId = await getActiveProjectId(user.id);
-  if (!projectId) return <EmptyState title="No project" body="Create a project to set budgets." />;
+  if (!projectId) {
+    return (
+      <NoProjectState
+        title="No House Project Selected"
+        description="Please create or select a house project to allocate stage and category budgets."
+      />
+    );
+  }
 
   const cacheKey = `budget:${projectId}`;
   const cached = getCached<{

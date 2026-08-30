@@ -4,13 +4,20 @@ import { loadWorkAreas } from "@/lib/finance/queries";
 import { getWorkWiseCost } from "@/lib/finance/aggregations";
 import { prisma } from "@/lib/prisma";
 import { getCached, setCached } from "@/lib/cache-utils";
-import { EmptyState } from "@/components/ui/page-header";
+import { NoProjectState } from "@/components/projects/no-project-state";
 import { ReportsTabs } from "@/components/reports/reports-tabs";
 
 export default async function ReportsPage() {
   const user = await requireUser();
   const projectId = await getActiveProjectId(user.id);
-  if (!projectId) return <EmptyState title="No project" body="Create a project to generate reports." />;
+  if (!projectId) {
+    return (
+      <NoProjectState
+        title="No House Project Selected"
+        description="Please create or select a house project to generate comprehensive financial, material, and labour reports."
+      />
+    );
+  }
 
   const cacheKey = `reports:${projectId}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

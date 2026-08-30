@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
 import { getCached, setCached } from "@/lib/cache-utils";
-import { EmptyState } from "@/components/ui/page-header";
+import { NoProjectState } from "@/components/projects/no-project-state";
 import {
   CHRONOLOGICAL_CONSTRUCTION_STAGES,
 } from "@/lib/catalog/stage-ordering";
@@ -24,9 +24,9 @@ export default async function StageDetailPage({
   const projectId = await getActiveProjectId(user.id);
   if (!projectId) {
     return (
-      <EmptyState
-        title="No active project"
-        body="Create or select a house project to view stage details."
+      <NoProjectState
+        title="No House Project Selected"
+        description="Please create or select a house project to view stage details and checklist progress."
       />
     );
   }

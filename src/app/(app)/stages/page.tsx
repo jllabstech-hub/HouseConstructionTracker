@@ -3,6 +3,7 @@ import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
 import { getCached, setCached } from "@/lib/cache-utils";
 import { EmptyState } from "@/components/ui/page-header";
+import { NoProjectState } from "@/components/projects/no-project-state";
 import { CHRONOLOGICAL_CONSTRUCTION_STAGES } from "@/lib/catalog/stage-ordering";
 import { StageHubView, type StageSummaryItem } from "@/components/stages/stage-hub-view";
 
@@ -13,9 +14,9 @@ export default async function StagesOverviewPage() {
   const projectId = await getActiveProjectId(user.id);
   if (!projectId) {
     return (
-      <EmptyState
-        title="No active project"
-        body="Create or select a house project to view the construction stages."
+      <NoProjectState
+        title="No House Project Selected"
+        description="Please create or select a house project to track your 20 construction stages and milestones."
       />
     );
   }

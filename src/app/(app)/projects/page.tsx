@@ -7,7 +7,6 @@ import { formatINR } from "@/lib/money";
 import { getProjectsSummaryBatch } from "@/lib/finance/financial-aggregates";
 import { Card } from "@/components/ui/card";
 import { ProjectCardActions } from "@/components/projects/project-card-actions";
-import type { Project } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 

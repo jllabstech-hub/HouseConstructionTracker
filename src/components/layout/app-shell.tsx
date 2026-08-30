@@ -100,9 +100,15 @@ export function AppShell({
             <p className="text-xs font-bold uppercase tracking-wider text-ink-500">
               House Construction
             </p>
-            <p className="text-sm font-bold text-ink-900 truncate">
-              {activeProject?.name ?? "My House"}
-            </p>
+            {activeProject ? (
+              <p className="text-sm font-bold text-ink-900 truncate">
+                {activeProject.name}
+              </p>
+            ) : (
+              <Link href="/projects/new" className="text-xs font-bold text-clay-700 hover:underline">
+                + Create Project
+              </Link>
+            )}
           </div>
         </div>
 
@@ -271,15 +277,27 @@ export function AppShell({
               <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500">
                 Active Project:
               </span>
-              <Link
-                href="/projects"
-                prefetch={true}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-900 bg-paper-100 hover:bg-paper-200 px-2.5 py-1 rounded-xl border border-paper-200/80 shadow-2xs transition"
-                title="Manage all house projects"
-              >
-                <Building2 className="h-3.5 w-3.5 text-clay-600 shrink-0" />
-                <span>{activeProject?.name ?? "My House"}</span>
-              </Link>
+              {activeProject ? (
+                <Link
+                  href="/projects"
+                  prefetch={true}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-ink-900 bg-paper-100 hover:bg-paper-200 px-2.5 py-1 rounded-xl border border-paper-200/80 shadow-2xs transition"
+                  title="Manage all house projects"
+                >
+                  <Building2 className="h-3.5 w-3.5 text-clay-600 shrink-0" />
+                  <span>{activeProject.name}</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/projects/new"
+                  prefetch={true}
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-clay-700 bg-clay-50 hover:bg-clay-100 px-2.5 py-1 rounded-xl border border-clay-200 shadow-2xs transition"
+                  title="Create your house project"
+                >
+                  <Plus className="h-3.5 w-3.5 text-clay-600 shrink-0" />
+                  <span>+ Create Project</span>
+                </Link>
+              )}
             </div>
 
             {/* Top-Right Search & Action Controls */}

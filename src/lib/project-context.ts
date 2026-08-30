@@ -2,7 +2,6 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth-guard";
-import { getCached, setCached } from "@/lib/cache-utils";
 import type { Project } from "@prisma/client";
 
 export const PROJECT_COOKIE = "hct-project-id";

@@ -3,7 +3,7 @@ import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
 import { getCached, setCached } from "@/lib/cache-utils";
 import { ExpenseTable } from "@/components/expenses/expense-table";
-import { EmptyState } from "@/components/ui/page-header";
+import { NoProjectState } from "@/components/projects/no-project-state";
 import type { ExpenseRowData } from "@/components/expenses/expense-mobile-card";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,12 @@ export default async function ExpensesPage() {
   const projectId = await getActiveProjectId(user.id);
 
   if (!projectId) {
-    return <EmptyState title="No project found" body="Create or select a house project to view expenses." />;
+    return (
+      <NoProjectState
+        title="No House Project Selected"
+        description="Please create or select a house project to view and manage construction expenses."
+      />
+    );
   }
 
   const cacheKey = `expenses:${projectId}`;

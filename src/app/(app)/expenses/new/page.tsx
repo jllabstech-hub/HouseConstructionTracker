@@ -2,7 +2,7 @@ import { requireUser } from "@/lib/auth-guard";
 import { getActiveProjectId } from "@/lib/project-context";
 import { loadMasters } from "@/lib/masters";
 import { ExpenseForm } from "@/components/expenses/expense-form";
-import { EmptyState } from "@/components/ui/page-header";
+import { NoProjectState } from "@/components/projects/no-project-state";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,12 @@ export default async function NewExpensePage({
   const user = await requireUser();
   const projectId = await getActiveProjectId(user.id);
   if (!projectId) {
-    return <EmptyState title="Choose a project first" body="Expenses always belong to a house project." />;
+    return (
+      <NoProjectState
+        title="No House Project Selected"
+        description="Expenses must be recorded against a house project. Please create or select a project first."
+      />
+    );
   }
   const masters = await loadMasters(user.id, projectId);
   const params = searchParams ? await searchParams : {};

@@ -1,9 +1,7 @@
 import { Suspense } from "react";
-import Link from "next/link";
-import { Plus } from "lucide-react";
 import { getActiveProject } from "@/lib/project-context";
 import { getCriticalFinancialSummary, getDashboardSecondaryData } from "@/lib/finance/financial-aggregates";
-import { EmptyState } from "@/components/ui/page-header";
+import { NoProjectState } from "@/components/projects/no-project-state";
 import { FinancialHero } from "@/components/dashboard/financial-hero";
 import { FinancialSplit } from "@/components/dashboard/financial-split";
 import { MonthlyChart } from "@/components/charts/finance-charts";
@@ -120,18 +118,9 @@ export default async function DashboardPage() {
 
   if (!ctx?.project) {
     return (
-      <EmptyState
+      <NoProjectState
         title="Start your house project"
-        body="Track every rupee spent on cement, steel, bricks, and mason wages with zero confusion."
-        action={
-          <Link
-            href="/projects/new"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-5 py-2.5 font-bold text-white shadow-xs hover:bg-clay-700 transition"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Create New Project</span>
-          </Link>
-        }
+        description="Track every rupee spent on cement, steel, bricks, and mason wages with zero confusion."
       />
     );
   }
@@ -143,18 +132,9 @@ export default async function DashboardPage() {
 
   if (!summary) {
     return (
-      <EmptyState
+      <NoProjectState
         title="Start your house project"
-        body="Track every rupee spent on cement, steel, bricks, and mason wages with zero confusion."
-        action={
-          <Link
-            href="/projects/new"
-            className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-5 py-2.5 font-bold text-white shadow-xs hover:bg-clay-700 transition"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Create New Project</span>
-          </Link>
-        }
+        description="Track every rupee spent on cement, steel, bricks, and mason wages with zero confusion."
       />
     );
   }

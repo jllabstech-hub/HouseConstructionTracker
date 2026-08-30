@@ -3,6 +3,7 @@ import { getActiveProjectId } from "@/lib/project-context";
 import { prisma } from "@/lib/prisma";
 import { getCached, setCached } from "@/lib/cache-utils";
 import { EmptyState } from "@/components/ui/page-header";
+import { NoProjectState } from "@/components/projects/no-project-state";
 import { DocumentsHub, type DocumentItem } from "@/components/documents/documents-hub";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,14 @@ export const dynamic = "force-dynamic";
 export default async function DocumentsPage() {
   const user = await requireUser();
   const projectId = await getActiveProjectId(user.id);
-  if (!projectId) return <EmptyState title="No project found" body="Create or select a house project to manage blueprints and elevations." />;
+  if (!projectId) {
+    return (
+      <NoProjectState
+        title="No House Project Selected"
+        description="Please create or select a house project to manage blueprints, structural drawings, and floor plans."
+      />
+    );
+  }
 
   const cacheKey = `documents:${projectId}`;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
