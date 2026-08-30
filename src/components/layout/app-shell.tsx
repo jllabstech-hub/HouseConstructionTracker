@@ -71,7 +71,7 @@ export function AppShell({
 
   const moreNav = [
     { href: "/daily-log", label: "Daily Labour Log", icon: HardHat, active: pathname.startsWith("/daily-log") },
-    { href: "/projects", label: "My Houses", icon: Building2, active: pathname.startsWith("/projects") },
+    { href: "/projects", label: "Manage Houses", icon: Building2, active: pathname.startsWith("/projects") },
     { href: "/phonedirectory", label: "Phone Directory", icon: Users, active: pathname === "/phonedirectory" },
     { href: "/masters", label: "Categories", icon: Tags, active: pathname === "/masters" },
     { href: "/documents", label: "Documents", icon: Files, active: pathname === "/documents" },
@@ -475,7 +475,7 @@ export function AppShell({
                 <Milestone className="h-4.5 w-4.5 text-clay-600 shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-ink-900 truncate">Construction</p>
-                  <p className="text-[10px] text-ink-500 truncate">20 Stages</p>
+                  <p className="text-[10px] text-ink-500 truncate">Your work stages</p>
                 </div>
               </Link>
 
@@ -523,7 +523,7 @@ export function AppShell({
                 <Tags className="h-4.5 w-4.5 text-clay-600 shrink-0" />
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-ink-900 truncate">Categories</p>
-                  <p className="text-[10px] text-ink-500 truncate">Materials & Labour</p>
+                  <p className="text-[10px] text-ink-500 truncate">Categories & stages</p>
                 </div>
               </Link>
 

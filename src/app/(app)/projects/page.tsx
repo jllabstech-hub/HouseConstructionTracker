@@ -33,15 +33,15 @@ export default async function ProjectsPage() {
       {/* Compact header with inline button */}
       <div className="flex items-center justify-between gap-3 mb-5">
         <h1 className="font-display text-xl sm:text-2xl font-bold text-ink-900">
-          My Houses
+          Manage Houses
         </h1>
-        <Link
+        {cards.length > 0 && <Link
           href="/projects/new"
           className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-clay-700 transition whitespace-nowrap shadow-xs shrink-0"
         >
           <Plus className="h-3.5 w-3.5" />
-          Add House
-        </Link>
+          Add another house
+        </Link>}
       </div>
 
       {cards.length === 0 ? (
@@ -56,7 +56,7 @@ export default async function ProjectsPage() {
               className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-4 py-2 text-xs font-bold text-white hover:bg-clay-700 shadow-xs transition"
             >
               <Plus className="h-3.5 w-3.5" />
-              Create First House
+              Create your first house
             </Link>
           </div>
         </div>
