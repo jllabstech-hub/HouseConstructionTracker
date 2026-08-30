@@ -448,50 +448,7 @@ export function ReportsTabs({
         </p>
       </div>
 
-      {/* 2. Quick Reports 1-Tap Bar */}
-      <div className="space-y-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400 block">
-          Choose Report Mode
-        </span>
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {[
-            { id: "total", label: "Total expenditure", icon: FileText },
-            { id: "material", label: "Material-wise (Cement, Steel, Paints...)", icon: Package },
-            { id: "worker", label: "Worker / Person-wise (Mason, Carpenter...)", icon: HardHat },
-            { id: "vendor", label: "Vendor / Shop-wise (Dealers, Stores)", icon: Wallet },
-            { id: "stage", label: "Stage-wise", icon: Layers },
-            { id: "budget", label: "Budget vs Actual", icon: Wallet },
-          ].map((item) => {
-            const isSelected = selectedReport === item.id;
-            const Icon = item.icon;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setSelectedReport(item.id);
-                  if (item.id === "total") {
-                    setSelectedCategoryId("ALL");
-                    setSelectedWorkerId("ALL");
-                    setSelectedVendorId("ALL");
-                  }
-                }}
-                className={cn(
-                  "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition active:scale-95 whitespace-nowrap shrink-0",
-                  isSelected
-                    ? "bg-clay-600 text-white shadow-xs"
-                    : "bg-white border border-paper-200 text-ink-700 hover:bg-paper-50 shadow-2xs"
-                )}
-              >
-                <Icon className={cn("h-3.5 w-3.5", isSelected ? "text-white" : "text-clay-600")} />
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 3. Primary Report Configuration Card */}
+      {/* Primary Report Configuration Card */}
       <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-5">
         {/* Row 1: Report Type & Date Range Pickers */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -665,6 +622,42 @@ export function ReportsTabs({
               {vendors.map((v) => (
                 <option key={v.id} value={v.id}>
                   {v.name} {v.phone ? `· ${v.phone}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* STAGE-WISE DEDICATED SELECTOR */}
+        {selectedReport === "stage" && (
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label className="text-xs font-bold text-blue-950 flex items-center gap-1.5">
+                <Layers className="h-4 w-4 text-blue-700" />
+                <span>Select Construction Stage</span>
+              </label>
+              {selectedStageId !== "ALL" && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedStageId("ALL")}
+                  className="text-xs font-bold text-blue-800 hover:underline inline-flex items-center gap-1"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  <span>Show All Stages</span>
+                </button>
+              )}
+            </div>
+
+            {/* Stage Dropdown */}
+            <select
+              value={selectedStageId}
+              onChange={(e) => setSelectedStageId(e.target.value)}
+              className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs cursor-pointer"
+            >
+              <option value="ALL">All Stages Summary ({stages.length} stages)</option>
+              {stages.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
                 </option>
               ))}
             </select>
