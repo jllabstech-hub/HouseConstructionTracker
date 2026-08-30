@@ -211,6 +211,13 @@ export default async function EditExpensePage({ params }: { params: Promise<{ id
             dailyWorkers: expense.numberOfWorkers?.toString() ?? "",
             dailyDays: expense.numberOfDays?.toString() ?? "",
           }}
+          existingReceipts={expense.receipts.map((r) => ({
+            id: r.id,
+            fileName: r.fileName,
+            mimeType: r.mimeType,
+            sizeBytes: r.sizeBytes,
+            ocrStatus: r.ocrStatus,
+          }))}
           materials={masters.materials}
           labours={masters.labours}
           services={masters.services}

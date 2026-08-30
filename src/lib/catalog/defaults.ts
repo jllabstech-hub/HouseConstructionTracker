@@ -77,8 +77,8 @@ export const LABOUR_CATALOG: { group: string; items: string[] }[] = [
     items: ["Tile & Granite Laying", "Painting Labour", "Fabrication & Grill Work"],
   },
   {
-    group: "General & Helpers",
-    items: ["General Labour & Helpers", "Other Labour"],
+    group: "General & Machinery",
+    items: ["General Labour & Helpers", "Machine & JCB Operator", "Supervisor / Contractor", "Other Man Power"],
   },
 ];
 

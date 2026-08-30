@@ -14,7 +14,7 @@ export const MAJOR_MATERIAL_CATEGORIES = [
   "Hardware, Metal & Grills",
   "Waterproofing & Chemicals",
   "Shuttering & Scaffolding",
-  "Other Materials",
+  "Other Material",
 ] as const;
 
 export const MAJOR_LABOUR_CATEGORIES = [
@@ -27,30 +27,33 @@ export const MAJOR_LABOUR_CATEGORIES = [
   "Painting Labour",
   "Fabrication & Grill Work",
   "General Labour & Helpers",
-  "Other Labour",
+  "Machine & JCB Operator",
+  "Supervisor / Contractor",
+  "Other Man Power",
 ] as const;
 
 export const QUICK_MATERIAL_PRESETS = [
   "Cement",
-  "Steel / TMT / Binding Wire",
+  "Steel / TMT",
   "Sand",
   "Red Bricks",
-  "Cement & AAC Blocks",
-  "Electrical & Wiring",
-  "Plumbing & Sanitary",
-  "Tiles, Granite & Marble",
-  "Paint, Primer & Wall Care",
+  "Aggregates",
+  "Tiles & Marble",
+  "Paint & Primer",
+  "Plumbing",
+  "Electrical",
 ] as const;
 
 export const QUICK_LABOUR_PRESETS = [
-  "Civil & Masonry Labour",
-  "Bar Bending & Steel Work",
+  "Masonry Labour",
+  "Bar Bending",
   "Shuttering & Carpentry",
   "Plumbing Labour",
   "Electrical Labour",
-  "Tile & Granite Laying",
+  "Tile Laying",
   "Painting Labour",
-  "General Labour & Helpers",
+  "General Labour",
+  "JCB / Machine Operator",
 ] as const;
 
 export const STAGE_GROUP_ORDER: Record<string, number> = {

@@ -70,7 +70,7 @@ export type EntityOption = {
 const REPORT_TYPES = [
   { value: "total", label: "Total expenditure" },
   { value: "material", label: "Material" },
-  { value: "labour", label: "Labour" },
+  { value: "labour", label: "Man Power" },
   { value: "budget", label: "Budget vs Actual" },
   { value: "work-wise", label: "Work-wise cost" },
   { value: "stage", label: "Construction Stage" },

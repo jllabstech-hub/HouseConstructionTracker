@@ -322,9 +322,9 @@ export function MasterForms({
       <div className="flex overflow-x-auto no-scrollbar gap-2 p-1.5 bg-paper-100/90 rounded-2xl border border-paper-200 min-w-0 max-w-full">
         {[
           { id: "VENDORS", label: "Shops & Vendors", count: effectiveVendors.length },
-          { id: "WORKERS", label: "Workers & Masons", count: effectiveWorkers.length },
+          { id: "WORKERS", label: "Workers & Contractors", count: effectiveWorkers.length },
           { id: "MATERIALS", label: "Materials Catalog", count: materials.length },
-          { id: "LABOURS", label: "Labour Rates", count: labours.length },
+          { id: "LABOURS", label: "Man Power Catalog", count: labours.length },
           { id: "SERVICES", label: "Machinery & Services", count: services.length },
         ].map((tab) => (
           <button
