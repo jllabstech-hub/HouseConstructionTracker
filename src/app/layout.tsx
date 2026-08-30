@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { TopProgressBar } from "@/components/ui/top-progress-bar";
+import { PwaRegister } from "@/components/ui/pwa-register";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="font-sans antialiased">
         <TopProgressBar />
+        <PwaRegister />
         {children}
       </body>
     </html>
