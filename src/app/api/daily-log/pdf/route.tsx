@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { DailyLabourLogPdf } from "@/components/daily-log/daily-log-pdf";
 import { getOwnedProjectOrNull } from "@/lib/auth-guard";
-import { getDailySiteLogs } from "@/lib/actions/daily-logs";
+import { getDailySiteLogs, type DailySiteLogsSummary } from "@/lib/actions/daily-logs";
 
 export const dynamic = "force-dynamic";
 
@@ -26,16 +26,32 @@ export async function GET(request: Request) {
     }
 
     const stageId = url.searchParams.get("stageId") || undefined;
+    const logId = url.searchParams.get("logId") || undefined;
     const download = url.searchParams.get("download") === "1";
 
     const { logs: allLogs, summary } = await getDailySiteLogs(projectId);
-    const filteredLogs = stageId ? allLogs.filter((l) => l.stageId === stageId) : allLogs;
+    let filteredLogs = stageId ? allLogs.filter((l) => l.stageId === stageId) : allLogs;
+    if (logId) {
+      filteredLogs = allLogs.filter((l) => l.id === logId);
+    }
+
+    const logSummary: DailySiteLogsSummary = logId && filteredLogs.length > 0 ? {
+      totalMestriDays: filteredLogs.reduce((acc, l) => acc + l.mestriCount, 0),
+      totalHelperDays: filteredLogs.reduce((acc, l) => acc + l.helperCount, 0),
+      totalOtherWorkerDays: filteredLogs.reduce((acc, l) => acc + l.otherWorkersCount, 0),
+      totalWorkerDays: filteredLogs.reduce((acc, l) => acc + l.totalWorkers, 0),
+      totalLabourSpent: filteredLogs.reduce((acc, l) => acc + l.totalLabourCost, 0),
+      totalCementBags: 0,
+      totalCementSpent: 0,
+      grandTotal: filteredLogs.reduce((acc, l) => acc + l.totalLabourCost, 0),
+      daysLoggedCount: filteredLogs.length,
+    } : summary;
 
     const pdfBuffer = await renderToBuffer(
       <DailyLabourLogPdf
         projectName={project.name}
         logs={filteredLogs}
-        summary={summary}
+        summary={logSummary}
         generatedAt={new Date().toLocaleDateString("en-IN", {
           day: "numeric",
           month: "short",
@@ -45,7 +61,9 @@ export async function GET(request: Request) {
     );
 
     const safeName = project.name.toLowerCase().replace(/[^a-z0-9]/g, "-");
-    const filename = `daily-labour-muster-roll-${safeName}.pdf`;
+    const filename = logId && filteredLogs[0]
+      ? `daily-labour-voucher-${filteredLogs[0].date}-${safeName}.pdf`
+      : `daily-labour-muster-roll-${safeName}.pdf`;
 
     return new Response(pdfBuffer as unknown as BodyInit, {
       headers: {

@@ -151,6 +151,12 @@ export async function getDailySiteLogs(projectId: string): Promise<{
     const totalCementCost = cementBags * cementRate;
     const totalWorkers = mestriCount + helperCount + otherWorkersCount;
 
+    // Clean cement references from labour work description
+    let cleanWorkDescription = (workDescription || "").replace(/,?\s*\d+\s*bags?\s*cement/gi, "").trim();
+    if (!cleanWorkDescription || cleanWorkDescription === "Site Work") {
+      cleanWorkDescription = `Site Work (${mestriCount} Mestri, ${helperCount} Helpers)`;
+    }
+
     logs.push({
       id: exp.id,
       date: exp.date.toISOString().slice(0, 10),
@@ -174,7 +180,7 @@ export async function getDailySiteLogs(projectId: string): Promise<{
       cementRate,
       totalCementCost,
       totalDayCost: totalLabourCost + totalCementCost,
-      workDescription,
+      workDescription: cleanWorkDescription,
       notes: customNotes,
       paymentMethod: exp.paymentMethod,
       linkedCementExpenseId: linkedCementId,
