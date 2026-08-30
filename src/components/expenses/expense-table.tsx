@@ -221,6 +221,18 @@ export function ExpenseTable({
     return filtered.reduce((acc, curr) => acc + Number(curr.amount), 0);
   }, [filtered]);
 
+  const materialTotal = useMemo(() => {
+    return filtered.filter((e) => e.type === "MATERIAL").reduce((acc, curr) => acc + Number(curr.amount), 0);
+  }, [filtered]);
+
+  const labourTotal = useMemo(() => {
+    return filtered.filter((e) => e.type === "LABOUR").reduce((acc, curr) => acc + Number(curr.amount), 0);
+  }, [filtered]);
+
+  const otherTotal = useMemo(() => {
+    return filtered.filter((e) => e.type !== "MATERIAL" && e.type !== "LABOUR").reduce((acc, curr) => acc + Number(curr.amount), 0);
+  }, [filtered]);
+
   // Paginated Slices
   const paginatedExpenses = useMemo(() => {
     const start = (page - 1) * pageSize;
@@ -237,35 +249,59 @@ export function ExpenseTable({
   };
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto pb-10">
-      {/* 1. Top Section: Header, Total Spent, Transaction Count & Primary CTA */}
+    <div className="space-y-6 w-full pb-10">
+      {/* 1. Top Section: Header & Primary CTA */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-paper-200/80 pb-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 leading-tight">
             Expenses
           </h1>
-          <div className="flex items-center gap-2.5 text-xs text-ink-500 mt-1 flex-wrap font-medium">
-            <span>
-              Total spent:{" "}
-              <strong className="font-display text-sm font-bold text-ink-900">
-                {formatINR(currentTotal)}
-              </strong>
-            </span>
-            <span>•</span>
-            <span>
-              {filtered.length} transactions
-            </span>
-          </div>
+          <p className="text-xs sm:text-sm text-ink-500 mt-1">
+            Track, filter, and audit every construction payment with bill receipts.
+          </p>
         </div>
 
-        {/* Primary Action (mobile/tablet only; desktop top nav has persistent Add Expense) */}
+        {/* Primary Action */}
         <Link
           href="/expenses/new"
-          className="lg:hidden inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto whitespace-nowrap shrink-0"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto whitespace-nowrap shrink-0 cursor-pointer"
         >
           <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
           <span className="whitespace-nowrap">Add Expense</span>
         </Link>
+      </div>
+
+      {/* 2. Top Financial Metric Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs space-y-1">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500 block">Total Spent</span>
+          <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">{formatINR(currentTotal)}</p>
+          <p className="text-[11px] text-ink-400 font-medium">{filtered.length} transactions recorded</p>
+        </div>
+        <div className="rounded-2xl border border-clay-200 bg-clay-50/40 p-4 shadow-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-clay-800">Material</span>
+            <Package className="h-3.5 w-3.5 text-clay-600" />
+          </div>
+          <p className="font-display text-xl sm:text-2xl font-bold text-clay-900 leading-tight">{formatINR(materialTotal)}</p>
+          <p className="text-[11px] text-clay-700 font-medium">{currentTotal > 0 ? ((materialTotal / currentTotal) * 100).toFixed(0) : 0}% of spending</p>
+        </div>
+        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4 shadow-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Labour</span>
+            <HardHat className="h-3.5 w-3.5 text-emerald-600" />
+          </div>
+          <p className="font-display text-xl sm:text-2xl font-bold text-emerald-950 leading-tight">{formatINR(labourTotal)}</p>
+          <p className="text-[11px] text-emerald-700 font-medium">{currentTotal > 0 ? ((labourTotal / currentTotal) * 100).toFixed(0) : 0}% of spending</p>
+        </div>
+        <div className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500">Other / Services</span>
+            <MoreHorizontal className="h-3.5 w-3.5 text-ink-400" />
+          </div>
+          <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">{formatINR(otherTotal)}</p>
+          <p className="text-[11px] text-ink-400 font-medium">Machinery, transport & fees</p>
+        </div>
       </div>
 
       {/* 2. Quick Filters (All | Material | Labour | Other) + Search & Filter Drawer Trigger */}
@@ -451,16 +487,16 @@ export function ExpenseTable({
         </div>
       ) : (
         /* Empty State */
-        <div className="rounded-2xl border border-dashed border-paper-300 bg-white p-12 text-center space-y-4">
-          <Receipt className="mx-auto h-12 w-12 text-ink-300" />
-          <div className="space-y-1">
-            <h3 className="font-display text-base sm:text-lg font-bold text-ink-900">
-              No expenses found
+        <div className="rounded-3xl border border-dashed border-paper-300 bg-white p-8 sm:p-12 text-center space-y-6">
+          <div className="max-w-md mx-auto space-y-2">
+            <Receipt className="mx-auto h-12 w-12 text-ink-300" />
+            <h3 className="font-display text-lg sm:text-xl font-bold text-ink-900">
+              {search || activeFiltersCount > 0 ? "No matching expenses" : "No expenses recorded yet"}
             </h3>
-            <p className="text-xs text-ink-500 max-w-sm mx-auto">
+            <p className="text-xs sm:text-sm text-ink-500">
               {search || activeFiltersCount > 0
                 ? "No records match your active filters. Try clearing search or filters."
-                : "Start tracking your construction spending by recording your first expense."}
+                : "Start tracking your house construction spending by recording your material purchases or labour payments."}
             </p>
           </div>
 
@@ -468,19 +504,55 @@ export function ExpenseTable({
             <button
               type="button"
               onClick={handleResetFilters}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2.5 text-xs font-bold text-ink-800 hover:bg-paper-100 transition shadow-2xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2.5 text-xs font-bold text-ink-800 hover:bg-paper-100 transition shadow-2xs cursor-pointer"
             >
               <RotateCcw className="h-3.5 w-3.5" />
               <span>Clear Filters</span>
             </button>
           ) : (
-            <Link
-              href="/expenses/new"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-clay-700 transition shadow-xs"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add First Expense</span>
-            </Link>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto pt-2">
+              <Link
+                href="/expenses/new?type=MATERIAL"
+                className="rounded-2xl border border-clay-200 bg-clay-50/50 hover:bg-clay-50 p-5 text-left transition group space-y-2"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-clay-600 text-white group-hover:scale-105 transition">
+                  <Package className="h-4.5 w-4.5" />
+                </div>
+                <h4 className="font-display font-bold text-ink-900 text-sm">Material Purchase</h4>
+                <p className="text-xs text-ink-500 leading-relaxed">Record cement, steel, sand, bricks, tiles, electricals, and plumbing supplies.</p>
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-clay-700 pt-1 group-hover:translate-x-0.5 transition">
+                  <span>+ Record Material</span> &rarr;
+                </span>
+              </Link>
+
+              <Link
+                href="/expenses/new?type=LABOUR"
+                className="rounded-2xl border border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 p-5 text-left transition group space-y-2"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-700 text-white group-hover:scale-105 transition">
+                  <HardHat className="h-4.5 w-4.5" />
+                </div>
+                <h4 className="font-display font-bold text-ink-900 text-sm">Labour Wages</h4>
+                <p className="text-xs text-ink-500 leading-relaxed">Pay daily wages or contract payments to masons, carpenters, and electricians.</p>
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 pt-1 group-hover:translate-x-0.5 transition">
+                  <span>+ Record Labour</span> &rarr;
+                </span>
+              </Link>
+
+              <Link
+                href="/phonedirectory"
+                className="rounded-2xl border border-paper-200 bg-paper-50 hover:bg-paper-100 p-5 text-left transition group space-y-2"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 text-white group-hover:scale-105 transition">
+                  <Receipt className="h-4.5 w-4.5" />
+                </div>
+                <h4 className="font-display font-bold text-ink-900 text-sm">Phone Directory</h4>
+                <p className="text-xs text-ink-500 leading-relaxed">Save contact numbers of your local hardware shops, masons, and contractors.</p>
+                <span className="inline-flex items-center gap-1 text-xs font-bold text-ink-800 pt-1 group-hover:translate-x-0.5 transition">
+                  <span>View Contacts</span> &rarr;
+                </span>
+              </Link>
+            </div>
           )}
         </div>
       )}

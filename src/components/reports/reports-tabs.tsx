@@ -449,7 +449,7 @@ export function ReportsTabs({
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* 1. Header Section */}
       <div className="border-b border-paper-200/80 pb-4">
         <h1 className="font-display text-2xl sm:text-3xl font-bold text-ink-900 leading-tight">

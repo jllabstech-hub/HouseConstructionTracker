@@ -61,7 +61,7 @@ export default async function ProjectsPage() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {cards.map(({ project, totals, isActive }) => (
             <Card key={project.id} className={isActive ? "border-clay-400 bg-clay-50/10" : ""}>
               {/* Row 1: Name + Status */}

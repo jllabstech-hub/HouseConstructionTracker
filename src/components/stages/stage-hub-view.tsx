@@ -114,7 +114,7 @@ export function StageHubView({
   }, [stagesData, activeFilter, search]);
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-12">
+    <div className="space-y-6 w-full pb-12">
       {/* 1. Header & Project Context */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-paper-200/80 pb-4">
         <div>
@@ -313,7 +313,7 @@ export function StageHubView({
         </div>
       </div>
 
-      {/* 4. Simple Stage Timeline List */}
+      {/* 4. Stage Timeline Grid */}
       {filteredStages.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-paper-300 bg-white p-12 text-center space-y-3">
           <Layers className="mx-auto h-10 w-10 text-ink-300" />
@@ -329,152 +329,125 @@ export function StageHubView({
               setActiveFilter("ALL");
               setSearch("");
             }}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2 text-xs font-bold text-ink-800 hover:bg-paper-100 transition"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-paper-50 px-4 py-2 text-xs font-bold text-ink-800 hover:bg-paper-100 transition cursor-pointer"
           >
             <span>Reset Filters</span>
           </button>
         </div>
       ) : (
-        <div className="relative space-y-4">
-          {/* Vertical Timeline Spine */}
-          <div className="absolute top-6 bottom-6 left-[19px] sm:left-[23px] w-0.5 bg-paper-200 z-0" />
-
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filteredStages.map((stage) => {
             const isCompleted = stage.status === "COMPLETED" || stage.percentageComplete >= 100;
             const isInProgress = stage.status === "IN_PROGRESS" || (stage.percentageComplete > 0 && stage.percentageComplete < 100);
             const hasProgressEntered = stage.percentageComplete > 0 || isCompleted;
 
             return (
-              <div key={stage.step} className="relative z-10 flex items-start gap-3 sm:gap-4 group">
-                {/* Step Marker Circle */}
-                <div className="shrink-0 mt-3.5">
-                  {isCompleted ? (
-                    <div className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-emerald-600 text-white shadow-xs ring-4 ring-white">
-                      <CheckCircle2 className="h-5 w-5" />
+              <Link
+                key={stage.step}
+                href={`/stages/${stage.step}`}
+                className={cn(
+                  "rounded-2xl border bg-white p-5 shadow-xs transition-all duration-200 hover:border-clay-300 hover:shadow-md flex flex-col justify-between space-y-4 group",
+                  isCompleted
+                    ? "border-emerald-200/80 bg-emerald-50/15"
+                    : isInProgress
+                    ? "border-amber-300/90 bg-amber-50/15 ring-1 ring-amber-300/30"
+                    : "border-paper-200 hover:bg-paper-50/40"
+                )}
+              >
+                {/* Top Row: Step badge, Stage Name & Status Badge */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={cn(
+                        "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl font-bold text-xs shadow-xs",
+                        isCompleted
+                          ? "bg-emerald-600 text-white"
+                          : isInProgress
+                          ? "bg-amber-500 text-white animate-pulse"
+                          : "bg-paper-100 border border-paper-300 text-ink-700"
+                      )}
+                    >
+                      {isCompleted ? <CheckCircle2 className="h-4.5 w-4.5" /> : stage.step}
                     </div>
-                  ) : isInProgress ? (
-                    <div className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-amber-500 text-white shadow-xs ring-4 ring-amber-100 animate-pulse">
-                      <Clock className="h-5 w-5" />
+                    <div className="min-w-0">
+                      <h2 className="font-display text-base font-bold text-ink-900 leading-snug group-hover:text-clay-700 transition truncate">
+                        {stage.name}
+                      </h2>
+                      <span className="text-[11px] font-medium text-ink-400 capitalize">
+                        {stage.phase.toLowerCase().replace("_", " ")} Phase
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Status Badge */}
+                  <div className="shrink-0">
+                    {isCompleted ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-900">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                        <span>Done</span>
+                      </span>
+                    ) : isInProgress ? (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100 border border-amber-200 px-2.5 py-1 text-[11px] font-bold text-amber-900">
+                        <Clock className="h-3 w-3 text-amber-600" />
+                        <span>Active</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-lg bg-paper-100 border border-paper-200 px-2.5 py-1 text-[11px] font-bold text-ink-600">
+                        <span>Upcoming</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Progress Display */}
+                <div className="space-y-1.5">
+                  {hasProgressEntered ? (
+                    <div>
+                      <div className="flex items-center justify-between text-xs font-bold mb-1">
+                        <span className="text-ink-500">Milestone Progress</span>
+                        <span className="font-display text-sm font-bold text-ink-900">
+                          {stage.percentageComplete}%
+                        </span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-paper-100 overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-all duration-500",
+                            isCompleted
+                              ? "bg-emerald-600"
+                              : isInProgress
+                              ? "bg-amber-500"
+                              : "bg-clay-600"
+                          )}
+                          style={{ width: `${Math.max(stage.percentageComplete, 2)}%` }}
+                        />
+                      </div>
                     </div>
                   ) : (
-                    <div className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full bg-white border-2 border-paper-300 text-ink-500 font-bold text-xs sm:text-sm ring-4 ring-white">
-                      {stage.step}
+                    <div className="flex items-center gap-1.5 text-xs text-ink-400 py-0.5">
+                      <AlertCircle className="h-3.5 w-3.5 text-ink-300" />
+                      <span className="italic font-medium">Progress not updated yet</span>
                     </div>
                   )}
                 </div>
 
-                {/* Stage Detail Card */}
-                <Link
-                  href={`/stages/${stage.step}`}
-                  className={cn(
-                    "flex-1 rounded-2xl border bg-white p-4 sm:p-5 shadow-xs transition-all duration-200 hover:border-clay-300 hover:shadow-md block",
-                    isCompleted
-                      ? "border-emerald-200/80 bg-emerald-50/20"
-                      : isInProgress
-                      ? "border-amber-300/90 bg-amber-50/20 ring-1 ring-amber-300/40"
-                      : "border-paper-200"
-                  )}
-                >
-                  {/* Top Row: Stage Name & Status Badge */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <h2 className="font-display text-base sm:text-lg font-bold text-ink-900 leading-snug group-hover:text-clay-700 transition">
-                        {stage.name}
-                      </h2>
-                    </div>
-
-                    {/* Status Badge */}
-                    <div className="shrink-0">
-                      {isCompleted ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-900">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                          <span>Completed</span>
-                        </span>
-                      ) : isInProgress ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-amber-100 border border-amber-200 px-2.5 py-1 text-[11px] font-bold text-amber-900">
-                          <Clock className="h-3.5 w-3.5 text-amber-600" />
-                          <span>In Progress</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-paper-100 border border-paper-200 px-2.5 py-1 text-[11px] font-bold text-ink-600">
-                          <span>Upcoming</span>
-                        </span>
-                      )}
-                    </div>
+                {/* Financial Breakdown */}
+                <div className="pt-3 border-t border-paper-100 flex flex-wrap items-center justify-between gap-2 text-xs">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-ink-500 font-medium">Spent:</span>
+                    <strong className="font-display font-bold text-clay-800 text-sm">{formatLakhs(stage.totalSpent)}</strong>
                   </div>
 
-                  {/* Progress Display */}
-                  <div className="mt-3 space-y-1.5">
-                    {hasProgressEntered ? (
-                      <div>
-                        <div className="flex items-center justify-between text-xs font-bold mb-1">
-                          <span className="text-ink-500">
-                            Progress
-                          </span>
-                          <span className="font-display text-sm font-bold text-ink-900">
-                            {stage.percentageComplete}%
-                          </span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-paper-100 overflow-hidden">
-                          <div
-                            className={cn(
-                              "h-full rounded-full transition-all duration-500",
-                              isCompleted
-                                ? "bg-emerald-600"
-                                : isInProgress
-                                ? "bg-amber-500"
-                                : "bg-clay-600"
-                            )}
-                            style={{ width: `${Math.max(stage.percentageComplete, 2)}%` }}
-                          />
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-xs text-ink-400 py-0.5">
-                        <AlertCircle className="h-3.5 w-3.5 text-ink-300" />
-                        <span className="italic font-medium">
-                          Progress not updated
-                        </span>
-                      </div>
-                    )}
+                  <div className="flex items-center gap-2 text-ink-600 text-[11px] flex-wrap">
+                    <span className="rounded-md bg-paper-100 px-2 py-0.5 font-semibold text-ink-800">
+                      Mat: {formatLakhs(stage.materialSpent)}
+                    </span>
+                    <span className="rounded-md bg-paper-100 px-2 py-0.5 font-semibold text-ink-800">
+                      Lab: {formatLakhs(stage.labourSpent)}
+                    </span>
                   </div>
-
-                  {/* Financial Breakdown: Spent ₹6.8L • Material ₹5.2L • Labour ₹1.6L */}
-                  <div className="mt-3.5 pt-3 border-t border-paper-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-                    {/* Spent Summary */}
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-ink-900 font-display text-sm">
-                        Spent{" "}
-                        <strong className="text-clay-700">{formatLakhs(stage.totalSpent)}</strong>
-                      </span>
-                      {stage.totalSpent > 0 && (
-                        <span className="text-[11px] text-ink-400 font-normal">
-                          ({formatINR(stage.totalSpent)})
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Material & Labour Split */}
-                    <div className="flex items-center gap-2 text-ink-600 flex-wrap">
-                      <span className="rounded-md bg-paper-100 px-2 py-0.5 font-semibold text-ink-800">
-                        Material: {formatLakhs(stage.materialSpent)}
-                      </span>
-                      <span>•</span>
-                      <span className="rounded-md bg-paper-100 px-2 py-0.5 font-semibold text-ink-800">
-                        Labour: {formatLakhs(stage.labourSpent)}
-                      </span>
-                      {stage.serviceSpent > 0 && (
-                        <>
-                          <span>•</span>
-                          <span className="rounded-md bg-paper-100 px-2 py-0.5 font-semibold text-ink-800">
-                            Other: {formatLakhs(stage.serviceSpent)}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              </div>
+                </div>
+              </Link>
             );
           })}
         </div>

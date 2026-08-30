@@ -333,8 +333,8 @@ export function AppShell({
           {/* Main Content Viewport */}
           <main
             className={cn(
-              "px-3 sm:px-6 lg:px-8 max-w-7xl w-full mx-auto flex-1 flex flex-col min-h-0",
-              activeProject ? "pb-24 lg:pb-12" : "pb-16 lg:pb-8"
+              "px-4 sm:px-6 lg:px-8 xl:px-10 max-w-[1600px] w-full mx-auto flex-1 flex flex-col min-h-0",
+              activeProject ? "pb-24 lg:pb-12 pt-4 sm:pt-6" : "pb-16 lg:pb-8 pt-4 sm:pt-6"
             )}
           >
             {children}

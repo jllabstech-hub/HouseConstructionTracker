@@ -357,7 +357,7 @@ export function MasterForms({
               )}
             </div>
           ) : (
-            <div className={cn("grid gap-4", showAddForm ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3")}>
+            <div className={cn("grid gap-4", showAddForm ? "sm:grid-cols-2 xl:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
               {paginatedContacts.map((contact) => {
                 const totalSpent = Number(
                   contact.kind === "vendor"
