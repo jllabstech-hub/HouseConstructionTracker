@@ -768,4 +768,37 @@ export async function createConstructionStageAction(input: { projectId: string; 
   }
 }
 
+export async function updateConstructionStageName(projectId: string, id: string, nameInput: string) {
+  const user = await requireUser();
+  await requireProject(projectId, user.id);
+  const name = nameInput.trim();
+  if (!name) return { error: "Stage name is required" };
+  const duplicate = await prisma.constructionStage.findFirst({
+    where: { projectId, name: { equals: name, mode: "insensitive" }, NOT: { id } },
+  });
+  if (duplicate) return { error: "A stage with this name already exists" };
+  const result = await prisma.constructionStage.updateMany({ where: { id, projectId }, data: { name } });
+  if (!result.count) return { error: "Stage not found" };
+  invalidateProjectCache(projectId);
+  revalidatePath("/masters");
+  revalidatePath("/stages");
+  revalidatePath("/expenses");
+  return { ok: true };
+}
+
+export async function deleteConstructionStageAction(projectId: string, id: string) {
+  const user = await requireUser();
+  await requireProject(projectId, user.id);
+  await prisma.$transaction([
+    prisma.expense.updateMany({ where: { projectId, constructionStageId: id }, data: { constructionStageId: null } }),
+    prisma.projectDocument.updateMany({ where: { projectId, constructionStageId: id }, data: { constructionStageId: null } }),
+    prisma.constructionStage.deleteMany({ where: { id, projectId } }),
+  ]);
+  invalidateProjectCache(projectId);
+  revalidatePath("/masters");
+  revalidatePath("/stages");
+  revalidatePath("/expenses");
+  return { ok: true };
+}
+
 

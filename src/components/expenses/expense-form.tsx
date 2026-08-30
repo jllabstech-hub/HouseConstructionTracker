@@ -608,18 +608,21 @@ export function ExpenseForm({
                     {superiorCategory === "MATERIAL" ? "Material Category" : "Labour / Work Category"} *
                   </label>
                   {currentCategoryList.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsCustomCategory((prev) => !prev);
-                        if (!isCustomCategory) {
-                          handleCategoryNameChange("");
-                        }
-                      }}
-                      className="text-[11px] font-bold text-clay-700 hover:underline cursor-pointer"
-                    >
-                      {isCustomCategory ? "← Pick from List" : "+ Type Custom Category"}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      <Link href="/masters" className="text-[11px] font-bold text-ink-600 hover:text-clay-700 hover:underline">
+                        Manage categories
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsCustomCategory((prev) => !prev);
+                          if (!isCustomCategory) handleCategoryNameChange("");
+                        }}
+                        className="text-[11px] font-bold text-clay-700 hover:underline cursor-pointer"
+                      >
+                        {isCustomCategory ? "← Pick from List" : "+ Add category"}
+                      </button>
+                    </div>
                   )}
                 </div>
 
