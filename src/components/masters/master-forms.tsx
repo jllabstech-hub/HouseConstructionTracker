@@ -483,11 +483,11 @@ export function MasterForms({
                             });
                             setShowPayModal(true);
                           }}
-                          className="flex-1 inline-flex items-center justify-center gap-1 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 px-2 py-2 text-xs font-bold text-purple-800 transition"
+                          className="flex-1 inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-xl border border-purple-200 bg-purple-50 px-2 py-2 text-xs font-bold text-purple-800 transition hover:bg-purple-100"
                           title="Pay via UPI"
                         >
                           <IndianRupee className="h-3.5 w-3.5 text-purple-700" />
-                          <span>Pay UPI</span>
+                          <span>Pay</span>
                         </button>
                       </div>
                     </div>
