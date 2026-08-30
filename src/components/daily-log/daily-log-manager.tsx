@@ -11,7 +11,6 @@ import {
   Users,
   CheckCircle2,
   ChevronDown,
-  Download,
   Eye,
 } from "lucide-react";
 import {
@@ -604,19 +603,9 @@ export function DailyLogManager({
               </div>
             )}
 
-            {/* Action Bar: PDF Report Generation & Share */}
+            {/* Action Bar: PDF Report Share */}
             {initialLogs.length > 0 && (
               <div className="flex flex-wrap items-center gap-2 p-2.5 bg-paper-50 rounded-2xl border border-paper-200">
-                <button
-                  type="button"
-                  onClick={handleDownloadPdf}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 hover:bg-clay-700 text-white px-3 py-1.5 text-xs font-bold shadow-xs transition active:scale-95 cursor-pointer"
-                  title="Download Daily Muster Roll PDF"
-                >
-                  <Download className="h-3.5 w-3.5" />
-                  <span>Download PDF Table</span>
-                </button>
-
                 <button
                   type="button"
                   disabled={sharingPdf}
@@ -693,17 +682,8 @@ export function DailyLogManager({
                       </div>
                     </div>
 
-                    {/* Row 3: Action Buttons (WhatsApp Share & Delete) */}
-                    <div className="flex items-center justify-between pt-1 border-t border-paper-100 text-xs">
-                      <button
-                        type="button"
-                        onClick={() => handleShareWhatsApp(log)}
-                        className="inline-flex items-center gap-1.5 font-bold text-emerald-700 hover:text-emerald-800 transition cursor-pointer"
-                      >
-                        <Share2 className="h-3.5 w-3.5" />
-                        <span>Share on WhatsApp</span>
-                      </button>
-
+                    {/* Row 3: Delete */}
+                    <div className="flex items-center justify-end pt-1 border-t border-paper-100 text-xs">
                       <button
                         type="button"
                         onClick={() => setDeleteTargetId(log.id)}
