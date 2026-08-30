@@ -251,8 +251,17 @@ export function MasterForms({
             }}
             className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-clay-700 transition cursor-pointer"
           >
-            <Plus className="h-4 w-4" />
-            <span>{showAddForm && !editingContact ? "Close Form" : "Add Contact"}</span>
+            {showAddForm && !editingContact ? (
+              <>
+                <X className="h-4 w-4" />
+                <span>Close Form</span>
+              </>
+            ) : (
+              <>
+                <Plus className="h-4 w-4" />
+                <span>Add Contact</span>
+              </>
+            )}
           </button>
         </div>
       </div>
