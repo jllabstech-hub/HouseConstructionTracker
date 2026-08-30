@@ -503,10 +503,21 @@ export function ExpenseForm({
         <form onSubmit={handleSubmit} className="lg:col-span-8 space-y-5">
           <div className="rounded-3xl border border-paper-200 bg-white p-4 sm:p-5 shadow-xs">
             <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400 block">
-              1. Expense Type
+              1. Date & Expense Type
             </span>
-            <label htmlFor="expense-type" className="sr-only">Expense type</label>
-            <div className="relative mt-2">
+            <label htmlFor="expense-date" className="mt-3 block text-xs font-bold text-ink-700">
+              Payment / Transaction Date
+            </label>
+            <input
+              id="expense-date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+              className="mt-1.5 w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base font-medium text-ink-900 shadow-2xs focus:border-clay-500 focus:outline-none sm:text-sm"
+            />
+            <label htmlFor="expense-type" className="mt-4 block text-xs font-bold text-ink-700">Expense Type</label>
+            <div className="relative mt-1.5">
               <select
                 id="expense-type"
                 value={superiorCategory}
@@ -533,22 +544,7 @@ export function ExpenseForm({
               2. Details & Construction Stage
             </span>
 
-            <div>
-              <label htmlFor="expense-date" className="text-xs font-bold text-ink-700 block mb-1.5">
-                Payment / Transaction Date
-              </label>
-              <input
-                id="expense-date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
-                className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
-              />
-            </div>
-
-            {/* Core 2-Column Responsive Grid: Category + Construction Stage */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+            <div className="space-y-4 pt-1">
               {superiorCategory !== "OTHER" && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
@@ -632,7 +628,7 @@ export function ExpenseForm({
               )}
 
               {/* Construction Stage Dropdown + Clean Custom Input */}
-              <div className={cn("space-y-1.5", superiorCategory === "OTHER" && "md:col-span-2")}>
+              <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label htmlFor="expense-stage-select-main" className="text-xs font-bold text-ink-700 flex items-center gap-1.5">
                     <Milestone className="h-3.5 w-3.5 text-clay-600" />
