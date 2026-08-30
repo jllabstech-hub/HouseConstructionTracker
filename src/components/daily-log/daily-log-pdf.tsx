@@ -1,7 +1,7 @@
 import React from "react";
 import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 import type { DailySiteLogEntry, DailySiteLogsSummary } from "@/lib/actions/daily-logs";
-import { formatINR } from "@/lib/money";
+import { formatPdfINR } from "@/lib/money";
 
 const styles = StyleSheet.create({
   page: { padding: 32, fontSize: 9, fontFamily: "Helvetica", color: "#1c1917", backgroundColor: "#ffffff" },
@@ -93,7 +93,7 @@ export function DailyLabourLogPdf({
 
           <View style={styles.kpi}>
             <Text style={styles.kpiLabel}>Total Wage Payout</Text>
-            <Text style={styles.kpiValue}>{formatINR(summary.totalLabourSpent)}</Text>
+            <Text style={styles.kpiValue}>{formatPdfINR(summary.totalLabourSpent)}</Text>
             <Text style={styles.kpiSub}>Total daily wages disbursed</Text>
           </View>
         </View>
@@ -117,13 +117,13 @@ export function DailyLabourLogPdf({
                 <Text style={styles.colDate}>{log.date}</Text>
                 <Text style={styles.colStage}>{log.stageName || "General Site Work"}</Text>
                 <Text style={styles.colMestri}>
-                  {log.mestriCount > 0 ? `${log.mestriCount} @ ${formatINR(log.mestriRate)} = ${formatINR(log.mestriTotal)}` : "-"}
+                  {log.mestriCount > 0 ? `${log.mestriCount} @ ${formatPdfINR(log.mestriRate)} = ${formatPdfINR(log.mestriTotal)}` : "-"}
                 </Text>
                 <Text style={styles.colHelper}>
-                  {log.helperCount > 0 ? `${log.helperCount} @ ${formatINR(log.helperRate)} = ${formatINR(log.helperTotal)}` : "-"}
+                  {log.helperCount > 0 ? `${log.helperCount} @ ${formatPdfINR(log.helperRate)} = ${formatPdfINR(log.helperTotal)}` : "-"}
                 </Text>
                 <Text style={styles.colWork}>{log.workDescription || "-"}</Text>
-                <Text style={styles.colAmount}>{formatINR(log.totalLabourCost)}</Text>
+                <Text style={styles.colAmount}>{formatPdfINR(log.totalLabourCost)}</Text>
               </View>
             );
           })}
@@ -134,7 +134,7 @@ export function DailyLabourLogPdf({
           <Text style={styles.totalText}>
             Grand Total Daily Wage Payout ({logs.length} Days Recorded):
           </Text>
-          <Text style={styles.totalAmount}>{formatINR(summary.totalLabourSpent)}</Text>
+          <Text style={styles.totalAmount}>{formatPdfINR(summary.totalLabourSpent)}</Text>
         </View>
 
         {/* Fixed Footer */}
