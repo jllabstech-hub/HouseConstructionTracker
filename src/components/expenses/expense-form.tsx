@@ -21,6 +21,7 @@ import { uploadReceipt } from "@/lib/actions/receipts";
 import {
   createMaterialCategory,
   createLabourCategory,
+  createServiceCategory,
   createConstructionStageAction,
 } from "@/lib/actions/masters";
 import { computeLabourAmount, computeMaterialAmount } from "@/lib/finance/aggregations";
@@ -75,6 +76,7 @@ export function ExpenseForm({
   existingReceipts = [],
   materials = [],
   labours = [],
+  services = [],
   vendors = [],
   workers = [],
   stages = [],
@@ -127,6 +129,14 @@ export function ExpenseForm({
     return list;
   });
 
+  const [servicesList, setServicesList] = useState<Option[]>(() => {
+    const list = [...services];
+    if (initial?.serviceCategoryId && initial?.serviceCategoryName && !list.some((item) => item.id === initial.serviceCategoryId)) {
+      list.push({ id: initial.serviceCategoryId, name: initial.serviceCategoryName, groupName: "Custom" });
+    }
+    return list;
+  });
+
   // Category Name and ID state - starts completely empty by default
   const [materialCategoryName, setMaterialCategoryName] = useState<string>(
     initial?.materialCategoryName ?? ""
@@ -141,9 +151,11 @@ export function ExpenseForm({
   const [labourCategoryId, setLabourCategoryId] = useState<string>(
     initial?.labourCategoryId ?? ""
   );
+  const [otherCategoryName, setOtherCategoryName] = useState<string>(initial?.serviceCategoryName ?? "General");
+  const [otherCategoryId, setOtherCategoryId] = useState<string>(initial?.serviceCategoryId ?? "");
 
   // Toggle for custom category entry
-  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [isCustomCategory, setIsCustomCategory] = useState(superiorCategory === "OTHER");
 
   // 2. Shared Core Fields: Date & Description
   const [date, setDate] = useState<string>(
@@ -231,8 +243,8 @@ export function ExpenseForm({
     return 0;
   }, [superiorCategory, calcMode, directAmount, quantity, rate, numberOfWorkers, numberOfDays, dailyRate]);
 
-  const currentCategoryList = superiorCategory === "MATERIAL" ? materialsList : superiorCategory === "MANPOWER" ? laboursList : [];
-  const activeCategoryName = superiorCategory === "MATERIAL" ? materialCategoryName : superiorCategory === "MANPOWER" ? labourCategoryName : "";
+  const currentCategoryList = superiorCategory === "MATERIAL" ? materialsList : superiorCategory === "MANPOWER" ? laboursList : servicesList;
+  const activeCategoryName = superiorCategory === "MATERIAL" ? materialCategoryName : superiorCategory === "MANPOWER" ? labourCategoryName : otherCategoryName;
 
   // Handle Category selection or custom input
   const handleCategoryNameChange = (name: string) => {
@@ -262,6 +274,9 @@ export function ExpenseForm({
       } else {
         setLabourCategoryId("");
       }
+    } else {
+      setOtherCategoryName(name);
+      setOtherCategoryId(servicesList.find((item) => item.name.toLowerCase() === name.toLowerCase())?.id ?? "");
     }
   };
 
@@ -280,9 +295,9 @@ export function ExpenseForm({
     e.preventDefault();
     setError(null);
 
-    const categoryNameToSave = (superiorCategory === "MATERIAL" ? materialCategoryName : superiorCategory === "MANPOWER" ? labourCategoryName : "").trim();
-    if (superiorCategory !== "OTHER" && !categoryNameToSave) {
-      setError(`Please select or write a ${superiorCategory === "MATERIAL" ? "Material" : "Man Power"} category.`);
+    const categoryNameToSave = activeCategoryName.trim();
+    if (!categoryNameToSave) {
+      setError(`Please select or write an ${superiorCategory === "MATERIAL" ? "Material" : superiorCategory === "MANPOWER" ? "Man Power" : "Other"} category.`);
       return;
     }
 
@@ -295,6 +310,7 @@ export function ExpenseForm({
       try {
         let finalMaterialCatId = materialCategoryId;
         let finalLabourCatId = labourCategoryId;
+        let finalOtherCatId = otherCategoryId;
 
         // Auto-create category if custom
         if (superiorCategory === "MATERIAL") {
@@ -317,6 +333,17 @@ export function ExpenseForm({
             if ("category" in createRes && createRes.category?.id) {
               finalLabourCatId = createRes.category.id;
               setLaboursList((prev) => [...prev, { id: createRes.category!.id, name: categoryNameToSave }]);
+            }
+          }
+        } else {
+          const existing = servicesList.find((item) => item.name.toLowerCase() === categoryNameToSave.toLowerCase());
+          if (existing) {
+            finalOtherCatId = existing.id;
+          } else {
+            const createRes = await createServiceCategory({ projectId, name: categoryNameToSave });
+            if ("category" in createRes && createRes.category?.id) {
+              finalOtherCatId = createRes.category.id;
+              setServicesList((prev) => [...prev, { id: createRes.category!.id, name: categoryNameToSave }]);
             }
           }
         }
@@ -350,6 +377,7 @@ export function ExpenseForm({
           notes: notes.trim() || undefined,
           materialCategoryId: superiorCategory === "MATERIAL" ? finalMaterialCatId || undefined : undefined,
           labourCategoryId: superiorCategory === "MANPOWER" ? finalLabourCatId || undefined : undefined,
+          serviceCategoryId: superiorCategory === "OTHER" ? finalOtherCatId || undefined : undefined,
         };
 
         if (calcMode === "DIRECT_AMOUNT" || superiorCategory === "OTHER") {
@@ -525,7 +553,7 @@ export function ExpenseForm({
                   const nextType = event.target.value as SuperiorCategory;
                   setSuperiorCategory(nextType);
                   setCalcMode(nextType === "OTHER" ? "DIRECT_AMOUNT" : calcMode);
-                  setIsCustomCategory(false);
+                  setIsCustomCategory(nextType === "OTHER");
                   setError(null);
                 }}
                 className="w-full appearance-none rounded-xl border border-paper-300 bg-white p-3 pr-9 text-base font-semibold text-ink-900 shadow-2xs focus:border-clay-500 focus:outline-none sm:text-sm"
@@ -545,11 +573,10 @@ export function ExpenseForm({
             </span>
 
             <div className="space-y-4 pt-1">
-              {superiorCategory !== "OTHER" && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label htmlFor="expense-category-select" className="text-xs font-bold text-ink-700 block">
-                    {superiorCategory === "MATERIAL" ? "Material Category" : "Labour / Work Category"} *
+                    {superiorCategory === "MATERIAL" ? "Material Category" : superiorCategory === "MANPOWER" ? "Labour / Work Category" : "Other Category"} *
                   </label>
                   {currentCategoryList.length > 0 && (
                     <div className="flex items-center gap-3">
@@ -581,7 +608,9 @@ export function ExpenseForm({
                       placeholder={
                         superiorCategory === "MATERIAL"
                           ? "e.g. Italian Marble, UPVC Windows, Teak Wood..."
-                          : "e.g. Masonry, Plumbing, Carpentry, Wages..."
+                          : superiorCategory === "MANPOWER"
+                            ? "e.g. Masonry, Plumbing, Carpentry, Wages..."
+                            : "e.g. Transport, Permit Fee, Tool Rental..."
                       }
                       className="w-full rounded-xl border border-paper-300 bg-white p-3 text-base sm:text-sm font-semibold text-ink-900 placeholder:text-ink-400 placeholder:font-normal focus:border-clay-500 focus:outline-none shadow-2xs"
                       autoFocus
@@ -613,7 +642,7 @@ export function ExpenseForm({
                       className="w-full appearance-none rounded-xl border border-paper-300 bg-white p-3 pr-9 text-base sm:text-sm font-semibold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs cursor-pointer"
                       required
                     >
-                      <option value="">-- Select {superiorCategory === "MATERIAL" ? "Material" : "Labour"} Category --</option>
+                      <option value="">-- Select {superiorCategory === "MATERIAL" ? "Material" : superiorCategory === "MANPOWER" ? "Labour" : "Other"} Category --</option>
                       {currentCategoryList.map((cat) => (
                         <option key={cat.id} value={cat.name}>
                           {cat.name} {cat.groupName ? `(${cat.groupName})` : ""}
@@ -625,7 +654,6 @@ export function ExpenseForm({
                   </div>
                 )}
               </div>
-              )}
 
               {/* Construction Stage Dropdown + Clean Custom Input */}
               <div className="space-y-1.5">

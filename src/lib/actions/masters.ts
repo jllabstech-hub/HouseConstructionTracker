@@ -768,6 +768,26 @@ export async function createConstructionStageAction(input: { projectId: string; 
   }
 }
 
+export async function updateServiceCategory(id: string, input: unknown) {
+  const user = await requireUser();
+  const parsed = categorySchema.safeParse(input);
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Invalid category" };
+  const projectId = parsed.data.projectId;
+  if (!projectId) return { error: "Project is required" };
+  await requireProject(projectId, user.id);
+  const name = parsed.data.name.trim();
+  const existing = await prisma.serviceCategory.findFirst({ where: { id, projectId } });
+  if (!existing) return { error: "Category not found" };
+  const duplicate = await prisma.serviceCategory.findFirst({ where: { projectId, name: { equals: name, mode: "insensitive" }, NOT: { id } } });
+  if (duplicate) return { error: "A category with this name already exists" };
+  await prisma.serviceCategory.update({ where: { id }, data: { name } });
+  invalidateProjectCache(projectId);
+  revalidatePath("/masters");
+  revalidatePath("/expenses");
+  revalidatePath("/expenses/new");
+  return { ok: true };
+}
+
 export async function updateConstructionStageName(projectId: string, id: string, nameInput: string) {
   const user = await requireUser();
   await requireProject(projectId, user.id);

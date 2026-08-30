@@ -7,10 +7,11 @@ export default async function MastersPage() {
   const user = await requireUser();
   const projectId = await getActiveProjectId(user.id);
   if (!projectId) return <p className="py-12 text-center text-sm text-ink-600">Create a house project before adding categories.</p>;
-  const [materials, labours, stages] = await Promise.all([
+  const [materials, labours, services, stages] = await Promise.all([
     prisma.materialCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
     prisma.labourCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+    prisma.serviceCategory.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
     prisma.constructionStage.findMany({ where: { projectId }, orderBy: { sortOrder: "asc" } }),
   ]);
-  return <CategoryManager projectId={projectId} materials={materials} labours={labours} stages={stages} />;
+  return <CategoryManager projectId={projectId} materials={materials} labours={labours} services={services} stages={stages} />;
 }
