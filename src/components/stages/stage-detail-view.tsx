@@ -205,7 +205,7 @@ export function StageDetailView({
           <span className="text-xs font-bold uppercase tracking-wider text-clay-800">
             Total Spent on Stage
           </span>
-          <p className="font-display text-2xl font-bold text-ink-900 mt-1">
+          <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums text-ink-900">
             {formatINR(totalSpent)}
           </p>
           <p className="text-xs text-ink-500 mt-1 font-medium">
@@ -219,7 +219,7 @@ export function StageDetailView({
             <Package className="h-4 w-4 text-clay-600" />
             <span>Material</span>
           </div>
-          <p className="font-display text-2xl font-bold text-ink-900 mt-1">
+          <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums text-ink-900">
             {formatINR(materialSpent)}
           </p>
           <p className="text-xs text-ink-400 mt-1">
@@ -233,7 +233,7 @@ export function StageDetailView({
             <HardHat className="h-4 w-4 text-emerald-700" />
             <span>Labour</span>
           </div>
-          <p className="font-display text-2xl font-bold text-ink-900 mt-1">
+          <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums text-ink-900">
             {formatINR(labourSpent)}
           </p>
           <p className="text-xs text-ink-400 mt-1">
@@ -325,7 +325,7 @@ export function StageDetailView({
                 </div>
 
                 <div className="text-right shrink-0 pl-3">
-                  <p className="font-display text-sm font-bold text-ink-900">
+                  <p className="text-sm font-semibold tabular-nums text-ink-900">
                     {formatINR(Number(exp.amount))}
                   </p>
                   <Link

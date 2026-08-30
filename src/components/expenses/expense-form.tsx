@@ -446,7 +446,7 @@ export function ExpenseForm({
             <h2 className="font-display text-xl sm:text-2xl font-bold text-ink-900">
               Expense Recorded Successfully!
             </h2>
-            <p className="font-display text-2xl sm:text-3xl font-bold text-clay-700">
+            <p className="text-xl font-semibold tracking-tight tabular-nums text-clay-700 sm:text-2xl">
               {formatINR(savedSuccess.amount)}
             </p>
             <p className="text-xs text-ink-500 font-medium">
@@ -1150,7 +1150,7 @@ export function ExpenseForm({
                 <p className="text-[11px] font-bold uppercase tracking-wider text-ink-400">
                   Total Amount
                 </p>
-                <p className="font-display text-2xl sm:text-3xl font-extrabold text-clay-700 mt-0.5">
+                <p className="mt-0.5 text-xl font-semibold tracking-tight tabular-nums text-clay-700 sm:text-2xl">
                   {formatINR(computedTotal)}
                 </p>
               </div>

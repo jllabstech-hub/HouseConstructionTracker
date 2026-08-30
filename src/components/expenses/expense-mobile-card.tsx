@@ -88,7 +88,7 @@ export function ExpenseMobileCard({
 
           {/* Bold Currency Amount */}
           <div className="text-right shrink-0">
-            <p className="font-display text-base sm:text-lg font-bold text-ink-900 leading-none">
+            <p className="text-base font-semibold tabular-nums text-ink-900 leading-none sm:text-lg">
               {formatINR(Number(expense.amount))}
             </p>
           </div>

@@ -141,7 +141,7 @@ export function StageHubView({
               Overall Construction Progress
             </span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="font-display text-3xl sm:text-4xl font-bold text-ink-900">
+              <span className="text-2xl font-semibold tracking-tight tabular-nums text-ink-900 sm:text-3xl">
                 {overallProgress}%
               </span>
               <span className="text-xs text-ink-500 font-medium">
@@ -155,7 +155,7 @@ export function StageHubView({
             <span className="text-xs font-bold uppercase tracking-wider text-ink-500">
               Total Spent
             </span>
-            <p className="font-display text-xl sm:text-2xl font-bold text-clay-700 mt-0.5">
+            <p className="mt-0.5 text-lg font-semibold tracking-tight tabular-nums text-clay-700 sm:text-xl">
               {formatINR(totalProjectSpent)}
             </p>
           </div>

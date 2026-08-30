@@ -117,7 +117,7 @@ export function BudgetOverview({
             <span className="text-xs font-bold uppercase tracking-wider text-ink-500 block">
               Budget (Planned)
             </span>
-            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">
+            <p className="text-lg font-semibold tracking-tight tabular-nums text-ink-900 sm:text-xl">
               {formatLakhsShort(numBudget)}
             </p>
             <p className="text-[11px] text-ink-400 font-medium">
@@ -130,7 +130,7 @@ export function BudgetOverview({
             <span className="text-xs font-bold uppercase tracking-wider text-ink-500 block">
               Spent (Actual)
             </span>
-            <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">
+            <p className="text-lg font-semibold tracking-tight tabular-nums text-ink-900 sm:text-xl">
               {formatLakhsShort(numSpent)}
             </p>
             <p className="text-[11px] text-ink-400 font-medium">
@@ -145,7 +145,7 @@ export function BudgetOverview({
             </span>
             <p
               className={cn(
-                "font-display text-xl sm:text-2xl font-bold leading-tight",
+                "text-lg font-semibold tracking-tight tabular-nums sm:text-xl",
                 isOver ? "text-red-600" : isWarning ? "text-amber-700" : "text-emerald-700"
               )}
             >
@@ -165,7 +165,7 @@ export function BudgetOverview({
             </span>
             <p
               className={cn(
-                "font-display text-xl sm:text-2xl font-bold leading-tight",
+                "text-lg font-semibold tracking-tight tabular-nums sm:text-xl",
                 isOver ? "text-red-600" : isWarning ? "text-amber-700" : "text-emerald-700"
               )}
             >

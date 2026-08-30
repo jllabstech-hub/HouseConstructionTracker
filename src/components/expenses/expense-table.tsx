@@ -284,7 +284,7 @@ export function ExpenseTable({
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <div className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs space-y-1">
           <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500 block">Total Spent</span>
-          <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">{formatINR(currentTotal)}</p>
+          <p className="text-lg font-semibold tracking-tight tabular-nums text-ink-900 sm:text-xl">{formatINR(currentTotal)}</p>
           <p className="text-[11px] text-ink-400 font-medium">{filtered.length} transactions recorded</p>
         </div>
         <div className="rounded-2xl border border-clay-200 bg-clay-50/40 p-4 shadow-xs space-y-1">
@@ -292,7 +292,7 @@ export function ExpenseTable({
             <span className="text-[11px] font-bold uppercase tracking-wider text-clay-800">Material</span>
             <Package className="h-3.5 w-3.5 text-clay-600" />
           </div>
-          <p className="font-display text-xl sm:text-2xl font-bold text-clay-900 leading-tight">{formatINR(materialTotal)}</p>
+          <p className="text-lg font-semibold tracking-tight tabular-nums text-clay-900 sm:text-xl">{formatINR(materialTotal)}</p>
           <p className="text-[11px] text-clay-700 font-medium">{currentTotal > 0 ? ((materialTotal / currentTotal) * 100).toFixed(0) : 0}% of spending</p>
         </div>
         <div className="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4 shadow-xs space-y-1">
@@ -300,7 +300,7 @@ export function ExpenseTable({
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Labour</span>
             <HardHat className="h-3.5 w-3.5 text-emerald-600" />
           </div>
-          <p className="font-display text-xl sm:text-2xl font-bold text-emerald-950 leading-tight">{formatINR(labourTotal)}</p>
+          <p className="text-lg font-semibold tracking-tight tabular-nums text-emerald-950 sm:text-xl">{formatINR(labourTotal)}</p>
           <p className="text-[11px] text-emerald-700 font-medium">{currentTotal > 0 ? ((labourTotal / currentTotal) * 100).toFixed(0) : 0}% of spending</p>
         </div>
         <div className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs space-y-1">
@@ -308,7 +308,7 @@ export function ExpenseTable({
             <span className="text-[11px] font-bold uppercase tracking-wider text-ink-500">Other / Services</span>
             <MoreHorizontal className="h-3.5 w-3.5 text-ink-400" />
           </div>
-          <p className="font-display text-xl sm:text-2xl font-bold text-ink-900 leading-tight">{formatINR(otherTotal)}</p>
+          <p className="text-lg font-semibold tracking-tight tabular-nums text-ink-900 sm:text-xl">{formatINR(otherTotal)}</p>
           <p className="text-[11px] text-ink-400 font-medium">Machinery, transport & fees</p>
         </div>
       </div>
@@ -456,7 +456,7 @@ export function ExpenseTable({
                     <td className="py-3.5 px-4 text-ink-600 truncate max-w-[160px]">
                       {expense.vendorName ?? "—"}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-display text-sm font-bold text-ink-900 whitespace-nowrap">
+                    <td className="py-3.5 px-4 text-right text-sm font-semibold tabular-nums text-ink-900 whitespace-nowrap">
                       {formatINR(Number(expense.amount))}
                     </td>
                     <td className="py-3.5 px-3 text-right whitespace-nowrap">
