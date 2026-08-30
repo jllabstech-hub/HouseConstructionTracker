@@ -5,6 +5,7 @@ import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   Filter,
+  Download,
   HardHat,
   MoreHorizontal,
   Package,
@@ -67,7 +68,7 @@ export function ExpenseTable({
   });
 
   const [page, setPage] = useState(1);
-  const pageSize = 20;
+  const [pageSize, setPageSize] = useState(20);
 
   const handleFilterChange = (key: keyof AdvancedFiltersState, val: string) => {
     setAdvancedFilters((prev) => ({ ...prev, [key]: val }));
@@ -261,14 +262,22 @@ export function ExpenseTable({
           </p>
         </div>
 
-        {/* Primary Action (Shown on mobile/tablet; desktop uses top bar CTA) */}
-        <Link
-          href="/expenses/new"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition self-start sm:self-auto whitespace-nowrap shrink-0 cursor-pointer lg:hidden"
-        >
-          <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
-          <span className="whitespace-nowrap">Add Expense</span>
-        </Link>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <a
+            href={`/api/reports/pdf?projectId=${encodeURIComponent(projectId)}&kind=total&download=1`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-paper-300 bg-white px-4 py-2.5 text-xs font-bold text-ink-800 shadow-2xs transition hover:bg-paper-50 sm:text-sm"
+          >
+            <Download className="h-4 w-4" />
+            <span>Download PDF</span>
+          </a>
+          <Link
+            href="/expenses/new"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-clay-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow-xs hover:bg-clay-700 active:scale-95 transition whitespace-nowrap shrink-0 cursor-pointer lg:hidden"
+          >
+            <Plus className="h-4 w-4 stroke-[2.5] shrink-0" />
+            <span className="whitespace-nowrap">Add Expense</span>
+          </Link>
+        </div>
       </div>
 
       {/* 2. Top Financial Metric Summary Cards */}
@@ -476,12 +485,15 @@ export function ExpenseTable({
           </div>
 
           {/* Pagination */}
-          {filtered.length > pageSize && (
+          {filtered.length > 0 && (
             <TablePagination
               currentPage={page}
               totalItems={filtered.length}
               pageSize={pageSize}
               onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              pageSizeOptions={[10, 20, 50, 100]}
+              showAllOption
             />
           )}
         </div>

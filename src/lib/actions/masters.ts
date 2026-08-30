@@ -768,6 +768,32 @@ export async function createConstructionStageAction(input: { projectId: string; 
   }
 }
 
+export async function moveLabourCategoryToOther(id: string) {
+  const user = await requireUser();
+  const category = await prisma.labourCategory.findFirst({ where: { id }, include: { project: { select: { userId: true } } } });
+  if (!category || category.project.userId !== user.id) return { error: "Category not found or access denied" };
+
+  const projectId = category.projectId;
+  const otherCategory = await prisma.serviceCategory.findFirst({ where: { projectId, name: { equals: category.name, mode: "insensitive" } } })
+    ?? await prisma.serviceCategory.create({ data: { projectId, name: category.name } });
+
+  await prisma.$transaction([
+    prisma.expense.updateMany({
+      where: { labourCategoryId: id },
+      data: { expenseType: "OTHER", labourCategoryId: null, serviceCategoryId: otherCategory.id, labourCalcMethod: null, numberOfWorkers: null, numberOfDays: null },
+    }),
+    prisma.budgetCategory.deleteMany({ where: { labourCategoryId: id } }),
+    prisma.workAreaLabour.deleteMany({ where: { categoryId: id } }),
+    prisma.labourCategory.delete({ where: { id } }),
+  ]);
+  invalidateProjectCache(projectId);
+  invalidateUserCache(user.id);
+  revalidatePath("/masters");
+  revalidatePath("/expenses");
+  revalidatePath("/expenses/new");
+  return { ok: true };
+}
+
 export async function updateServiceCategory(id: string, input: unknown) {
   const user = await requireUser();
   const parsed = categorySchema.safeParse(input);

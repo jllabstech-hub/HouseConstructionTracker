@@ -10,6 +10,7 @@ interface TablePaginationProps {
   onPageChange: (page: number) => void;
   onPageSizeChange?: (size: number) => void;
   pageSizeOptions?: number[];
+  showAllOption?: boolean;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ export function TablePagination({
   onPageChange,
   onPageSizeChange,
   pageSizeOptions = [10, 25, 50, 100],
+  showAllOption = false,
   className,
 }: TablePaginationProps) {
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -63,9 +65,9 @@ export function TablePagination({
           <div className="flex items-center gap-1.5">
             <span className="text-ink-400">Rows:</span>
             <select
-              value={pageSize}
+              value={showAllOption && pageSize >= totalItems ? "all" : pageSize}
               onChange={(e) => {
-                onPageSizeChange(Number(e.target.value));
+                onPageSizeChange(e.target.value === "all" ? totalItems : Number(e.target.value));
                 onPageChange(1);
               }}
               className="rounded-lg border border-paper-300 bg-paper-50 px-2 py-1 text-xs font-bold text-ink-800 focus:border-clay-500 focus:bg-white focus:outline-none"
@@ -75,6 +77,7 @@ export function TablePagination({
                   {opt}
                 </option>
               ))}
+              {showAllOption && <option value="all">All</option>}
             </select>
           </div>
         )}
