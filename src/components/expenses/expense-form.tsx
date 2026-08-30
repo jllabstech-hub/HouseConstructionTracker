@@ -644,6 +644,31 @@ export function ExpenseForm({
               className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none shadow-2xs"
             />
           </div>
+
+          <div>
+            <label htmlFor="expense-stage-select-main" className="text-xs font-bold text-ink-700 block mb-1.5">
+              Construction Stage
+            </label>
+            <div className="relative">
+              <select
+                id="expense-stage-select-main"
+                value={stageId}
+                onChange={(e) => setStageId(e.target.value)}
+                className="w-full appearance-none rounded-xl border border-paper-300 bg-white p-2.5 pr-8 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs cursor-pointer"
+              >
+                <option value="">-- General / Not Linked to Specific Stage --</option>
+                {stages.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
+            </div>
+            <p className="text-[11px] text-ink-400 mt-1">
+              Select which construction stage (Foundation, Slabs, Masonry, Plastering, Electrical, etc.) this belongs to.
+            </p>
+          </div>
         </div>
 
         <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
@@ -950,25 +975,6 @@ export function ExpenseForm({
                     {PAYMENT_METHODS.map((pm) => (
                       <option key={pm.value} value={pm.value}>
                         {pm.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label htmlFor="expense-stage-select" className="text-xs font-bold text-ink-700 block mb-1.5">
-                    Construction Stage
-                  </label>
-                  <select
-                    id="expense-stage-select"
-                    value={stageId}
-                    onChange={(e) => setStageId(e.target.value)}
-                    className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-base sm:text-sm font-medium text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs"
-                  >
-                    <option value="">Select Stage (Optional)</option>
-                    {stages.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
                       </option>
                     ))}
                   </select>

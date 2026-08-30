@@ -257,7 +257,7 @@ export function MasterForms({
             Phone Directory & Master Catalog
           </h1>
           <p className="text-xs sm:text-sm text-ink-500 mt-0.5">
-            Store and call material vendors, shopkeepers, daily workers, masons, and standard site categories.
+            Store and call material stores, suppliers, daily workers, masons, and project categories.
           </p>
         </div>
 
@@ -283,9 +283,9 @@ export function MasterForms({
               <Trash2 className="h-3.5 w-3.5 text-red-600" />
               <span>
                 {activeTab === "VENDORS"
-                  ? `Clear All Shops (${effectiveVendors.length})`
+                  ? `Clear All Material Stores (${effectiveVendors.length})`
                   : activeTab === "WORKERS"
-                  ? `Clear All Workers (${effectiveWorkers.length})`
+                  ? `Clear All Man Power (${effectiveWorkers.length})`
                   : `Empty All Categories (${materials.length + labours.length + services.length})`}
               </span>
             </button>
@@ -297,7 +297,7 @@ export function MasterForms({
             className="inline-flex items-center gap-1.5 rounded-xl bg-clay-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-clay-700 transition"
           >
             <Plus className="h-4 w-4" />
-            <span>Add New Shop</span>
+            <span>Add Material Store</span>
           </button>
 
           <button
@@ -306,7 +306,7 @@ export function MasterForms({
             className="inline-flex items-center gap-1.5 rounded-xl border border-paper-300 bg-white px-3.5 py-2 text-xs font-bold text-ink-800 shadow-2xs hover:bg-paper-50 transition"
           >
             <Plus className="h-4 w-4" />
-            <span>Add New Worker</span>
+            <span>Add Man Power</span>
           </button>
         </div>
       </div>
@@ -327,10 +327,10 @@ export function MasterForms({
       {/* Directory Tab Navigation */}
       <div className="flex overflow-x-auto no-scrollbar gap-2 p-1.5 bg-paper-100/90 rounded-2xl border border-paper-200 min-w-0 max-w-full">
         {[
-          { id: "VENDORS", label: "Shops & Vendors", count: effectiveVendors.length },
-          { id: "WORKERS", label: "Workers & Contractors", count: effectiveWorkers.length },
-          { id: "MATERIALS", label: "Materials Catalog", count: materials.length },
-          { id: "LABOURS", label: "Man Power Catalog", count: labours.length },
+          { id: "VENDORS", label: "Material (Stores & Vendors)", count: effectiveVendors.length },
+          { id: "WORKERS", label: "Man Power (Workers & Contractors)", count: effectiveWorkers.length },
+          { id: "MATERIALS", label: "Material Categories", count: materials.length },
+          { id: "LABOURS", label: "Man Power Categories", count: labours.length },
           { id: "SERVICES", label: "Machinery & Services", count: services.length },
         ].map((tab) => (
           <button
@@ -361,17 +361,17 @@ export function MasterForms({
         ))}
       </div>
 
-      {/* 1. TAB: SHOPS & VENDORS */}
+      {/* 1. TAB: MATERIAL STORES & VENDORS */}
       {activeTab === "VENDORS" && (
         <div className="grid gap-6 lg:grid-cols-3 items-start min-w-0 max-w-full">
-          {/* Shop List & Search */}
+          {/* Material Store List & Search */}
           <div className="lg:col-span-2 space-y-4 min-w-0 max-w-full">
             <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
               <div className="relative w-full">
                 <Search className="absolute left-3.5 top-3 h-4 w-4 text-ink-400" />
                 <input
                   type="text"
-                  placeholder="Search shops by name, material, or mobile..."
+                  placeholder="Search material stores by name, material, or mobile..."
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -382,7 +382,7 @@ export function MasterForms({
               </div>
               <div className="flex items-center gap-2">
                 <p className="text-xs text-ink-500 font-medium whitespace-nowrap">
-                  Showing {filteredVendors.length} shops
+                  Showing {filteredVendors.length} material stores
                 </p>
                 {vendors.length > 0 && (
                   <button
@@ -401,10 +401,10 @@ export function MasterForms({
               <div className="rounded-3xl border border-dashed border-paper-300 bg-white p-10 text-center space-y-3">
                 <Store className="h-10 w-10 text-ink-300 mx-auto" />
                 <h3 className="font-bold text-ink-900 text-sm sm:text-base">
-                  No shops found
+                  No material stores found
                 </h3>
                 <p className="text-xs text-ink-500 max-w-sm mx-auto">
-                  Add your first hardware store or material dealer using the form on the right.
+                  Add your first hardware store, cement dealer, or steel supplier using the form on the right.
                 </p>
               </div>
             ) : (
@@ -556,13 +556,13 @@ export function MasterForms({
             )}
           </div>
 
-          {/* Add / Edit Shop Form */}
+          {/* Add / Edit Material Store Form */}
           <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4 lg:sticky lg:top-6 min-w-0 max-w-full">
             <div className="flex items-center justify-between gap-2 border-b border-paper-100 pb-3">
               <div className="flex items-center gap-2">
                 <Store className="h-5 w-5 text-clay-600" />
                 <h3 className="font-display font-bold text-ink-900 text-base">
-                  {editingVendor ? "Edit Shop Details" : "Add New Shop"}
+                  {editingVendor ? "Edit Material Store" : "Add Material Store"}
                 </h3>
               </div>
               {editingVendor && (
@@ -599,7 +599,7 @@ export function MasterForms({
             >
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  Shop Name <span className="text-red-500">*</span>
+                  Store / Vendor Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -626,7 +626,7 @@ export function MasterForms({
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  Business Type
+                  Business Type / Supplied Material
                 </label>
                 <input
                   type="text"
@@ -655,7 +655,7 @@ export function MasterForms({
 
               <div>
                 <label className="block text-xs font-bold text-ink-800 mb-1">
-                  Shop Address
+                  Store Address
                 </label>
                 <input
                   type="text"
@@ -695,7 +695,7 @@ export function MasterForms({
                   disabled={pending}
                   className="flex-1 bg-clay-600 hover:bg-clay-700 font-bold text-white text-xs py-2.5 rounded-xl shadow-sm"
                 >
-                  {pending ? "Saving..." : editingVendor ? "Update Shop" : "Save Shop Details"}
+                  {pending ? "Saving..." : editingVendor ? "Update Store" : "Save Material Store"}
                 </Button>
               </div>
             </form>
@@ -1466,18 +1466,18 @@ export function MasterForms({
         }}
         title={
           clearTarget === "VENDORS"
-            ? "Clear All Shops & Vendors?"
+            ? "Clear All Material Stores?"
             : clearTarget === "WORKERS"
-            ? "Clear All Workers & Contractors?"
+            ? "Clear All Man Power?"
             : clearTarget === "ALL_CATEGORIES"
             ? "Empty All Categories?"
             : "Clear All Phone Directory Entries?"
         }
         description={
           clearTarget === "VENDORS"
-            ? `Are you sure you want to delete all ${effectiveVendors.length} shops & vendors in a single click? This action cannot be undone.`
+            ? `Are you sure you want to delete all ${effectiveVendors.length} material stores & vendors in a single click? This action cannot be undone.`
             : clearTarget === "WORKERS"
-            ? `Are you sure you want to delete all ${effectiveWorkers.length} workers & contractors in a single click? This action cannot be undone.`
+            ? `Are you sure you want to delete all ${effectiveWorkers.length} man power workers & contractors in a single click? This action cannot be undone.`
             : clearTarget === "ALL_CATEGORIES"
             ? `Are you sure you want to delete all ${materials.length + labours.length + services.length} categories to start fresh? This action cannot be undone.`
             : `Are you sure you want to delete all phone directory entries in a single click? This action cannot be undone.`
