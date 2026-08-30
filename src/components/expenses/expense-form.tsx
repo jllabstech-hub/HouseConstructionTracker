@@ -10,8 +10,6 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  HardHat,
-  Package,
   Plus,
   Trash2,
   Wallet,
@@ -33,7 +31,7 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { cn } from "@/lib/utils";
 
 type Option = { id: string; name: string; groupName?: string | null; type?: string; phone?: string | null; company?: string | null };
-export type SuperiorCategory = "MATERIAL" | "MANPOWER";
+export type SuperiorCategory = "MATERIAL" | "MANPOWER" | "OTHER";
 export type CalcMode = "QUANTITY_RATE" | "DIRECT_AMOUNT";
 
 export type ExistingReceipt = {
@@ -101,15 +99,12 @@ export function ExpenseForm({
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  const isInitialLabour =
-    initial?.expenseType === "LABOUR" ||
-    initial?.expenseType === "SERVICE" ||
-    initial?.expenseType === "EQUIPMENT" ||
-    initial?.expenseType === "PROFESSIONAL" ||
-    Boolean(initial?.labourCategoryId);
-
   const [superiorCategory, setSuperiorCategory] = useState<SuperiorCategory>(
-    isInitialLabour ? "MANPOWER" : "MATERIAL"
+    initial?.expenseType === "LABOUR" || initial?.labourCategoryId
+      ? "MANPOWER"
+      : initial?.expenseType === "MATERIAL" || initial?.materialCategoryId
+        ? "MATERIAL"
+        : "OTHER"
   );
 
   const [materialsList, setMaterialsList] = useState<Option[]>(() => {
@@ -213,7 +208,7 @@ export function ExpenseForm({
 
   // Live Computed Total
   const computedTotal = useMemo(() => {
-    if (calcMode === "DIRECT_AMOUNT") {
+    if (calcMode === "DIRECT_AMOUNT" || superiorCategory === "OTHER") {
       return Number(parseMoneyInput(directAmount) ?? 0);
     }
 
@@ -236,8 +231,8 @@ export function ExpenseForm({
     return 0;
   }, [superiorCategory, calcMode, directAmount, quantity, rate, numberOfWorkers, numberOfDays, dailyRate]);
 
-  const currentCategoryList = superiorCategory === "MATERIAL" ? materialsList : laboursList;
-  const activeCategoryName = superiorCategory === "MATERIAL" ? materialCategoryName : labourCategoryName;
+  const currentCategoryList = superiorCategory === "MATERIAL" ? materialsList : superiorCategory === "MANPOWER" ? laboursList : [];
+  const activeCategoryName = superiorCategory === "MATERIAL" ? materialCategoryName : superiorCategory === "MANPOWER" ? labourCategoryName : "";
 
   // Handle Category selection or custom input
   const handleCategoryNameChange = (name: string) => {
@@ -259,7 +254,7 @@ export function ExpenseForm({
           if (!description && preset.descriptions?.[0]) setDescription(preset.descriptions[0]);
         }
       }
-    } else {
+    } else if (superiorCategory === "MANPOWER") {
       setLabourCategoryName(name);
       const match = laboursList.find((l) => l.name.toLowerCase() === name.toLowerCase());
       if (match) {
@@ -285,8 +280,8 @@ export function ExpenseForm({
     e.preventDefault();
     setError(null);
 
-    const categoryNameToSave = (superiorCategory === "MATERIAL" ? materialCategoryName : labourCategoryName).trim();
-    if (!categoryNameToSave) {
+    const categoryNameToSave = (superiorCategory === "MATERIAL" ? materialCategoryName : superiorCategory === "MANPOWER" ? labourCategoryName : "").trim();
+    if (superiorCategory !== "OTHER" && !categoryNameToSave) {
       setError(`Please select or write a ${superiorCategory === "MATERIAL" ? "Material" : "Man Power"} category.`);
       return;
     }
@@ -313,7 +308,7 @@ export function ExpenseForm({
               setMaterialsList((prev) => [...prev, { id: createRes.category!.id, name: categoryNameToSave }]);
             }
           }
-        } else {
+        } else if (superiorCategory === "MANPOWER") {
           const existing = laboursList.find((l) => l.name.toLowerCase() === categoryNameToSave.toLowerCase());
           if (existing) {
             finalLabourCatId = existing.id;
@@ -344,8 +339,8 @@ export function ExpenseForm({
         const payload: Record<string, string | number | undefined> = {
           projectId,
           date,
-          expenseType: superiorCategory === "MATERIAL" ? "MATERIAL" : "LABOUR",
-          description: description.trim() || `${categoryNameToSave} expense`,
+          expenseType: superiorCategory === "MANPOWER" ? "LABOUR" : superiorCategory,
+          description: description.trim() || (categoryNameToSave ? `${categoryNameToSave} expense` : "Other expense"),
           paymentMethod,
           constructionStageId: finalStageId || undefined,
           floorId: floorId || undefined,
@@ -357,7 +352,7 @@ export function ExpenseForm({
           labourCategoryId: superiorCategory === "MANPOWER" ? finalLabourCatId || undefined : undefined,
         };
 
-        if (calcMode === "DIRECT_AMOUNT") {
+        if (calcMode === "DIRECT_AMOUNT" || superiorCategory === "OTHER") {
           payload.amount = directAmount;
         } else {
           if (superiorCategory === "MATERIAL") {
@@ -506,83 +501,36 @@ export function ExpenseForm({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column (Main Form - 8 Cols) */}
         <form onSubmit={handleSubmit} className="lg:col-span-8 space-y-5">
-          {/* Section 1: Type Selection */}
-          <div className="rounded-3xl border border-paper-200 bg-white p-4 sm:p-5 shadow-xs space-y-3">
+          <div className="rounded-3xl border border-paper-200 bg-white p-4 sm:p-5 shadow-xs">
             <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400 block">
-              1. Select Type
+              1. Expense Type
             </span>
-
-            <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Superior Category">
-              <button
-                type="button"
-                role="radio"
-                aria-checked={superiorCategory === "MATERIAL"}
-                onClick={() => {
-                  setSuperiorCategory("MATERIAL");
+            <label htmlFor="expense-type" className="sr-only">Expense type</label>
+            <div className="relative mt-2">
+              <select
+                id="expense-type"
+                value={superiorCategory}
+                onChange={(event) => {
+                  const nextType = event.target.value as SuperiorCategory;
+                  setSuperiorCategory(nextType);
+                  setCalcMode(nextType === "OTHER" ? "DIRECT_AMOUNT" : calcMode);
                   setIsCustomCategory(false);
                   setError(null);
                 }}
-                className={cn(
-                  "flex flex-col sm:flex-row items-center justify-center gap-2.5 rounded-2xl border p-4 text-center sm:text-left transition active:scale-[0.99] cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-clay-500",
-                  superiorCategory === "MATERIAL"
-                    ? "border-clay-600 bg-clay-50/80 text-clay-950 ring-2 ring-clay-600/20 shadow-xs"
-                    : "border-paper-200 bg-paper-50/60 text-ink-700 hover:bg-paper-100 hover:border-paper-300"
-                )}
+                className="w-full appearance-none rounded-xl border border-paper-300 bg-white p-3 pr-9 text-base font-semibold text-ink-900 shadow-2xs focus:border-clay-500 focus:outline-none sm:text-sm"
               >
-                <div
-                  className={cn(
-                    "p-2.5 rounded-xl shrink-0",
-                    superiorCategory === "MATERIAL" ? "bg-clay-600 text-white" : "bg-paper-200 text-ink-600"
-                  )}
-                >
-                  <Package className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-sm font-bold block leading-tight">Material</span>
-                  <span className="text-[11px] text-ink-500 hidden sm:block mt-0.5">
-                    Cement, Steel, Sand, Bricks, Tiles...
-                  </span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                role="radio"
-                aria-checked={superiorCategory === "MANPOWER"}
-                onClick={() => {
-                  setSuperiorCategory("MANPOWER");
-                  setIsCustomCategory(false);
-                  setError(null);
-                }}
-                className={cn(
-                  "flex flex-col sm:flex-row items-center justify-center gap-2.5 rounded-2xl border p-4 text-center sm:text-left transition active:scale-[0.99] cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600",
-                  superiorCategory === "MANPOWER"
-                    ? "border-emerald-600 bg-emerald-50/80 text-emerald-950 ring-2 ring-emerald-600/20 shadow-xs"
-                    : "border-paper-200 bg-paper-50/60 text-ink-700 hover:bg-paper-100 hover:border-paper-300"
-                )}
-              >
-                <div
-                  className={cn(
-                    "p-2.5 rounded-xl shrink-0",
-                    superiorCategory === "MANPOWER" ? "bg-emerald-600 text-white" : "bg-paper-200 text-ink-600"
-                  )}
-                >
-                  <HardHat className="h-5 w-5" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-sm font-bold block leading-tight">Man Power</span>
-                  <span className="text-[11px] text-ink-500 hidden sm:block mt-0.5">
-                    Masons, Carpenters, Plumbers, Wages...
-                  </span>
-                </div>
-              </button>
+                <option value="MATERIAL">Material</option>
+                <option value="MANPOWER">Man Power</option>
+                <option value="OTHER">Other</option>
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" />
             </div>
           </div>
 
           {/* Section 2: Core Details & Construction Stage */}
           <div className="rounded-3xl border border-paper-200 bg-white p-5 sm:p-6 shadow-xs space-y-4">
             <span className="text-[11px] font-bold uppercase tracking-wider text-ink-400 block border-b border-paper-100 pb-2">
-              2. Category & Construction Stage
+              2. Details & Construction Stage
             </span>
 
             <div>
@@ -601,7 +549,7 @@ export function ExpenseForm({
 
             {/* Core 2-Column Responsive Grid: Category + Construction Stage */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-              {/* Category Dropdown + Clean Custom Input */}
+              {superiorCategory !== "OTHER" && (
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label htmlFor="expense-category-select" className="text-xs font-bold text-ink-700 block">
@@ -681,9 +629,10 @@ export function ExpenseForm({
                   </div>
                 )}
               </div>
+              )}
 
               {/* Construction Stage Dropdown + Clean Custom Input */}
-              <div className="space-y-1.5">
+              <div className={cn("space-y-1.5", superiorCategory === "OTHER" && "md:col-span-2")}>
                 <div className="flex items-center justify-between">
                   <label htmlFor="expense-stage-select-main" className="text-xs font-bold text-ink-700 flex items-center gap-1.5">
                     <Milestone className="h-3.5 w-3.5 text-clay-600" />
@@ -759,7 +708,9 @@ export function ExpenseForm({
                 placeholder={
                   superiorCategory === "MATERIAL"
                     ? "e.g. UltraTech 53 Grade Cement, 16mm Fe550D Steel"
-                    : "e.g. Plinth beam shuttering & concrete work, 4 masons"
+                    : superiorCategory === "MANPOWER"
+                      ? "e.g. Plinth beam shuttering & concrete work, 4 masons"
+                      : "e.g. Site transport, permit fee, or tool rental"
                 }
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -775,7 +726,7 @@ export function ExpenseForm({
                 3. Amount Calculation
               </span>
 
-              <div className="flex items-center gap-1 rounded-xl bg-paper-100 p-1 border border-paper-200">
+              {superiorCategory !== "OTHER" && <div className="flex items-center gap-1 rounded-xl bg-paper-100 p-1 border border-paper-200">
                 <button
                   type="button"
                   onClick={() => setCalcMode("QUANTITY_RATE")}
@@ -802,10 +753,10 @@ export function ExpenseForm({
                   <Wallet className="h-3.5 w-3.5" />
                   <span>Direct Amount</span>
                 </button>
-              </div>
+              </div>}
             </div>
 
-            {calcMode === "QUANTITY_RATE" ? (
+            {calcMode === "QUANTITY_RATE" && superiorCategory !== "OTHER" ? (
               <>
                 {superiorCategory === "MATERIAL" ? (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -1176,7 +1127,7 @@ export function ExpenseForm({
                 <div className="flex items-center justify-between">
                   <span className="text-ink-500 font-medium">Type</span>
                   <span className="font-bold text-ink-900">
-                    {superiorCategory === "MATERIAL" ? "Material Purchase" : "Man Power Wages"}
+                    {superiorCategory === "MATERIAL" ? "Material Purchase" : superiorCategory === "MANPOWER" ? "Man Power Wages" : "Other Expense"}
                   </span>
                 </div>
 
@@ -1216,8 +1167,10 @@ export function ExpenseForm({
               </div>
               <p className="text-ink-600 leading-relaxed">
                 {superiorCategory === "MATERIAL"
-                  ? "Record cement and steel bills with quantity & rate to automatically compute unit costs and generate itemized stage expenditure reports."
-                  : "Track daily worker counts and mason wage rates to prevent budget overruns during slab casting and brickwork stages."}
+                  ? "Record cement and steel bills with quantity and rate to automatically compute unit costs."
+                  : superiorCategory === "MANPOWER"
+                    ? "Track daily worker counts and wage rates to prevent budget overruns."
+                    : "Record transport, permits, rentals, and other construction costs in one place."}
               </p>
             </div>
 
