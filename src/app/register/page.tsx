@@ -64,6 +64,12 @@ export default function RegisterPage() {
                     setError(loginResult.error);
                     return;
                   }
+                  try {
+                    localStorage.setItem("hct_last_login_user", payload.email);
+                    localStorage.setItem("hct_last_login_pass", payload.password);
+                  } catch {
+                    // ignore
+                  }
                   window.location.href = "/projects";
                 } catch (err: unknown) {
                   const msg = err instanceof Error ? err.message : "An unexpected error occurred during registration.";

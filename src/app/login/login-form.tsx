@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import Link from "next/link";
 import { ShieldCheck, AlertCircle, Loader2, Home } from "lucide-react";
 import { loginUser } from "@/lib/actions/auth";
@@ -12,20 +12,49 @@ export default function LoginForm({
   setup?: string;
   callbackUrl?: string;
 }) {
-  const [email, setEmail] = useState("admin");
-  const [password, setPassword] = useState("test123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+
+  // Load last entered login details for instant convenience upon logout/return
+  useEffect(() => {
+    try {
+      const savedUser = localStorage.getItem("hct_last_login_user");
+      const savedPass = localStorage.getItem("hct_last_login_pass");
+      if (savedUser) {
+        setEmail(savedUser);
+        if (savedPass) setPassword(savedPass);
+      } else {
+        // First-time demo defaults
+        setEmail("admin");
+        setPassword("test123");
+      }
+    } catch {
+      setEmail("admin");
+      setPassword("test123");
+    }
+  }, []);
 
   const handleLogin = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setError(null);
 
+    const userToSave = email.trim();
+    const passToSave = password;
+
+    try {
+      if (userToSave) localStorage.setItem("hct_last_login_user", userToSave);
+      if (passToSave) localStorage.setItem("hct_last_login_pass", passToSave);
+    } catch {
+      // ignore storage errors
+    }
+
     start(async () => {
       try {
         const result = await loginUser({
-          email: email.trim(),
-          password: password,
+          email: userToSave,
+          password: passToSave,
         });
         if (result && result.error) {
           setError(result.error);
@@ -44,6 +73,13 @@ export default function LoginForm({
     setEmail("admin");
     setPassword("test123");
     setError(null);
+
+    try {
+      localStorage.setItem("hct_last_login_user", "admin");
+      localStorage.setItem("hct_last_login_pass", "test123");
+    } catch {
+      // ignore
+    }
 
     start(async () => {
       try {
@@ -114,6 +150,7 @@ export default function LoginForm({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin or user@example.com"
+                autoComplete="username"
                 autoCapitalize="none"
                 autoCorrect="off"
                 className="w-full rounded-2xl border border-paper-200 bg-paper-100/60 px-4 py-3 text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/20 shadow-2xs transition"
@@ -131,6 +168,7 @@ export default function LoginForm({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
+                autoComplete="current-password"
                 className="w-full rounded-2xl border border-paper-200 bg-paper-100/60 px-4 py-3 text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/20 shadow-2xs transition"
               />
             </div>
