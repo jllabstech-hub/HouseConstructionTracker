@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --paper: #F7F6F2;
-  --ink: #1A232A;
-  --slate: #24313A;
-  --clay: #C56A2D;
+  --paper: #F8F5EE;
+  --ink: #181410;
+  --slate: #1E2530;
+  --clay: #9C5127;
   --success: #39745A;
   --warning: #B7791F;
   --danger: #B94A48;

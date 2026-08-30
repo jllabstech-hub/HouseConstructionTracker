@@ -49,7 +49,7 @@ export function Field({
 }
 
 export const inputClass =
-  "w-full rounded-xl border border-paper-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/40 transition";
+  "w-full rounded-2xl border border-paper-200 bg-paper-100/60 px-4 py-3 text-sm font-medium text-ink-900 placeholder:text-ink-400 focus:border-clay-500 focus:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/30 shadow-2xs transition";
 
 export function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={cn(inputClass, props.className)} />;

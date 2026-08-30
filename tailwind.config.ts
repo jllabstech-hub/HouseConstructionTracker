@@ -5,49 +5,49 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Coherent Design System Palette
+        // Coherent Editorial Design System Palette (Warm Linen & Rich Terracotta)
         paper: {
-          50: "#F7F6F2", // Warm Background
-          100: "#EFECE4",
-          200: "#E2DDD2",
-          300: "#D0C8B8",
-          400: "#B4A994",
+          50: "#F8F5EE", // Warm Linen Canvas Background
+          100: "#F1ECE3",
+          200: "#E5DFD4",
+          300: "#D5CDC0",
+          400: "#B8AEA0",
         },
         clay: {
-          50: "#FBF5F0",
-          100: "#F5E6DA",
-          200: "#E8CBB3",
-          300: "#DBAB87",
-          400: "#D08B5B",
-          500: "#C56A2D", // Construction Amber (Primary Action)
-          600: "#C56A2D", // Construction Amber CTA
-          700: "#A75420",
-          800: "#864117",
-          900: "#602D0E",
+          50: "#FAF3EC",
+          100: "#F4E4D4",
+          200: "#E6C4A8",
+          300: "#D69F77",
+          400: "#C37B47",
+          500: "#9C5127", // Rich Terracotta Brown (Primary Action)
+          600: "#91491F", // Terracotta CTA
+          700: "#7A3B16",
+          800: "#622E0F",
+          900: "#482008",
         },
         slate: {
-          50: "#F4F6F8",
-          100: "#E6EAEE",
-          200: "#CCD5DD",
-          300: "#A8B8C4",
-          400: "#7E94A5",
-          500: "#587184",
-          600: "#415565",
-          700: "#31414E",
-          800: "#24313A", // Slate (Navigation / Trust)
-          900: "#1B252C",
+          50: "#F7F8FA",
+          100: "#EEF0F4",
+          200: "#D8DCE4",
+          300: "#B6BECB",
+          400: "#8692A4",
+          500: "#5D6A7E",
+          600: "#424D5E",
+          700: "#2D3643",
+          800: "#1E2530", // Deep Slate / Header / Badges
+          900: "#131821",
         },
         ink: {
-          50: "#F8FAFB",
-          100: "#EEF2F4",
-          200: "#DFE5E9",
-          300: "#C6D0D6",
-          400: "#8A9BA8",
-          500: "#5D707F",
-          600: "#435360",
-          700: "#313F4A",
-          800: "#24313A", // Trust / Slate
-          900: "#1A232A", // Primary text
+          50: "#F9F8F6",
+          100: "#F0EDE8",
+          200: "#E2DDD6",
+          300: "#C4BCB1",
+          400: "#8C8276",
+          500: "#635A4F",
+          600: "#473F36",
+          700: "#322B24",
+          800: "#231D17", // Primary Text
+          900: "#181410", // High-Contrast Headings
         },
         success: {
           DEFAULT: "#39745A", // Green (healthy / under budget)
