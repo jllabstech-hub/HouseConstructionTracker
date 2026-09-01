@@ -461,6 +461,7 @@ export function ReportsTabs({
               value={selectedReport}
               onChange={(e) => {
                 setSelectedReport(e.target.value);
+                setShowOptionalFilters(false);
                 if (e.target.value === "total") {
                   setSelectedCategoryId("ALL");
                   setSelectedWorkerId("ALL");
@@ -550,6 +551,42 @@ export function ReportsTabs({
               {materials.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name} {m.groupName ? `(${m.groupName})` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* MAN POWER (LABOUR)-WISE DEDICATED SELECTOR & QUICK CHIPS */}
+        {selectedReport === "labour" && (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                <HardHat className="h-4 w-4 text-emerald-700" />
+                <span>Select Man Power Category (Masonry, Plumbing, Electrical, Painting...)</span>
+              </label>
+              {selectedCategoryId !== "ALL" && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategoryId("ALL")}
+                  className="text-xs font-bold text-emerald-800 hover:underline inline-flex items-center gap-1"
+                >
+                  <X className="h-3.5 w-3.5" />
+                  <span>Show All Man Power</span>
+                </button>
+              )}
+            </div>
+
+            {/* Labour Category Dropdown */}
+            <select
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              className="w-full rounded-xl border border-paper-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-ink-900 focus:border-clay-500 focus:outline-none shadow-2xs cursor-pointer"
+            >
+              <option value="ALL">All Man Power Summary ({labours.length} categories)</option>
+              {labours.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.name} {l.groupName ? `(${l.groupName})` : ""}
                 </option>
               ))}
             </select>
@@ -738,8 +775,8 @@ export function ReportsTabs({
                 </div>
               )}
 
-              {/* Category (if not on material tab) */}
-              {selectedReport !== "material" && (
+              {/* Category (if not on material or labour tab — they have dedicated selectors) */}
+              {selectedReport !== "material" && selectedReport !== "labour" && (
                 <div>
                   <label className="font-bold text-ink-700 block mb-1">Category</label>
                   <select

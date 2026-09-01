@@ -314,11 +314,15 @@ export async function recordDailySiteLog(input: RecordDailyLogInput) {
       const logMetadata = { type: "DAILY_LOG", mestriCount, mestriRate, helperCount, helperRate, otherWorkersCount, otherWorkersRate,
         cementBags, cementBrand, cementRate, workDescription: input.workDescription.trim() || `Daily Site Work (${mestriCount} Masons, ${helperCount} Helpers)`,
         notes: input.notes?.trim() || "", linkedCementExpenseId };
+      // Daily labour log is RECORDING ONLY — amount is 0, not added to expense totals.
+      // The actual weekly payment is added manually by the user. All breakdown data
+      // (mestri/helper counts, rates, computed totals) is preserved in the notes JSON
+      // for the muster roll report and attendance tracking.
       const labour = await tx.expense.create({
         data: {
           projectId: input.projectId, date: logDate, expenseType: "LABOUR", labourCategoryId: labourCategory?.id ?? null,
           labourCalcMethod: "DAILY_WAGE", numberOfWorkers: totalWorkers || 0, numberOfDays: new Prisma.Decimal(1),
-          rate: new Prisma.Decimal(avgRate.toFixed(2)), amount: new Prisma.Decimal(totalLabourCost), constructionStageId: input.stageId || null,
+          rate: new Prisma.Decimal(0), amount: new Prisma.Decimal(0), constructionStageId: input.stageId || null,
           floorId: input.floorId || null, workerId: input.workerId || null, paymentMethod,
           description: input.workDescription.trim() || `Daily Site Log: ${mestriCount} Mestri (₹${mestriRate}) + ${helperCount} Helpers (₹${helperRate})`,
           notes: JSON.stringify(logMetadata),

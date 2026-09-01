@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Calendar,
   HardHat,
+  Info,
   Plus,
   Trash2,
   Share2,
@@ -51,9 +52,9 @@ export function DailyLogManager({
 
   // Labour Fields
   const [mestriCount, setMestriCount] = useState<string>("2");
-  const [mestriRate, setMestriRate] = useState<string>("950");
+  const [mestriRate, setMestriRate] = useState<string>("1000");
   const [helperCount, setHelperCount] = useState<string>("4");
-  const [helperRate, setHelperRate] = useState<string>("650");
+  const [helperRate, setHelperRate] = useState<string>("800");
 
   // Notes & Description
   const [workDescription, setWorkDescription] = useState<string>("");
@@ -205,9 +206,9 @@ export function DailyLogManager({
     setStageId("");
     setFloorId("");
     setMestriCount("2");
-    setMestriRate("950");
+    setMestriRate("1000");
     setHelperCount("4");
-    setHelperRate("650");
+    setHelperRate("800");
     setWorkDescription("");
     setNotes("");
     setPaymentMethod("CASH");
@@ -292,13 +293,13 @@ export function DailyLogManager({
 
         <div className="rounded-2xl border border-paper-200 bg-white p-4 shadow-xs space-y-1">
           <div className="flex items-center justify-between text-ink-400">
-            <span className="text-[11px] font-bold uppercase tracking-wider">Total Wage Payout</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider">Est. Wages (Record Only)</span>
             <span className="text-xs font-bold text-clay-700">₹</span>
           </div>
           <p className="font-display text-xl sm:text-2xl font-bold text-clay-700">
             {formatINR(initialSummary.totalLabourSpent)}
           </p>
-          <p className="text-[11px] text-ink-500">Total wages paid</p>
+          <p className="text-[11px] text-ink-500">Not added to expenses</p>
         </div>
       </div>
 
@@ -546,6 +547,15 @@ export function DailyLogManager({
                   ? (editingLogId ? "Updating…" : "Saving…")
                   : (editingLogId ? "Update Daily Labour Log" : "Save Daily Labour Log")}
               </button>
+
+              {/* Recording-Only Info Banner */}
+              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-3 flex items-start gap-2">
+                <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                <div className="text-[11px] text-blue-900 leading-relaxed">
+                  <span className="font-bold">Recording only</span> — Daily wages are <span className="font-bold">not</span> added to expenses.
+                  Add overall weekly payment directly in Expenses section.
+                </div>
+              </div>
             </form>
           </div>
         </div>
@@ -700,7 +710,7 @@ export function DailyLogManager({
         onClose={() => setDeleteTargetId(null)}
         onConfirm={handleDelete}
         title="Delete Daily Labour Log?"
-        description="Are you sure you want to delete this daily labour log entry? The recorded wages will be adjusted automatically."
+        description="Are you sure you want to delete this daily labour log entry? This only removes the attendance record."
         confirmText={pending ? "Deleting..." : "Delete Log"}
         variant="danger"
       />
